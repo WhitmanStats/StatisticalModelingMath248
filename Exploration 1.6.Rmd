@@ -1,0 +1,170 @@
+---
+title: "Math 248: Exploration 1.6"
+author: "Your name here "
+header-includes:
+  - \usepackage{float}
+  - \floatplacement{figure}{H}
+output:
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo=TRUE,message=FALSE,warning=FALSE, fig.align = 'center', out.width="80%" )
+library(tidyverse)
+#library(pwr)
+#library(readr)
+```
+
+
+## Exploration 1.6 Who Is Spending More Time Parenting on Average?
+
+In this exploration, we assume that you are familiar with the idea of _statistical power_ as discussed in Example 1.6.
+
+Suppose that you are planning a study to investigate whether female parents tend to spend more time (hours) parenting each week, as compared to male parents and will use a significance level of 5%. How many people should you plan to have in your study? Let’s investigate this question by conducting a _statistical power analysis_.
+
+> 1. Identify the explanatory variable and the response variable. Also, identify whether each is categorical or quantitative, as well as units of measurement for any quantitative variable(s).
+
+> 2. Explain why this would be an observational study rather than a randomized experiment.
+
+> 3. State the null and the alternative hypotheses for this study.
+
+> 4. Will the study use random sampling or random assignment, or both, to recruit the participants?
+
+> 5. What will be the Type I error rate in your proposed study? Explain, in context, what a Type I error would represent in your planned study?
+
+> 6. What size p-value will you need in order to find a statistically significant result?
+
+But, how large of a sample size do you need in each group (men and women) in order to get a convincing p-value?
+
+To investigate this question, let’s go to the [Comparing Two Populations applet](https://www.rossmanchance.com/applets/TwoPopulations.html?population=model).
+
+Note, this applet simulates random samples from different theoretical populations (rather than random shuffling). In this applet, we can explore how our study might play out if we were to run it.
+
+Let’s assume that (a) women parent 15 hours per week on average and that it is the same for men, (b) that the standard deviation of both male and female parenting distributions is 5 hours per week, and (c) that we decide to sample 10 male parents and 10 female parents for this study.
+
+_Enter this information into the applet as population 1 (females) and population 2 (males) and leave the population shape set on Normal. Check the **Show sampling options** box in order to set the sample size to 10 (10 in each group), and press Draw samples. The applet has selected 10 random men and 10 random women from these two populations._
+
+> 7. What mean did you get for the women? SD? What mean did you get for the men? SD? How different are the means?
+
+> 8. Which hypothesis are you assuming to be true in this simulation?
+
+> 9. Now, take 999 more samples. The graph all the way to the right shows the difference in the two sample means for each of the 1000 samples you took. At what value is this distribution centered? Why does that make sense? What is the standard deviation?
+
+> 10. How big of a difference in sample means do you need in order to have 5% of the data in the upper tail of the distribution? (Hint: You will have to try different numbers in the “Count Samples greater than” box until you find a percentage that is close to 5% but below 5%.)
+
+
+> 11. Based on your answer to #10, if you actually did this study (surveying 10 men and 10 women), and got a difference of 5 hours on average between the two sample means, what would your conclusion be? How would your answer change if the difference in sample means was only 3? Why?
+
+You should find a difference of roughly 3.7. The fact that a difference of 3.7 in the two sample means is what separates the top 5% of the data from the rest of the null distribution means that, at a significance level of 0.05, differences in sample means of more than 3.7 will be statistically significant (p-value $\le 0.05$), whereas differences of less than 3.7 between the two sample means will not be statistically significant (p-value > 0.05). In other words, the sample average number of hours/week women spend parenting would need to be at least 3.7 hours larger than the sample average for mean for us to be convinced to reject the null hypothesis. The region difference in group means greater or equal to 3.7 is called the _rejection region_.
+
+## Definition
+
+The _rejection region_ tells us how different the sample statistic (e.g., difference in group means) need to be in order for us to reject the null hypothesis at a specified level of significance.
+
+So, what does the rejection region tell us about how big our sample sizes need to be? In order to answer this question, we have to make an assumption about what the true difference in average hours of parent is. For example, what if, in reality, the average number of hours (per week) women spend parenting is, say, 8 hours more (a full “work day’s” worth) than that for men?
+
+> 12. Now, change the population mean for population 2 to be 7 hours (this is if men parented 8 hours less than women and women were at 15 hours per week). Take a single sample of size 10 men and 10 women. How different are the group means?
+
+> 13. Now, take 999 more samples of men and women. What is the mean of the difference in group means across the 1000 samples? What is the SD? How do these values compare to the one’s we obtained earlier when men and women were parenting the same amount on average? Why do these new values make sense?
+
+> 14. On this new distribution, how often did you get values greater than 3.7? Interpret this percentage.
+
+About 97% of the time, we get difference in means that are greater than 3.7. This means that if women, on average, parent 8 more hours per week than men and we repeatedly randomly sample 10 men and 10 women from the population, about 97% of the time we would get the sample mean for women that is 3.7 hours or higher than the sample mean for men. The value you’ve estimated is the statistical power.
+
+## Definition
+
+The _statistical power_ of a study is the _probability that the researchers find evidence against the null hypothesis and in favor of the alternative hypothesis when the alternative hypothesis is true_.
+
+To see that this is what we just did remember that we: (a) first found that we will reject the null hypothesis and find evidence for the alternative hypothesis if the difference in group means is more than 3.7; and then (b) found that differences larger than 3.7 will happen approximately 97% of the time if the average parenting time for women is 15 hours/week and only 7 hours/week for men.
+
+> 15. What is your estimate of the Type II error rate in this study? What would a Type II error mean in this context?
+
+## Factors That Impact Power
+
+As we saw in Example 1.6, typically we like to have the power of the study be approximately 80% to consider the study to be “well-powered” and not more than necessary. Thus, having 10 people in each group may be more than we need. There are numerous factors which effect the power of a study. We will explore them now to help us determine the sample size we should have in this study.
+
+## Sample Size
+
+What would happen if we sample 5 men and 5 women?
+
+> 16. Start by finding the rejection region. How large will the difference in sample means have to be to reject the null hypothesis if you sample 5 men and 5 women? (Remember to set both population means at 15 to find the rejection region first.)
+
+> 17. Estimate the power of the study to detect a difference of 8 hours per week. Provide an interpretation of power in this context.
+
+>18. What is the relationship between power and sample size? Why does this make intuitive sense?
+
+## Size of the Actual Difference/How Wrong the Null Hypothesis Is
+
+What if we decided that a difference of eight hours per week was large but were curious about smaller differences? 
+What if the difference was only 4 hours per week (1/2 a work day)? Start by sampling 10 men and 10 women again.
+
+> 19. What is the power if the actual difference in the population means is 4 hours per week?
+
+> 20. How does the power change as the difference in group means changes (or increases/deceases)?
+
+As we saw earlier in this chapter, the F-statistic is a standardized statistic with a known theoretical distribution. Instead of comparing the difference in means, let’s now use the F-statistic to estimate the power.
+
+> 21. Use the applet to find the rejection region for the F-statistic assuming that the mean hours of parenting is the same (15 hours per week) for both men and women, the SD is 5 in each group and you sample 10 men and 10 women. (Note: You will need to click on F-statistic above the distributions of sample means.)
+
+> 22. Use the rejection region to estimate the power of detecting a difference of 8 hours in the population means with the F-statistic.
+
+> 23. How does this power estimate compare to the one you found in #14 when using the difference in means? Why is it a bit different?
+
+## Significance Level
+
+What if we were more concerned about Type I errors and so wanted to set the Type I error rate to 1%? If we sampled 10 men and 10 women, the SD is 5 hours in each group, and we are back to using the difference in means as our statistic and a one-sided test. (Don’t forget to find the rejection region with a Type I error rate of 1% first.)
+
+> 24. What is the power to detect a difference of 8 hours per week (using the difference in means)?
+
+> 25. How does the power change when the Type I error rate decreases?
+
+## Population Standard Deviation
+
+To this point, we’ve been assuming that the standard deviation within each group is 5 hours. But what if it isn’t?
+
+> 26. Find the power of detecting a difference of 8 hours a week if we sample 10 men and 10 women, but the SD is 2.5 hours in each population. (Don’t forget to find the rejection region when SD is 2.5 hours in each population and mean hours of parenting is 15 for both males and females first.)
+
+
+```{r, eval=FALSE}
+library(pwr)
+d<-8/2.5 #Effect size (Cohen's d)
+pwrpt <- pwr.t.test(d=d,
+                    n=10,
+                    sig.level=0.05,
+                    type="paired",
+                    alternative="two.sided")
+# inspect
+pwrpt
+```
+
+> 27. How is power affected by changes in the population SDs?
+
+
+> 28. Consider this: Suppose that when recruiting the participants for the study, the researcher selected heterosexual couples with children, and surveyed both the male and female parents in the pair, comparing the observations within each pair to estimate the male/female difference. Do you think that this design will have an effect on the statistical power of the test? How and why?
+
+You should have recognized that study design outlined in #28 uses _matched pairs_. In the next chapter, we’ll be exploring how statistical power is affected by whether the study is a matched pairs study or not and other things you can do to design your study to impact the power of the study.
+
+**Summary**
+
+In this section, you examined the factors that impact the power of a study, the probability that the study will find a statistically significant p-value when conducted in a situation where the null hypothesis (no association) is false. These factors included:
+
+* the level of significance,
+* the sample size,
+* the number of groups, and
+* the strength of the actual association.
+
+You should be able to describe how increasing each of these individually lowers or raises the power of a study. The primary use of a power calculation is in designing a study, to determine the sample size that is necessary to have a high enough probability of detecting the type of association that you are interested in.
+
+## How to do what we did in the applet with R?
+
+```{r, eval=FALSE}
+library(pwr)
+pwrpt <- pwr.t.test(d=0.2,
+                    n=30,
+                    sig.level=0.05,
+                    type="paired",
+                    alternative="two.sided")
+# inspect
+pwrpt
+```
+
