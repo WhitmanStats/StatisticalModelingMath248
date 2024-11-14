@@ -1,0 +1,48 @@
+ ---
+title: "Math 248: worksheet Ch 1"
+header-includes:
+  - \usepackage{float}
+  - \floatplacement{figure}{H}
+output:
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo=TRUE,message=FALSE,warning=FALSE, fig.align = 'center', out.width="100%" )
+library(ISIwithR)
+library(mosaic)
+#library(readr)
+```
+
+
+**Part 1: Single-Mean Model**
+
+1.  **Scenario:** A study aims to estimate the average time students at a particular university spend studying per week. We collect data from a random sample of students.
+
+    *   **What is the response variable?** Time spent studying per week (quantitative).
+    *   **What is the explanatory variable?** There is no explanatory variable in a single-mean model.
+    *   **How many groups are there?** One group (the sample of students).
+    *   **Statistical Model:** We are simply estimating the average weekly study time for the entire student population at that university.
+
+2.  **Statistical Analysis:** The primary analysis would involve calculating the mean, standard deviation, and a confidence interval for the sample mean study time.  Descriptive statistics (histograms, boxplots) would also be useful to understand the distribution of the data.
+
+3.  **Example from Text:** This could be analogous to the single-mean model used in the scent study (Section 1.1) or the dung beetle study (Section 1.2) before considering the treatment (scent or cap type, respectively).  It's a model that predicts the study time using only the overall mean.
+
+**Part 3: Paired Data Model**
+
+1.  **Scenario:**  A study investigates whether a new study skills workshop impacts the amount of time students spend studying per week. We measure the weekly study time for a group of students *before* and *after* they participate in the workshop.  The same students are measured twice.
+
+    *   **What is the response variable?** Time spent studying per week (quantitative).  This variable is measured twice per student.
+    *   **What is the explanatory variable?** Time (before vs. after the workshop). The explanatory variable is within each subject.
+    *   **How many groups are there?** One group (the same students) measured at two time points.
+    *   **Statistical Model:** We are interested in the *difference* in study time before and after the workshop.
+
+2.  **Statistical Analysis:**  The appropriate analysis is a paired t-test (assuming the differences in study times are approximately normally distributed) or a non-parametric alternative like the Wilcoxon signed-rank test (if the normality assumption is violated). A confidence interval can also be computed for the mean difference in study times.  We are interested in whether the mean difference is statistically significantly different from zero.
+
+3.  **Assumptions:** Before conducting a paired t-test, we should assess:
+    *   **Normality:** The differences in study times (after - before) should be approximately normally distributed.
+    *   **Independence:** The observations (differences in study times) for different students should be independent.
+
+4.  **Example from Text:** This type of analysis is similar to the matched-pairs analysis used in the scent study (Section 1.1 and 1.3) where each participant was exposed to both the scent and no-scent conditions. The paired t-test focuses on the differences in response for each participant.
+
+
