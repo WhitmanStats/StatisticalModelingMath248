@@ -28,6 +28,52 @@ library(mosaic)
 
 3.  **Example from Text:** This could be analogous to the single-mean model used in the scent study (Section 1.1) or the dung beetle study (Section 1.2) before considering the treatment (scent or cap type, respectively).  It's a model that predicts the study time using only the overall mean.
 
+Part 2: Two-Means Model (Independent Samples) - Revised Scenario
+
+Scenario: A study investigates whether there is a difference in the average time spent studying per week between students who live on campus and students who live off campus.  We collect random samples from both groups.
+
+What is the response variable? Time spent studying per week (quantitative).
+What is the explanatory variable? Living arrangement (on-campus/off-campus) - categorical, two groups.
+How many groups are there? Two groups (on-campus and off-campus).
+Statistical Model: We estimate the mean study time for on-campus and off-campus students separately and then test for statistical significance of the difference.
+Statistical Analysis:  We could use a two-sample t-test (assuming equal variances) or a non-parametric alternative like the Mann-Whitney U test (if assumptions of normality or homogeneity of variance are not met). A confidence interval can be calculated for the difference in mean study times.
+
+Assumptions:  Before conducting a t-test, we need to check the assumptions:
+
+Independence: The observations within each group should be independent.
+Normality: The distribution of study times within each group should be approximately normal (or the sample sizes should be large enough for the Central Limit Theorem to apply).
+Homogeneity of Variance: The variances of study times in both groups should be roughly equal. (A formal test like Levene's test can be performed to check this.)
+Interpreting Results:
+
+If the p-value of the t-test is below a chosen significance level (e.g., 0.05), we reject the null hypothesis that there is no difference in mean study times between the two groups. We conclude there is statistically significant evidence of a difference.
+The confidence interval for the difference in means provides an estimate of the magnitude of the difference. If the interval does not include zero, then it supports the conclusion that the difference is statistically significant.
+R Code (Illustrative - requires your data):
+
+This code provides a framework.  You need to replace "your_data.csv" with the actual path to your data file and ensure the column names match your data.
+
+```{r}
+Copy
+#Import your data
+study_data <- read.csv("your_data.csv")
+
+# Ensure 'LivingArrangement' is a factor
+study_data$LivingArrangement <- as.factor(study_data$LivingArrangement)
+
+# Check assumptions (normality and homogeneity of variance) - Add more detailed checks as needed.
+#Normality check using shapiro wilk test
+shapiro.test(study_data$StudyTime[study_data$LivingArrangement == "On-Campus"])
+shapiro.test(study_data$StudyTime[study_data$LivingArrangement == "Off-Campus"])
+
+#Homogeneity of variances check using levene's test
+leveneTest(StudyTime ~ LivingArrangement, data = study_data)
+
+#Two Sample T-Test (Assuming equal variances) - Use non-parametric alternative (wilcox.test) if assumptions are violated
+t.test(StudyTime ~ LivingArrangement, data = study_data, var.equal = TRUE)
+
+#Alternatively Non Parametric test 
+wilcox.test(StudyTime ~ LivingArrangement, data = study_data)
+```
+
 **Part 3: Paired Data Model**
 
 1.  **Scenario:**  A study investigates whether a new study skills workshop impacts the amount of time students spend studying per week. We measure the weekly study time for a group of students *before* and *after* they participate in the workshop.  The same students are measured twice.
