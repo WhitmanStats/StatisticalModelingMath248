@@ -1,0 +1,264 @@
+---
+title: "Math 248: Exploration 6.2 - Alcohol Abuse in Ukraine"
+author: "Your Name Here"
+date: "11/14/2024"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE, fig.align = 'center', out.width = "80%")
+library(tidyverse)
+library(broom)  # For tidy model output
+library(epitools) # For odds ratio calculations
+```
+
+## Exploration 6.2 Alcohol Abuse in Ukraine
+
+The country of Ukraine, a former Soviet republic, gained its independence in 1991, but has a long history of conflict and strife, both within the country and with countries near its borders. This history has occurred, in large part, due to its location situated between Europe and Asia. Anecdotally, alcohol consumption in Ukraine is very high, and we anticipate that rates of alcohol abuse may also be very high. Furthermore, in 1986, the Chernobyl nuclear power plant exploded, releasing a radioactive cloud into the atmosphere which slowly drifted across the country. In a recent study, researchers investigated rates of alcohol abuse among men and women in Ukraine, investigating questions about whether rates differ depending on variables such as sex and age, and after adjusting for such potential confounding variables, how the rates may be related to exposure to different conflicts and traumas, in particular living near the Chernobyl nuclear power plant at the time of the accident (Bolt et al., 2018, "The Associations between Self-reported Exposure to the Chernobyl Nuclear Disaster Zone and Mental Health Disorders in Ukraine," Frontiers in Psychiatry). Data collection took place from February-December 2002 across all 24 of Ukraine's “states” and the republic of Crimea, using the World Mental Health-Composite International Diagnostic Interview (CIDI). The survey questions included enough information to make diagnoses of mental health disorders, including alcohol abuse, and demographic data such as sex and age. Respondents also answered the question, "Have you ever lived in the zone contaminated as a result of the Chernobyl accident?"
+
+**STEP 1: Ask a research question.**
+
+>1. What appears to be the primary response variable in this study? Is the response variable quantitative or categorical?
+
+>2. Identify three explanatory variables of primary interest. Classify each as quantitative or categorical.
+
+>3. Complete the Sources of Variation diagram below, including conjecturing at least one additional source of (unexplained) variation. Was this an observational study or an experiment?
+
+|                        |                                |                                  |
+|------------------------|--------------------------------|----------------------------------|
+| Observed Variation in: | Sources of explained variation | Sources of unexplained variation |
+| Design                 |                                |                                  |
+| Inclusion criterion    |                                |                                  |
+
+**STEP 2: Design a study and collect data.**
+
+The researchers used a representative sample of n = 4,725 individuals from Ukraine aged 18+ to investigate these questions.
+
+> 4. Identify the Inclusion Criterion in this study and add it to your Sources of Variation diagram. (Add to the table above)
+
+> 5. How old was the youngest person in the survey at the time of the Chernobyl disaster?
+
+> 6. Give one or two reasons why someone who was alive during the Chernobyl disaster would not be in this dataset.
+
+**STEP 3: Explore the data.**
+
+Read `chernobyl_data` into R. How many observations do we have?
+
+```{r}
+# Data import 
+chernobyl_data <- read.table("http://www.isi-stats.com/isi2/data/CherData.txt",
+                             sep="\t", header=T, stringsAsFactors = T)
+head(chernobyl_data,3)
+## How many observations do we have?
+nrow(chernobyl_data)
+
+plot(chernobyl_data$alc.post)
+```
+
+
+The `alc.post` variable indicates whether or not someone was diagnosed with alcohol abuse after 1986 (“yes”), before 1986 (“before”), or has never been diagnosed with alcohol abuse in their lifetime (“no”). The “before” respondents don’t really help us investigate possible impacts of the Chernobyl disaster, so we are going to remove them from the dataset.
+
+
+> 7. Create a new dataset that only includes individuals who have values of “yes” or “no” for the `alc.post` variable, ignoring the “before” values (people who first had alcohol abuse before 1986). How many observations do we have now?
+
+```{r}
+# Data Cleaning: Remove "Before" Alcohol Abuse cases (as mentioned in the text)
+chernobyl_data2 <- chernobyl_data %>%
+  filter(alc.post != "before") %>% 
+  droplevels()
+
+
+#Data Cleaning to convert alcohol abuse status to factor variable.
+chernobyl_data2$alc.post<-as.factor(chernobyl_data2$alc.post)
+
+
+## How many observations do we have now?
+nrow(chernobyl_data2)
+```
+
+> 8. Carry out a descriptive analysis (graphs, numerical summaries) exploring the association between `alc.post` and `sex` (you should include and report an odds ratio). What theory-based test could we use to test the statistical significance of this association? Do you think the p-value will be large or small? Explain.
+
+
+```{r}
+# Descriptive analysis and odds ratio for sex
+#plot(chernobyl_data$alc.post)
+sex_table<-table(chernobyl_data2$alc.post, chernobyl_data2$sex)
+#knitr::kable(sex_table)
+
+# Odds ratio calculation using epitools package
+oddsratio(sex_table)
+```
+
+> 9. Carry out a descriptive analysis (graphs, numerical summaries) exploring the association between `alc.post` and `age`. What theory-based test could we use to test the statistical significance of this association? Do you think the p-value will be large or small? Explain.
+
+```{r}
+library(tidyverse)
+ggplot(data=chernobyl_data,
+       mapping=aes(x=alc.post, y=age))+
+  geom_boxplot()+
+  stat_summary(fun = "mean",
+               geom = "point",
+               shape = 8,
+               size = 2,
+               color = "blue")+ 
+  scale_y_continuous(limits = c(10, 100)) 
+# modify the limits to reflect the range of the response variable in your data
+```
+
+> 10. Use R to carry out the tests suggested in questions #8 and #9. (Include a confidence interval for the population odds ratio for sex.) Does either explanatory variable explain significant variation in whether or not a Ukrainian has been diagnosed with alcohol abuse? (Results from above)
+
+```{r}
+# Chi-squared test for sex
+chisq.test(sex_table)
+# Odds ratio calculation using epitools package
+oddsratio(sex_table)
+```
+
+
+```{r}
+#t-test for age
+t.test(age ~ alc.post, data = chernobyl_data2)
+```
+
+
+
+> 11. Suggest one or two limitations to these analyses.
+
+One limitation to the above analyses is that they consider each variable in isolation. Because this is an observational study, there could be covariation between Sex and Age. Even if there wasn’t, the association between alcohol abuse and age could look different for males and females. We would like to develop a model that allows us to predict alcohol abuse based on both variables. First, we consider modeling a trend for the proportion that are diagnosed with alcohol abuse at different ages.
+
+Use R to compute the proportion that abuse alcohol for each age value. Then produce a graph of the “yes” percentages vs. the age values.
+
+
+```{r}
+#create a 0/1 variable for alc.post
+chernobyl_data$alc.post2 = as.numeric(chernobyl_data$alc.post)-1  #0 = no
+#find the mean of this variable at each age
+sorted = chernobyl_data[order(chernobyl_data$age),]
+props = tapply(sorted$alc.post2, as.factor(sorted$age), mean)
+plot(props~ unique(sorted$age), xlab="age", ylab="proportion yes")
+```
+
+> 12. Describe the association. Would you consider it linear? Are there any difficulties with using a line to model the relationship between the proportion of alcohol abusers and age? (Hint: beyond age 70.) Explain. 
+
+**Key Idea**
+
+When working with proportions, you may be able to fit a linear model, but often a linear model is not appropriate. The expected S-shaped curve (as probabilities must be bounded by 0 and 1) implies a power transformation (e.g., x2, log(x)) and is not likely to be helpful either. Instead, we can try a _logit transformation_: $ln(\pi/(1 − \pi))$, where we use  to represent the population proportion of successes. This is equivalent to using log odds as the response variable.
+
+Many statistical packages will perform this transformation for you when you specify a binary variable as your response variable. A method similar to “least squares estimation” (actually termed “maximum likelihood estimation”) then estimates the appropriate intercept and slope coefficients for this logistic regression model.
+
+### Definition
+
+**Logistic regression** models use quantitative or categorical explanatory variables to predict the probability of success for a binary response variable by fitting the _expected log odds of success_ as $\beta_{0} + \beta_{1}x$.
+
+Suppose we run a logistic regression model predicting alcohol abuse status by age and find _predicted log odds of alcohol abuse = −0.223 − 0.057 × age_. Notice that this corresponds to _predicted odds of alcohol abuse_ = $e^{−0.223 − 0.057 age} = (0.80)(0.94^{age})$.
+
+
+> 13. Using this equation, what are the predicted odds of alcohol abuse when age = 0? How could we change the age variable so that the intercept is more meaningful in our model?
+
+
+
+
+> 14. What are the predicted odds of alcohol abuse for someone age 50? Use the predicted odds to find the probability that someone age 50 has ever been diagnosed with alcohol abuse.
+
+> 15. To help interpret the slope in the equation (-0.057), set up and simplify the ratio of (0.80)(0.94age+1) to (0.80)(0.94age). How do the predicted odds change when age increases by one year? 
+
+
+
+**Key Idea**
+
+The _slope of a logistic regression model_ indicates the multiplicative change (× $e^{slope}$) with a one-unit increase in the explanatory variable.
+
+**What About the Categorical Explanatory Variable?**
+
+Suppose we code the Sex variable as 1 for males and 0 for females, and we run a logistic regression model to predict the log-odds of alcohol abuse from only this indicator variable. We find _predicted log odds of alcohol abuse = −3.83 + 2.175 × sex*(male)_
+
+> 16. If our respondents range from 18 to over 75 years of age, a one-year change in age is not that meaningful. How much would the odds ratio change if we compared people that were 10 years apart?
+
+```{r}
+
+```
+
+
+> 17. What is the predicted probability of alcohol abuse for males?
+
+```{r}
+
+```
+
+
+> 18. What is the predicted odds ratio of alcohol abuse for males compared to females? Which sex is more likely to abuse alcohol?
+
+```{r}
+
+```
+
+
+> 19. Verify that the estimate of the odds ratio matches the calculation of the sample odds ratio from the two-way table earlier.
+
+**STEP 4: Draw inferences beyond the data.**
+
+A key advantage to the logistic model is automatic generation of p-values and confidence intervals.
+
+> 20. Use R to fit logistic regression models using `alc.post as a response variable and `age` and `sex variables as two separated explanatory variables (predictors)
+
+``` {r}
+# Logistic regression model (age is continuous):
+logit_model_age <- glm(alc.post ~ age, data = chernobyl_data, family = binomial)
+tidy(logit_model_age)
+```
+
+
+```{r}
+# Logistic regression model (sex as a factor)
+logit_model_sex<-glm(alc.post~sex, data=chernobyl_data, family=binomial)
+tidy(logit_model_sex)
+```
+
+
+One interesting observation is these are no longer t-tests but actually chi-square tests. (You can verify the chi-square values, apart from rounding, by finding $z = Coeff/SE$ and then squaring.) However, that detail isn’t important and you will evaluate the p-values as with any other regression table.
+
+> 21. Does a person's age explain a significant amount of variation in whether or not a Ukrainian is diagnosed with alcohol abuse? Does a person's sex?
+
+> 22. Which variable provides stronger evidence of an association with whether or not someone abuses alcohol?
+
+> 23. Use the logistic regression model to produce a 95% confidence interval for the slope coefficient of sex.
+
+```{r}
+
+```
+
+
+**Key Idea**
+
+Given the confidence interval for the slope coefficient, exponentiating the endpoints gives you a confidence interval for the population odds ratio.
+
+> 24. Use the logistic regression model to produce and interpret a 95% confidence interval for the population odds ratio for sex.
+
+```{r}
+
+```
+
+
+> 25. Compare your analysis of the association between sex and alcohol abuse to a chi-square test and confidence interval for the odds ratio using the methods from Section 6.1 (you probably did this early in the exploration, but make sure you match up the reference group). Include the new output and summarize what you learn.
+
+
+```{r}
+
+```
+
+
+Now we can just as easily determine a confidence interval for the odds multiplier associated with age, keeping alcohol abuse as the response variable.
+
+> 26. Use the logistic regression model to find a confidence interval for the slope of age. Produce and interpret a 95% confidence interval for the odds ratio for age.
+
+```{r}
+
+```
+
+**STEP 5: Formulate conclusions.**
+
+> 27. Summarize what you have learned from your analysis.
+
+**STEP 6: Look back and ahead.**
+
+> 28. Identify at least one concern you have with this analysis.
