@@ -1,0 +1,72 @@
+---
+title: "Math 248: Exploration 2.1"
+author: "Your name here "
+header-includes:
+  - \usepackage{float}
+  - \floatplacement{figure}{H}
+output:
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo=TRUE,message=FALSE,warning=FALSE, fig.align = 'center', out.width="80%" )
+library(tidyverse)
+#library(pwr)
+#library(readr)
+```
+
+## Exploration 2.1 Chip Melting Times
+
+Industrial-scale baking requires a precise understanding of how recipe ingredients behave when baked. For example, bakers want to know and understand how different types of baking chips respond to different oven temperatures. In this study you will compare the melting times of chocolate chips and butterscotch chips. You are going to be the participants, and the response variable will be the amount of time, from placing a chip on your tongue and holding it steadily to the roof of your mouth, until the chip is completely melted. Of course, there are more precise ways of measuring melting times, but this approach is tastier!
+
+> 1.  Outline a study protocol for investigating this question. Specifically, how will you design your study? How will you use random assignment? What about inclusion criteria?
+
+> 2.  Brainstorm a Sources of Variation diagram, including discussion of any “controls” you will use in the study to minimize unexplained variation
+
+ | Observed variation in | Sources of explained variation | Sources of explained variation |
+ |-----------------------|--------------------------------|--------------------------------|
+ | Inclusion criteria    |                                |                                |
+ |                       |                                |                                |
+ | Design                |                                |                                |
+
+> 3. Reviewing your sources of unexplained variation, do they have anything in common? Based on this commonality, can you suggest a way to improve the design of your study to try to address these sources?
+
+## Definition
+
+A _matched pairs design_ pairs experimental units that are similar to each other and randomly assigns each member within a pair to one of the two treatment groups. A special type of matched pairs design is _repeated measures_ where the same individual receives both treatments in a randomly assigned order.
+
+> 4. Is a repeated measures type of matched pairs design feasible in this study? Describe how it would work and its main benefits.
+
+
+
+## Key Idea
+
+By having the same experimental unit (e.g., person) complete both treatments, the variability from experimental unit to experimental unit (e.g., person to person) is held constant and is no longer “unexplained variation.”
+
+
+> 5. Does random assignment still play an important role in a matched pairs design? Explain why it matters and what could happen if you didn’t use random assignment.
+
+> 6. Would a two-sample t-test (or a separate means model) as in Chapter 1 be an appropriate analysis to compare the two melting time means for our matched pairs study design? Explain.
+
+## Key Idea
+
+In a paired design, it is not reasonable to consider the multiple observations on the same individual as independent, so we cannot carry out a procedure (e.g., a two-sample t-test) that assumes we have two independent samples.
+
+## Key Idea
+
+To analyze a paired design you can either use a one-sample t-test (and confidence interval) on the differences or a simulation that maintains the paired nature of the study design (e.g., randomizing the order of the two treatments on the same individual). The validity condition of the one-sample t-test is that the distribution of the differences is reasonably symmetric or the sample size is large with no severe skewness or outliers (e.g., larger than 30).
+
+To work through a simulation-based analysis that simulates random assignment of the treatment within each pair or to conduct a one-sample t-test on the differences (i.e., the paired t-test that you may have seen in your first course), refer to the Homework Exercises. The paired t-test approach only works with two treatments and so we will show you a more general method here. (Data from one of the authors’ classes can be found in [MeltingTimes](https://www.isi-stats.com/isi2/data/MeltingTimes.txt))
+
+>7. Use R to find each of the following:
+
+Overall mean melting time:
+
+SSTotal:
+
+Mean melting time of chocolate: Mean melting time of butterscotch:
+
+Effect of chocolate: Effect of butterscotch:
+
+
+
