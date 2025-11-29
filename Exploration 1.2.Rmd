@@ -1,0 +1,156 @@
+---
+title: "Exploration 1.2"
+output: html_document
+date: "2025-09-30"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
+library(mosaic)
+library(dplyr)
+library(tidyverse)
+```
+
+```{r}
+# Create dataset directly
+beetles <- tribble(
+  ~time,   ~treatment,
+  34.2,    "clearcap",
+  38.46,   "clearcap",
+  58.13,   "clearcap",
+  43.77,   "clearcap",
+  16.17,   "clearcap",
+  70.7,    "clearcap",
+  37.23,   "clearcap",
+  49.5,    "clearcap",
+  36.86,   "clearcap",
+  152.21,  "blackcap",
+  123.61,  "blackcap",
+  123.56,  "blackcap",
+  114.29,  "blackcap",
+  156.99,  "blackcap",
+  84.18,   "blackcap",
+  112.78,  "blackcap",
+  131.54,  "blackcap",
+  139.77,  "blackcap"
+)
+CHERdata <- read.table("http://www.isi-stats.com/isi2/data/CherData.txt", sep="\t", header=T, stringsAsFactors = T)
+#Calculate Residuals for Single Means Model:
+beetles <- beetles%>%
+  mutate(residuals = time - mean(time))
+
+#Calculate Residuals for Two Means Model:
+beetles <- beetles%>%
+  group_by(treatment)%>%
+  mutate(trt_residuals = time - mean(time))%>%
+  ungroup()
+
+```
+
+# Starry Navigation
+
+The movements of dung beetles have fascinated observers for thousands of years. Some spe-cies of dung beetles, known as “rollers,” find a pile of dung which they form into a ball, and then immediately roll away from the source in order to prevent other beetles from stealing it. The goal is for the beetles to move the ball away as fast as possible. The nocturnal African dung beetle (Scarabaeus satyrus) is known to use celestial objects (e.g., sun, moon) to help it move along straighter (quicker) paths so its dung does not get stolen. But, what if it’s the middle of the night and the moon isn’t out (new moon); can the beetles navigate their way using just the stars? Dacke, Baird, Byrne, Scholtz, and Warrant (“Dung Beetles Use the Milky Way for Orientation,” Current Biology, 23, 2013) report on several experiments they conducted to document whether these dung beetles use stars to navigate. In one of their studies, beetles were placed on top of a dung ball at the center of a circular wooden platform (10 cm in diameter) and the researchers timed how long it took each beetle to reach the edge of the platform (another way of determining how straight a path was taken). Some of the beetles were given a small, black cardboard “cap” which obscured their view of the sky (up) but not of the edge of the platform (out), while others were given a transparent (clear) cap. (Why?) On a moonless, starry night beetles wearing the clear cap took an average of 40.1 seconds to reach the edge, compared to an average time of 124.5 seconds for beetles wearing the black cardboard cap.
+
+> 1.  Identify the researchers' conjecture (hypothesis or research question).
+
+> 2.  Explain how this is an experiment rather than an observational study. Identify the response variable and the explanatory variable. What are the treatments
+
+> 3.  Identify at least one component of the study protocol that was important in ensuring consistent and accurate measurements across the beetles
+
+> 4.  Based on the averages provided (124.5 seconds with black cap and 40.1 seconds with clear cap), are you convinced that obscuring the beetles’ vision of the night sky causes them to have more trouble moving in a direct line away from the starting position? If not, what other information about the data would you like to know?
+
+# Single Means Model:
+
+As we saw in the previous section, before taking the type of cap (black or clear) into account, we can predict the dung ball rolling time using the overall mean (the single-mean model).
+
+```{r}
+#Plot distribution, and residuals
+ggplot(beetles, aes(time))+
+  geom_histogram(fill="navy",color="black")+
+  theme_classic()+
+  labs(x="Dung Ball Rolling Time",
+       y="Frequency", 
+       title="Dung Ball Rolling Time Distribution (Single Means Model) ")
+```
+
+```{r}
+#Plot Residuals: 
+ggplot(beetles, aes(residuals))+
+  geom_histogram(fill="turquoise",color="black")+
+  theme_classic()+
+  labs(x="Dung Ball Rolling Time Residuals",
+       y="Frequency", 
+       title="Dung Ball Rolling Time Residual Distribution (Single Means Model) ")+
+  geom_vline(xintercept = 0, linetype="dotted",color="red")
+
+```
+
+> 5.  Record the overall mean and standard deviation for the times. Use these values to write out a “single-mean” statistical model for predicting the time to reach the edge.
+
+```{r}
+#HINT: USE FAVSTATS
+```
+
+## Standard Deviation and Sum of Squares Total (SSTotal):
+
+The standard deviation is found by the following calculation: 
+
+$$SD\ of \ times = \sqrt{\frac{Sum\ of \ all \ squared \ residuals}{n-1}} = \sqrt{\frac{\sum_{i=1}^n(observed\ value- 84.66)^2}{n-1}}$$
+
+The numerator is called the *Sum of Squares Total* or the *SSTotal*.
+
+$$SSTotal\ = Sum\ of \ all\ squared\ residuals\ = \sum_{all\  obs} (observed\ value - \ overall\ mean )^2 $$ 
+
+We will use the SSTotal as one representation of the total variation in the residuals from the single-mean model or just the total variation in the response variable. Note that we divide this sum by 17 rather than 18 because we are using the sample mean in the same calculation, so once we know 17 of the values, we know what the 18th must be. Therefore, we say this calculation has 17 degrees of freedom.
+
+The *degrees of freedom* for a sum of squares calculations represents how many “independent” values are being used in the computation of the sums of squares.
+
+
+>6. Report the SSTotal for the single means model. 
+
+```{r}
+# HINT: take standard deviation^2 / n-1 (17) and use R as a calculator
+```
+
+
+
+
+# Separate Means Model:
+
+
+```{r}
+#Looking at Distribution of Response
+
+ggplot(beetles, aes(x=time, fill=treatment))+      # fill=trt colors bars by treatment group
+  geom_histogram(color="black")+
+  facet_wrap(~treatment,ncol=1)+                        # facet_wrap() makes one histogram per treatment group (stacked vertically here)
+  theme_classic()+
+  labs(
+    title = "Distribution of Dung Ball Rolling Times (Seperate-Means Model)",
+    x = "Dung Ball Rolling Time",
+    y = "Frequency")
+```
+>7. Report the means of the treatment groups. Does the type of cap appear to explain variation in the times? 
+
+
+```{r}
+#HINT: use favstats but remember to subset by treatment (~time|treatment)
+```
+
+
+>8. Write out the statistical model using the group means to predict the times. How does the standard error of the residuals for the “cap model” compare to the single-mean model? 
+
+
+The standard error of the residuals for this model, taking into account the type of cap, is calculated by comparing each observation to its group mean, that is, the residual from using the group mean to predict an observation in that group:
+
+$$SE\ of \ residuals = \sqrt{\frac{\sum_{clearcap}(observed - 42.78)^2+\sum_{blackcap}(observed-126.55)^2}{16}}$$
+
+
+The numerator of this calculation is called the Sum of Squared Errors, or SSError. The SSError represents totaling the squared predictions errors (residuals) for a particular statistical model
+
+
+
+
+
+
