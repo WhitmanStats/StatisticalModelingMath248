@@ -1,96 +1,69 @@
+
 ---
-title: "Exploration 1.2"
-output: html_document
-date: "2025-09-30"
+title: "Math 248: Exploration 1.6"
+author: "Your name here "
+header-includes:
+  - \usepackage{float}
+  - \floatplacement{figure}{H}
+output:
+  pdf_document: default
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-library(ggplot2)
-library(mosaic)
-library(dplyr)
+knitr::opts_chunk$set(echo=TRUE,message=FALSE,warning=FALSE, fig.align = 'center', out.width="80%" )
 library(tidyverse)
+library(ggplot2)
+library(dplyr)
+library(mosaic)
+library(ImSIwithR)
 ```
 
+
 ```{r}
-# Create dataset directly
-beetles <- tribble(
-  ~time,   ~treatment,
-  34.2,    "clearcap",
-  38.46,   "clearcap",
-  58.13,   "clearcap",
-  43.77,   "clearcap",
-  16.17,   "clearcap",
-  70.7,    "clearcap",
-  37.23,   "clearcap",
-  49.5,    "clearcap",
-  36.86,   "clearcap",
-  152.21,  "blackcap",
-  123.61,  "blackcap",
-  123.56,  "blackcap",
-  114.29,  "blackcap",
-  156.99,  "blackcap",
-  84.18,   "blackcap",
-  112.78,  "blackcap",
-  131.54,  "blackcap",
-  139.77,  "blackcap"
-)
-CHERdata <- read.table("http://www.isi-stats.com/isi2/data/CherData.txt", sep="\t", header=T, stringsAsFactors = T)
-#Calculate Residuals for Single Means Model:
-beetles <- beetles%>%
+#Load Dataset
+data(DungBeetles)
+
+#Calculate Residuals for single mean Model:
+DungBeetles <- DungBeetles%>%
   mutate(residuals = time - mean(time))
 
 #Calculate Residuals for Two Means Model:
-beetles <- beetles%>%
+DungBeetles <- DungBeetles%>%
   group_by(treatment)%>%
   mutate(trt_residuals = time - mean(time))%>%
   ungroup()
-
 ```
 
-# Starry Navigation
 
-The movements of dung beetles have fascinated observers for thousands of years. Some spe-cies of dung beetles, known as “rollers,” find a pile of dung which they form into a ball, and then immediately roll away from the source in order to prevent other beetles from stealing it. The goal is for the beetles to move the ball away as fast as possible. The nocturnal African dung beetle (Scarabaeus satyrus) is known to use celestial objects (e.g., sun, moon) to help it move along straighter (quicker) paths so its dung does not get stolen. But, what if it’s the middle of the night and the moon isn’t out (new moon); can the beetles navigate their way using just the stars? Dacke, Baird, Byrne, Scholtz, and Warrant (“Dung Beetles Use the Milky Way for Orientation,” Current Biology, 23, 2013) report on several experiments they conducted to document whether these dung beetles use stars to navigate. In one of their studies, beetles were placed on top of a dung ball at the center of a circular wooden platform (10 cm in diameter) and the researchers timed how long it took each beetle to reach the edge of the platform (another way of determining how straight a path was taken). Some of the beetles were given a small, black cardboard “cap” which obscured their view of the sky (up) but not of the edge of the platform (out), while others were given a transparent (clear) cap. (Why?) On a moonless, starry night beetles wearing the clear cap took an average of 40.1 seconds to reach the edge, compared to an average time of 124.5 seconds for beetles wearing the black cardboard cap.
 
-> 1.  Identify the researchers' conjecture (hypothesis or research question).
 
-> 2.  Explain how this is an experiment rather than an observational study. Identify the response variable and the explanatory variable. What are the treatments
+## Exploration 1.2: Starry Navegation
+Some species of dung beetles, known as “rollers,” find a pile of dung which they form into a ball, and then immediately roll away from the source in order to prevent other beetles from stealing it. The goal is for the beetles to move the ball away as fast as possible. The nocturnal African dung beetle (Scarabaeus satyrus) is known to use celestial objects (e.g., sun, moon) to help it move along straighter (quicker) paths so its dung does not get stolen. But, what if it’s the middle of the night and the moon isn’t out (new moon); can the beetles navigate their way using just the stars? Dacke, Baird, Byrne, Scholtz, and Warrant (“Dung Beetles Use the Milky Way for Orientation,” Current Biology, 23, 2013) report on several experiments they conducted to document whether these dung beetles use stars to navigate.
 
-> 3.  Identify at least one component of the study protocol that was important in ensuring consistent and accurate measurements across the beetles
 
-> 4.  Based on the averages provided (124.5 seconds with black cap and 40.1 seconds with clear cap), are you convinced that obscuring the beetles’ vision of the night sky causes them to have more trouble moving in a direct line away from the starting position? If not, what other information about the data would you like to know?
+In one of their studies, beetles were placed on top of a dung ball at the center of a circular wooden platform (10 cm in diameter) and the researchers timed how long it took each beetle to reach the edge of the platform (another way of determining how straight a path was taken). Some of the beetles were given a small, black cardboard “cap” which obscured their view of the sky (up) but not of the edge of the platform (out), while others were given a transparent (clear) cap. (Why?) On a moonless, starry night beetles wearing the clear cap took an average of 40.1 seconds to reach the edge, compared to an average time of 124.5 seconds for beetles wearing the black cardboard cap
 
-# Single Means Model:
+>1. Explain why this is an experiment and not an observational study. Identify explanatory variable, response variable, and treatments. 
 
-As we saw in the previous section, before taking the type of cap (black or clear) into account, we can predict the dung ball rolling time using the overall mean (the single-mean model).
 
 ```{r}
-#Plot distribution, and residuals
-ggplot(beetles, aes(time))+
-  geom_histogram(fill="navy",color="black")+
-  theme_classic()+
-  labs(x="Dung Ball Rolling Time",
-       y="Frequency", 
-       title="Dung Ball Rolling Time Distribution (Single Means Model) ")
+favstats(time ~ treatment, data= DungBeetles)[c("treatment","mean")]
 ```
 
-```{r}
-#Plot Residuals: 
-ggplot(beetles, aes(residuals))+
-  geom_histogram(fill="turquoise",color="black")+
-  theme_classic()+
-  labs(x="Dung Ball Rolling Time Residuals",
-       y="Frequency", 
-       title="Dung Ball Rolling Time Residual Distribution (Single Means Model) ")+
-  geom_vline(xintercept = 0, linetype="dotted",color="red")
+>2. Based on the averages provided, are you convinced that obscuring the Beetles' vision of the night sky causes them to have more trouble moving in a direct line away from the starting position? If not, what other information about the data would you like to know?
 
+
+# The Single-Mean Model
+
+In the previous exploration we worked with two different models, the letter grouping model and the seperate-means model. The letter grouping model could also be called a Single-Mean Model, where we can predict the response given the overall mean of all groups. 
+
+
+>3. Record the overall mean and standard deviation for the times. Use these values to write a "single-mean" statistical model for predicting the time to reach the edge. 
+
+```{r, EVAL=FALSE}
+#Hint: USE favstats
 ```
 
-> 5.  Record the overall mean and standard deviation for the times. Use these values to write out a “single-mean” statistical model for predicting the time to reach the edge.
-
-```{r}
-#HINT: USE FAVSTATS
-```
 
 ## Standard Deviation and Sum of Squares Total (SSTotal):
 
@@ -107,22 +80,80 @@ We will use the SSTotal as one representation of the total variation in the resi
 The *degrees of freedom* for a sum of squares calculations represents how many “independent” values are being used in the computation of the sums of squares.
 
 
->6. Report the SSTotal for the single means model. 
+>4. Report the SSTotal for the single mean model. 
+
+```{r, eval=FALSE}
+# HINT: take standard deviation^2 / n-1 (17), using R as a calculator
+```
+
+
+## Visualizations (Single Mean Model)
+
+As we saw in the previous section, before taking the type of cap (black or clear) into account, we can predict the dung ball rolling time using the overall mean (the single-mean model).
 
 ```{r}
-# HINT: take standard deviation^2 / n-1 (17) and use R as a calculator
+#Plot distribution, and residuals
+ggplot(DungBeetles, aes(time))+
+  geom_histogram(fill="navy",color="black")+
+  theme_classic()+
+  labs(x="Dung Ball Rolling Time",
+       y="Frequency", 
+       title="Dung Ball Rolling Time Distribution (single mean Model) ")
+```
+
+```{r}
+#Plot Residuals: 
+ggplot(DungBeetles, aes(residuals))+
+  geom_histogram(fill="turquoise",color="black")+
+  theme_classic()+
+  labs(x="Dung Ball Rolling Time Residuals",
+       y="Frequency", 
+       title="Dung Ball Rolling Time Residual Distribution (single mean Model) ")+
+  geom_vline(xintercept = 0, linetype="dotted",color="red")
+
+```
+
+> 5.  Record the overall mean and standard deviation for the times. Use these values to write out a “single-mean” statistical model for predicting the time to reach the edge.
+
+```{r}
+#HINT: USE FAVSTATS
 ```
 
 
 
 
-# Separate Means Model:
 
+## Standard Deviation and Sum of Squares Total (SSTotal):
+
+The standard deviation is found by the following calculation: 
+
+$$SD\ of \ times = \sqrt{\frac{Sum\ of \ all \ squared \ residuals}{n-1}} = \sqrt{\frac{\sum_{i=1}^n(observed\ value- 84.66)^2}{n-1}}$$
+
+The numerator is called the *Sum of Squares Total* or the *SSTotal*.
+
+$$SSTotal\ = Sum\ of \ all\ squared\ residuals\ = \sum_{all\  obs} (observed\ value - \ overall\ mean )^2 $$ 
+
+We will use the SSTotal as one representation of the total variation in the residuals from the **single-mean model** or just the total variation in the response variable. Note that we divide this sum by 17 rather than 18 because we are using the sample mean in the same calculation, so once we know 17 of the values, we know what the 18th must be. Therefore, we say this calculation has 17 degrees of freedom.
+
+The *degrees of freedom* for a sum of squares calculations represents how many “independent” values are being used in the computation of the sums of squares.
+
+
+>6. Report the SSTotal for the single mean model. 
+
+```{r}
+# HINT: take standard deviation^2 * n-1 (17), using R as a calculator
+SSTotal <- sum(((DungBeetles$time)-84.66)^2)
+SSTotal
+```
+
+
+
+# Separate Means Model:
 
 ```{r}
 #Looking at Distribution of Response
 
-ggplot(beetles, aes(x=time, fill=treatment))+      # fill=trt colors bars by treatment group
+ggplot(DungBeetles, aes(x=time, fill=treatment))+      # fill=trt colors bars by treatment group
   geom_histogram(color="black")+
   facet_wrap(~treatment,ncol=1)+                        # facet_wrap() makes one histogram per treatment group (stacked vertically here)
   theme_classic()+
@@ -131,26 +162,143 @@ ggplot(beetles, aes(x=time, fill=treatment))+      # fill=trt colors bars by tre
     x = "Dung Ball Rolling Time",
     y = "Frequency")
 ```
->7. Report the means of the treatment groups. Does the type of cap appear to explain variation in the times? 
-
-
 ```{r}
-#HINT: use favstats but remember to subset by treatment (~time|treatment)
+#HINT: use favstats but remember to subset by treatment (time~treatment)
 ```
+
+>7. Report the means of the treatment groups. In the graph, does the type of cap appear to explain variation in the times? 
+
+
 
 
 >8. Write out the statistical model using the group means to predict the times. How does the standard error of the residuals for the “cap model” compare to the single-mean model? 
 
+
+## Standard Error of residuals for Seperate Means Model
 
 The standard error of the residuals for this model, taking into account the type of cap, is calculated by comparing each observation to its group mean, that is, the residual from using the group mean to predict an observation in that group:
 
 $$SE\ of \ residuals = \sqrt{\frac{\sum_{clearcap}(observed - 42.78)^2+\sum_{blackcap}(observed-126.55)^2}{16}}$$
 
 
-The numerator of this calculation is called the Sum of Squared Errors, or SSError. The SSError represents totaling the squared predictions errors (residuals) for a particular statistical model
+The numerator of this calculation is called the Sum of Squared Errors, or SSError. The SSError represents totaling the squared predictions errors (residuals) for a particular statistical model. 
+
+$$SSError = \sum_{all \ obs}(observed\ value\  - \ predicted\ value)^2 = \sum_{all \ obs} residuals^2$$
+The SSError represents the leftover variation in the response after conditioning on the treatment groups, the unexplained variation within the treatment groups. Notice that we are dividing by 16 this time, as we have used both the group means in our calculations. 
+
+## Key Idea: Degrees of Freedom
+
+The degrees of freedom for a sum of squares calculation will be the sample size minus the number of estimated parameters in the model. Taking the square root of the "average squared deviation" gives us the measure of a typical prediction error for the model. In other words it is the "pooled" (across the groups) "within group variation." Or the variation unexplained by the type of cap. 
+
+>9. Report the SSError for the Seperate Means Model.
+
+```{r}
+#Hint: use r as a calculator and use the DungBeetles$trt_residuals (squared) and the sum function
+SSError <- sum((DungBeetles$trt_residuals)^2) 
+SSError
+```
+
+## Variation Explained by the Cap Groups:
+
+We are going to look at one more sum of squares value. We will compare what we predict based on the treatment group to what we would predict if we had ignored the treatment group. In other words, we will measure how much variation there is in the group means by comparing to the overall mean. 
+
+### Effect:
+
+The *effect* of each treatment is the difference of the mean response in the treatment group from the overall mean response.Also can be called the Sum of Squares Between Groups.For example the effect for group $i$ would be as follows:
+
+$$Effect_{i} = (group \ mean_i\ - \ overall\ mean)$$
+
+
+>10. Calculate the cap effect and the "no cap" effect. 
+
+```{r}
+#Use R as a calculator and make sure to separate by the group. 
+cap<-(42.78 - 84.66)
+clear<-(126.5 -84.66)
+```
+
+
+
+### Need help with effect calculation, are you just looking at the difference between means??? And look at the model part. 
+
+
+
+>11. Using the overall mean and these treatment effects, suggest another way we can write out the statistical model. 
+
+
+
+## SSModel: Sum of Squares for the Model
+
+Measures the variation in the group means from the overall mean, then sum the squared differences. Because each observation withing the same group has the same difference between the group mean and the overall mean, we can simplify the formula to focus on the squared effects and the number of observations in each group. 
+
+$$SSModel = \sum_{all\ obs}(group\ mean\ - overall\ mean)^2 = \sum_{all \ groups}(group\ size) (effect)^2$$
+
+
+>12. Report the SSModel for this data. 
+
+```{r}
+SSModel <- (9*(clear)^2) + (9*(cap)^2)
+SSModel
+```
+
+
+## Key Idea: It all comes together!
+
+The variation in the response (SSTotal) is partioned into the variability of the interest (SSModel) and the unexplained variation (SSError):
+
+$$SSTotal = SSModel + SSError$$
+
+Also the degrees of freedom are partitioned in this way: 
+
+$$df_{total} = df_{model} + df_{error}$$
+
+>13. Calculate the *percentage of variation explained* for this data: 
+
+$$\frac{SSModel}{SSTotal} = 1-\frac{SSError}{SSTotal} \times 100\%$$
+```{r}
+#Use R as a calculator, you should already have the SSModel and SSTotal. 
+```
+
+
+## Definition: $R^2$ 
+
+The **coefficient of determination**, $R^2$, tells us the proportion of total variation in the response variable which is explained by the source(s) of interest specified by the model. The maximum value of $R^2$ is 1, and larger values are better (more variation in the response is explained by the variable of interest):
+
+$$R^2 = \frac{SSModel}{SSTotal} = 1-\frac{SSError}{SSTotal}$$
+
+>14. Write a one-sentence interpretation of this value, in context. 
 
 
 
 
 
+>15. Make sure this produces a Pie Chart, might have to make sure you have all your calculations correctly saved (SSModel and SSError). 
 
+
+```{r}
+
+#makes a dataframe for the pie chart, pivoting to have values all as one variable. 
+pie<-data.frame(SSModel, SSError)
+pie<- pie %>%
+  pivot_longer(cols=everything(), names_to="Partial_Variation")
+
+
+
+
+#Pie chart
+ggplot(pie, aes(x="", y= value, fill = Partial_Variation))+
+  geom_col()+
+  coord_polar(theta="y")+
+  theme_void()+
+  labs(title = "Pie Chart for Unexplained Variation and Explained Variation")
+
+```
+
+
+>16. Could there be any confounding variables or alternate explanations for why the black capped beetles may have moved slower?
+
+
+>17. Suggest one way to improve the study or a follow up research question. 
+
+
+>18. Remember to take "EVAL=FALSE" out of all R chunks. 
