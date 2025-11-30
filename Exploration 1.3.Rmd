@@ -1,0 +1,169 @@
+
+---
+title: "Math 248: Exploration 1.6"
+author: "Your name here "
+header-includes:
+  - \usepackage{float}
+  - \floatplacement{figure}{H}
+output:
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo=TRUE,message=FALSE,warning=FALSE, fig.align = 'center', out.width="80%" )
+library(tidyverse)
+library(ggplot2)
+library(dplyr)
+library(mosaic)
+library(ImSIwithR)
+```
+
+
+```{r}
+#Load in Data:
+data(DungBeetles)
+```
+
+
+# Exploration 1.3: Continued Starry Navegation
+
+Recall the Starry Navigation study from Exploration 1.2 (DungBeetles). We found that the type of cap used (whether they could see the night sky or not, nine beetles in each group) explained 84.3% of the variation in times for a beetle to roll the ball to the edge, and the difference in times of 83.77 seconds was large compared to the standard error of the residuals (19.77 seconds). Despite this seemingly large difference, is it possible that there really is no treatment effect from the type of cap, and the random assignment process alone was responsible for the large difference between the two treatment groups?
+
+## Quick Recap from STAT 247:
+
+Therefore we have two competing explanations for the observed difference in the groups:
+
+- There is an effect on dung beetles' rolling speed when they are not able to see the night sky. 
+- There is no difference whether or not dung beetles can see the night sky, and the only reason we saw a difference between the two groups in our study is "random chance." 
+
+The first statement- our research conjecture, as you may recall, is often set up as the *alternative hypothesis* and the second statement is often set up as the *null hypothesis*.
+
+### Key Idea: Hypotheses
+
+- The *null hypothesis* $(H_0)$ is the "by-chance-alone" explanation for the observed results. 
+- The *alternative hypothesis* $(H_a)$ typically corresponds to the research conjecture (e.g., the imposed treatments explain variation in the response variable). 
+
+### Parameter and Statistic
+
+A *parameter* summarizes the population or process, but the *statistic* is what we calculate from the observed sample data. Suppose we define our parameter to be $\mu_{black\ cap} - \mu_{clear\ cap}$ where $\mu_{clear\ cap}$ os the mean time to reach the edge for this population of beetles if they can see the sky, and $\mu_{black\ cap}$ is the mean tim eto reach the edge for this population of beetles if the view of the sky is blocked. 
+
+
+>1. Restate the null and alternative hypotheses in terms of $\mu$ values. 
+
+
+>2. For the data provided, what is the observed value of the statistic corresponding to this parameter? 
+
+```{r}
+#Hint: What means are of interest, use R as a calculator (could even use the mean function). 
+```
+
+
+
+## Three S Strategy:
+
+One way to decide between two competing explanations (hypotheses), is what we call the **3S Strategy**
+
+1. **Statistic:** Compute a statistic from the observed sample that measures the comparison of interest.
+2. **Simulate:** Identify a "by-chance-alone" explanation for the data. Then use a computer to repeatedly simulate values of the statistic mirroring the randomness of the study design, what could have happened if the chance explanation is true. 
+3. **Strength of Evidence:** If the observed statistic is unlikely to have occurred when the chance explanation is true, then we say we have "strong evidence" against the reasonableness of chance alone as an explanation for the study results. 
+
+
+# Choose if you want to do an in class activity to show how to shuffle. 
+
+
+## Definition: Randomization test
+
+Assumes the null hypothesis to be true and examines all possible re-random assignments of the observed responses among the groups, recalculating the statistic each time. Instead of doing all possible arrangements, we can repeat the process a large number of times to approximate the **null distribution** of the statistic. 
+
+
+>3. Describe the shape, center, and spread of the null distribution of shuffled differences in means.
+
+>4. Did your shuffles ever produce a difference in means as small or smaller than -83.77? Is is possible that we could find a difference in means that negative? Is it very probable?
+
+
+>5. How often does shuffling create a difference in means of -83.77 or smaller?
+
+```{r}
+#use to count the number of occurrences in the null distribution of the statistic
+
+```
+
+## Key Idea: p-value
+
+The *p-value* for a randomized experiment is how often random assignment alone could have produced a statistic at least as extreme as the statistic found in the actual study. A small p value, (e.g., below 0.05) constitutes strong evidence against the null hypothesis. When the p-value is small we say the observed difference is *statistically significant*, meaning the observed value of the statistic is unlikely to have happened by random chance alone. 
+
+
+
+>6. How does the null distribution change when looking at the $R^2$ value?
+
+>7. To approximate the p-value for this statistic, we need to use the observed value. What is the observed $R^2$ and what values do you view to be "more extreme"? 
+
+>8. What is the new p-value? Has it changed much by changing this statistic?
+
+### T Statistic:
+
+Another possible statistic to use, the "t-statistic". The following formula is called a *two-sample pooled t-statistic* because it assumes the standard deviation of the response outcomes is the same for both treatments and uses one value to estimate that standard deviation. It is important to note that we are not just dividing the by the unexplained variation, but also taking the sample sizes into account. This approximates the shuffle to shuffle variation in the statistic, and is reffered to as *standardizing* the statistic. 
+
+$$t= \frac{(\bar{y_1}-\bar{y_2})-0}{(SE\ of \ residuals)\times \sqrt{\frac{1}{n_1}+\frac{1}{n_2}}}$$
+ 
+>9. Calculate the denomenator of this statistic for the data. How does it compare to the standard deviation of the null distribution when you use the difference in means as the statistic? 
+
+>10. Calculate the t-statistic for this data. 
+
+>11. If the sample sizes had been 90 and 90 but the differences in means the same, how would the t-statistic change?
+
+>12. Find the corresponding p-value. 
+
+
+### T-Statistic benefits:
+
+An advantage to t-statistics is that it puts our results all on the same scale. We can compare t-statistics from different studies directly against each other. Typically, t-values larger than 2 or smaller than -2 are considered extreme. So if we see a t-statistic below -9, we know to rule out the random assignment process as a plausible explanation for the differences in mean times between the treatment groups. 
+
+The t-statistic is also well approximated by a probability model, the t-distribution and is flexible on degrees of freedom (as seen in the denominator of the calculation). 
+
+
+## Validity Conditions: 
+
+For the pooled t-statistic, when comparing two population means, if
+
+1. the samples are independent of each other,
+2. the sample standard deviations are roughly equal (the larger is not more than twice the size of the smaller), and
+3. the sample distributions are roughly symmetric or both sample sizes are at least 20 without strong skewness or outliers,
+
+Then we can approximate the null distribution of the t-statistic with a *t-distribution* with $(total\ sample \ size\  -2) degrees \ of \ freedom$. 
+
+
+>13. Assess the validity conditions to see whether this is a case where the t-distribution is likely to be a good approximation of the null distribution. 
+
+>a. Condition (1)
+>b. Condition (2)
+>c. Condition (3)
+
+>14. Does the t probability distribution appear to predict the simulation results reasonably well?
+
+>15. What degrees of freedom (df) is reported for the "theory-based" test?
+
+
+## Key Idea: 
+
+There is actually a family of t-distributions, indexed by a "degrees of freedom" value. For a two-sample pooled t-test, this will equal the degrees of freedom for the *SSError* calculation, total sample size minus two (because you are estimating two parameters). 
+
+
+## Estimating the Size of Difference:
+
+A two sample (pooled) t-confidence interval for the difference in two population means, assuming the population standard deviations are equal is:
+
+$$\bar{y_1}-\bar{y_2}\pm t^* \times (std \ error \ of \ residuals)\sqrt{\frac{1}{n_1}+\frac{1}{n_2}}$$
+Where the $t^*$ critical value comes from the t distribution with (total sample size - 2) degrees of freedom. For a 95% confidence interval, the multiplier will be roughly 2. 
+
+>16. What is the margin of error of this interval?
+
+>17. Report the interval and include an interpretation in the context of the problem. 
+
+
+>18. Write a full summary of your conclusions from this study including discussion of significance, estimation, generalizability, and causation. Write with the intended audience to be a non-statistics student. 
+
+
+>19. Remember to take "EVAL=FALSE" out of all R chunks. 
+
+
