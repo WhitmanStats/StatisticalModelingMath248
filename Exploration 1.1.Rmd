@@ -1,5 +1,5 @@
 ---
-title: "Math 248: Exploration 1.6"
+title: "Math 248: Exploration 1.1"
 author: "Your name here "
 header-includes:
   - \usepackage{float}
@@ -21,7 +21,7 @@ library(mosaic)
 
 
 
-##Exploration 1.1: Sources of Variation (Memorizing Letters)
+## Exploration 1.1: Sources of Variation (Memorizing Letters)
 
 You and your classmates will each be asked to study a sequence of letters for 20 seconds and then write down as many letters as you can remember, in order. Your score will be the number of letters that you remember correctly before your first error of any kind. You will also be asked to report your hours of sleep last night and whether or not you have consumed any caffeine today. After collecting the data, your instructor will tell you more information about the study protocol.
 
@@ -35,7 +35,7 @@ You and your classmates will each be asked to study a sequence of letters for 20
 >3. Was this an observational study or experiment? Justify your choice. 
 
 
-##Definition: The *explanatory variable* deliberately manipulated in an experiment is often called a treatment variable or factor. For categorical explanatory variables, the different categories of the treatment variable are often called *levels*. In experiments, the objects (or “subjects”) that we are measuring are often called *experimental units* rather than observational units. The conditions we impose on the experimental units (here the levels of the treatment variable) are also called treatments. Each experimental unit is assigned to one treatment. 
+## Definition: The *explanatory variable* deliberately manipulated in an experiment is often called a treatment variable or factor. For categorical explanatory variables, the different categories of the treatment variable are often called *levels*. In experiments, the objects (or “subjects”) that we are measuring are often called *experimental units* rather than observational units. The conditions we impose on the experimental units (here the levels of the treatment variable) are also called treatments. Each experimental unit is assigned to one treatment. 
 
 
 
@@ -46,7 +46,7 @@ You and your classmates will each be asked to study a sequence of letters for 20
 >6. If you were planning this study, how would you determine who gets which treatment? What would you try to accomplish?
 
 
-##Key Idea: Random Assignment
+## Key Idea: Random Assignment
 
 The goal of random assignment is to reduce the chances of there being any confounding variables in the study. By creating groups that are expected to be similar with respect to variables (other than the treatment variable of interest) that may impact the response, random assignment attempts to eliminate confounding. A key consequence of not having variables confounded with the treatment variable in a randomized experiment is the potential to draw cause-and-effect conclusions between the treatment variable and the response variable. 
 
@@ -97,7 +97,11 @@ ggplot(class_data, aes(x=scores))+   # ggplot() starts a plot, aes() tells it wh
 
 ```
 
-Key Idea: Residuals are a measure of how far each observation is away from the mean, Lower residual value indicates sample value close to the mean, 
+
+
+### Key Idea: Residuals are a measure of how far each observation is away from the mean, Lower residual value indicates sample value close to the mean, 
+
+
 
 ```{r, EVAL = FALSE}
 #Obtain Residuals
@@ -107,7 +111,7 @@ class_data <- class_data %>%
 
 #Plot Residuals
 ggplot(class_data,aes(x=residuals))+
-  geom_histogram(fill = "skyblue", color = "black") + # same hisogram idea, now just with residuals 
+  geom_histogram(fill = "skyblue", color = "black") + # same histogram code, now just with residuals instead of scores. 
   labs(
     title = "Histogram of Residuals (Single Mean Model)",
     x = "Residuals",
@@ -129,7 +133,8 @@ ggplot(class_data,aes(x=residuals))+
 >12. Specify a statistical model for predicting future results using the overall mean score. 
 
 
-#Now seperating by treatment groups:
+
+# Now seperating by treatment groups:
 
 We add in the factor to compare the two sample means by treatment group by grouping and computing two separate means. 
 
@@ -186,7 +191,7 @@ favstats(~scores | trt, data = class_data)
 >15. Does knowing which treatment group each person was assigned to explain all of the variation in the responses? How do you decide?
 
 
->16. Summarize your “letter-grouping model” with a Sources of Variation diagram, including brainstorming some possible sources of the unexplained variation.
+>16. Summarize your “letter-grouping model” by listing all sources of variation. Brainstorm some possible sources of unexplained variation.
 
 
 Inclusion Criteria: 
@@ -199,7 +204,7 @@ Design:
  - Sources of unexplained variation:
  
 
-#Confounding Variables: 
+# Confounding Variables: 
 
 One potential source of variation in how many letters someone can memorize is the amount of sleep he or she got the night before. Ideally, the study protocol has balanced this variable between the two treatment groups (i.e., there is a similar mix of those with lots and little sleep in both groups), but let’s check. Remember, to be a confounding variable, the variable must explain variation in the observed memory scores AND it must be associated with the explanatory variable, type of letter grouping. 
 
@@ -249,7 +254,7 @@ ggplot(class_data, aes(x= # your code here (hint: What variable are we looking a
 
 
 
-#Key Idea: 
+# Key Idea: 
 
 Random assignment is a critical component of a well-designed experiment that allows us to potentially draw cause-and-effect conclusions. How the experimental units are selected for the study (e.g., inclusion criteria, random sampling) is a key component of how broadly we can generalize the results.
 
