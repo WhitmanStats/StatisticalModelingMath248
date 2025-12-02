@@ -1,6 +1,6 @@
 
 ---
-title: "Math 248: Exploration 1.6"
+title: "Math 248: Exploration 1.2"
 author: "Your name here "
 header-includes:
   - \usepackage{float}
@@ -24,10 +24,14 @@ library(ImSIwithR)
 data(DungBeetles)
 
 #Calculate Residuals for single mean Model:
+
 DungBeetles <- DungBeetles%>%
   mutate(residuals = time - mean(time))
 
+
+
 #Calculate Residuals for Two Means Model:
+
 DungBeetles <- DungBeetles%>%
   group_by(treatment)%>%
   mutate(trt_residuals = time - mean(time))%>%
@@ -37,7 +41,7 @@ DungBeetles <- DungBeetles%>%
 
 
 
-## Exploration 1.2: Starry Navegation
+# Exploration 1.2: Starry Navegation
 Some species of dung beetles, known as “rollers,” find a pile of dung which they form into a ball, and then immediately roll away from the source in order to prevent other beetles from stealing it. The goal is for the beetles to move the ball away as fast as possible. The nocturnal African dung beetle (Scarabaeus satyrus) is known to use celestial objects (e.g., sun, moon) to help it move along straighter (quicker) paths so its dung does not get stolen. But, what if it’s the middle of the night and the moon isn’t out (new moon); can the beetles navigate their way using just the stars? Dacke, Baird, Byrne, Scholtz, and Warrant (“Dung Beetles Use the Milky Way for Orientation,” Current Biology, 23, 2013) report on several experiments they conducted to document whether these dung beetles use stars to navigate.
 
 
@@ -89,10 +93,11 @@ The *degrees of freedom* for a sum of squares calculations represents how many �
 
 ## Visualizations (Single Mean Model)
 
-As we saw in the previous section, before taking the type of cap (black or clear) into account, we can predict the dung ball rolling time using the overall mean (the single-mean model).
+Before taking the type of cap (black or clear) into account, we can predict the dung ball rolling time using the overall mean (the single-mean model).
 
 ```{r}
 #Plot distribution, and residuals
+
 ggplot(DungBeetles, aes(time))+
   geom_histogram(fill="navy",color="black")+
   theme_classic()+
@@ -121,8 +126,6 @@ ggplot(DungBeetles, aes(residuals))+
 
 
 
-
-
 ## Standard Deviation and Sum of Squares Total (SSTotal):
 
 The standard deviation is found by the following calculation: 
@@ -145,7 +148,6 @@ The *degrees of freedom* for a sum of squares calculations represents how many �
 SSTotal <- sum(((DungBeetles$time)-84.66)^2)
 SSTotal
 ```
-
 
 
 # Separate Means Model:
@@ -218,11 +220,6 @@ clear<-(126.5 -84.66)
 ```
 
 
-
-### Need help with effect calculation, are you just looking at the difference between means??? And look at the model part. 
-
-
-
 >11. Using the overall mean and these treatment effects, suggest another way we can write out the statistical model. 
 
 
@@ -256,7 +253,7 @@ $$df_{total} = df_{model} + df_{error}$$
 
 $$\frac{SSModel}{SSTotal} = 1-\frac{SSError}{SSTotal} \times 100\%$$
 ```{r}
-#Use R as a calculator, you should already have the SSModel and SSTotal. 
+#Use R as a calculator, you should already have the SSModel and SSTotal. (saved as variables so you can just call them here)
 ```
 
 
@@ -272,20 +269,22 @@ $$R^2 = \frac{SSModel}{SSTotal} = 1-\frac{SSError}{SSTotal}$$
 
 
 
->15. Make sure this produces a Pie Chart, might have to make sure you have all your calculations correctly saved (SSModel and SSError). 
+>15. Make sure this produces a Pie Chart, might have to make sure you have all your calculations correctly saved (SSModel and SSError).
 
 
 ```{r}
 
 #makes a dataframe for the pie chart, pivoting to have values all as one variable. 
+
 pie<-data.frame(SSModel, SSError)
 pie<- pie %>%
-  pivot_longer(cols=everything(), names_to="Partial_Variation")
+  pivot_longer(cols=everything(), names_to="Partial_Variation")     #pivots to be long form, so all values are the same variable
 
 
 
 
 #Pie chart
+
 ggplot(pie, aes(x="", y= value, fill = Partial_Variation))+
   geom_col()+
   coord_polar(theta="y")+
@@ -302,3 +301,4 @@ ggplot(pie, aes(x="", y= value, fill = Partial_Variation))+
 
 
 >18. Remember to take "EVAL=FALSE" out of all R chunks. 
+
