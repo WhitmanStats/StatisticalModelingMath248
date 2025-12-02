@@ -1,6 +1,6 @@
 
 ---
-title: "Math 248: Exploration 1.6"
+title: "Math 248: Exploration 1.3"
 author: "Your name here "
 header-includes:
   - \usepackage{float}
@@ -31,7 +31,7 @@ Recall the Starry Navigation study from Exploration 1.2 (DungBeetles). We found 
 
 ## Quick Recap from STAT 247:
 
-Therefore we have two competing explanations for the observed difference in the groups:
+We have two competing explanations for the observed difference in the groups:
 
 - There is an effect on dung beetles' rolling speed when they are not able to see the night sky. 
 - There is no difference whether or not dung beetles can see the night sky, and the only reason we saw a difference between the two groups in our study is "random chance." 
@@ -56,7 +56,6 @@ A *parameter* summarizes the population or process, but the *statistic* is what 
 ```{r}
 #Hint: What means are of interest, use R as a calculator (could even use the mean function). 
 ```
-
 
 
 ## Three S Strategy:
@@ -165,5 +164,6 @@ Where the $t^*$ critical value comes from the t distribution with (total sample 
 
 
 >19. Remember to take "EVAL=FALSE" out of all R chunks. 
+
 
 
