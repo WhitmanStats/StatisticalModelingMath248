@@ -17,11 +17,7 @@ library(mosaic)
 ```
 
 
-## need to change code to look at between group residuals and make comments on everything
-
-
-
-## Exploration 1.1: Sources of Variation (Memorizing Letters)
+# Exploration 1.1: Sources of Variation (Memorizing Letters)
 
 You and your classmates will each be asked to study a sequence of letters for 20 seconds and then write down as many letters as you can remember, in order. Your score will be the number of letters that you remember correctly before your first error of any kind. You will also be asked to report your hours of sleep last night and whether or not you have consumed any caffeine today. After collecting the data, your instructor will tell you more information about the study protocol.
 
@@ -72,10 +68,10 @@ If only one of the above two criteria are true for a study, then the study is sa
 
 >10. Are there any individuals that you believe we should exclude from participating in this study? Explain.
 
-##Definition: *Inclusion criteria* are the set of characteristics that individuals must have in order to participate in a study
+## Definition: *Inclusion criteria* are the set of characteristics that individuals must have in order to participate in a study
 
 
-#Single Sample Mean:
+# Single Sample Mean:
 
 First we will look at the distribution of the data without any explanatory variable, just looking at distribution of scores. 
 
@@ -99,7 +95,7 @@ ggplot(class_data, aes(x=scores))+   # ggplot() starts a plot, aes() tells it wh
 
 
 
-### Key Idea: Residuals are a measure of how far each observation is away from the mean, Lower residual value indicates sample value close to the mean, 
+## Key Idea: Residuals are a measure of how far each observation is away from the mean, Lower residual value indicates sample value close to the mean, 
 
 
 
@@ -134,7 +130,7 @@ ggplot(class_data,aes(x=residuals))+
 
 
 
-# Now seperating by treatment groups:
+# Seperate by treatment groups:
 
 We add in the factor to compare the two sample means by treatment group by grouping and computing two separate means. 
 
@@ -148,7 +144,7 @@ class_data <- class_data%>%
   ungroup()
 
 
-#Looking at Distribution of Response
+# Distribution of Response
 
 ggplot(class_data, aes(x=scores, fill=trt))+      # fill=trt colors bars by treatment group
   geom_histogram()+
@@ -254,7 +250,7 @@ ggplot(class_data, aes(x= # your code here (hint: What variable are we looking a
 
 
 
-# Key Idea: 
+## Key Idea: 
 
 Random assignment is a critical component of a well-designed experiment that allows us to potentially draw cause-and-effect conclusions. How the experimental units are selected for the study (e.g., inclusion criteria, random sampling) is a key component of how broadly we can generalize the results.
 
