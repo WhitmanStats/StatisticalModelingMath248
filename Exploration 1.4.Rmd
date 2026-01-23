@@ -1,0 +1,305 @@
+---
+title: "Math 248: Explorations 1.4-1.5"
+author: "Your name here "
+header-includes:
+  - \usepackage{float}
+  - \floatplacement{figure}{H}
+output:
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo=TRUE,message=FALSE,warning=FALSE, fig.align = 'center', out.width="80%" )
+library(tidyverse)
+library(ggplot2)
+library(dplyr)
+library(mosaic)
+library(ImSIwithR)
+```
+
+
+```{r}
+#load in data
+data(Squirrels)
+
+Squirrels <- Squirrels%>%
+  group_by(Location)%>%
+  mutate(location_resids = Length- mean(Length))%>%
+  ungroup()
+```
+
+
+# Exploration 1.4: Golden Squirrels
+
+Bergmann’s rule (named after German biologist Carl Bergmann) is an ecogeological rule that states that within a species specimen will tend to be larger if they are from cooler climates or more extreme latitude. Bergmann’s rule is most often applied to warm-blooded animals, but there has been some evidence of the rule in other species as well. A former Cal Poly Biology grad student (Nora Gerdes) wanted to investigate whether Bergmann’s Rule applies to the golden mantled squirrel in California. She measured the body lengths (mm) of 18 squirrels from four California locations. 
+
+
+```{r}
+#Insert Location Table with temperature and latitudes.
+
+locations <- tribble(
+  ~Location,            ~Avg_Temp_F, ~Latitude_degN,
+  "Hemet, CA",           64.7,        33.75,
+  "Big Bear Lake, CA",   47.6,        34.24,
+  "Susanville, CA",      50.25,       40.42,
+  "Loop Hill, CA (Yreka)", 51.25,     41.70
+)
+locations
+
+```
+
+
+>1. State the research quesiton along the lines of an alternative hypothesis. Conjecture any other possible sources of variation in squirrel length. 
+
+
+>2. Identify the observational units, the response variable, and the explanatory variable. Classify each. 
+
+
+>3. Is this an experiment or a observational study? Include a discussion of any inclusion criteria. 
+
+
+
+>4. Summarize the distribution of squirrel lengths, using both a graphical summary and summary statistics 
+
+```{r}
+# hint: use ggplot with aes() + geom_histogram
+
+# hint: use favstats. 
+```
+
+
+>5. What is the SSTotol for this data? 
+
+```{r}
+#Hint: Question 6 from exploration 1.2. (Try to remember the formula without checking back)
+```
+
+
+
+>6. Now look at the lengths seperated by location: 
+
+```{r}
+#Looking at Distribution of Squirrel Lengths by Location
+
+ggplot(Squirrels, aes(x=Length, fill=Location))+      # fill=trt colors bars by treatment group
+  geom_histogram(color="black")+
+  facet_wrap(~Location,ncol=1)+                        # facet_wrap() makes one histogram per treatment group (stacked vertically here)
+  theme_classic()+
+  labs(
+    title = "Distribution of Squirrel Lengths by Location",
+    x = "Squirrel Length",
+    y = "Frequency")
+```
+
+> Does location appear to explain variation in squirrel length?
+
+
+>7. Use group means to write out a "seperate locations" model. Give the predicted equation and standard error of residuals. 
+
+```{r}
+# Use as a calculator, remember to use the locaiton_resids. 
+```
+
+
+## Practical Significance: 
+
+Recall that in evaluating practical significance, you should consider the context of the research study as well as a numerical measure of group differences. When we have only two groups, we can compare the difference in means to the residual SE: $\bar{y_1}-\bar{y_2}/(Residual\ SE)$. If the difference in means is larger than one residual SE, 
+
+We tend to think of the difference as practically significant. When there are more than two groups, we can use R2 to summarize how different the groups are in terms of how much variation in the response variable we are able to explain. 
+
+
+
+>8. Determine and Interpret R^2 for this data. 
+
+```{r}
+
+```
+
+
+
+>9. Are any pairs of group means larger further apart than one residual standard error?
+
+
+>10. Write out in words the null and alternative hypotheses for our significance test. (Hint: You
+may do so simply in terms of “association” between the response and explanatory variables
+or in terms of population means—being sure to define any symbols that you use.)
+
+
+## Applying the 3S Strategy
+>A. Choice of Statistic
+
+First, we need one number that summarizes how different the groups are. The difference in means and t-statistic only work when we have just two groups to compare.
+
+
+
+
+>11. Suggest a statistic (a formula) that we could use to summarize the differences among these four groups.
+
+
+
+>B. Simulation
+
+There are several different statistics we could use; the key is getting some sense overall of how different the squirrel lengths are among the four location groups using only one number. This study was not a randomized experiment, but we can still shuffle the observed lengths to the four locations many, many times and determine how often we would randomly get a value for this statistic as or more extreme than that found in the actual environments. So, after each shuffle, as before, we will need to calculate the value of this statistic, and build a null distribution for the statistic. As we’ve already computed $R^2$, let’s start with $R^2$ as our statistic.
+
+
+>12. Describe the behavior of the null distribution of the R^2 statistic. Is it roughly symmetric? Does this shape make sense? Explain.
+
+
+>C. Strength of Evidence
+
+Use the applet to estimate the p-value. (Hint: What types of R2 values do you consider
+“more extreme” than the observed value from the actual study?) Include a screen capture of
+your results.
+
+
+>13. Explain how you determined your p-value. Does this p-value provide strong evidence against the null hypothesis of no association between location and length? Explain.
+
+
+
+
+Change to have 4 copies of the data. 
+>14. How have summary statistics (means and standard deviations and sample sizes) changed? How has the R^2 value changed? (Include supporting output to answer these questions.)
+
+
+>15. Now reshuffle 1000 times. How does the p-value (our strength of evidence against the null hypothesis) change? Explain why this makes sense.
+
+
+
+When we have more data, with the same differences in means and the same variability, we might find the additional “consistency” in the group differences more convincing, less likely to be due to “random chance” alone. The simulation reflects this, giving us a smaller p-value, but it would be nice if our statistic did so as well. The $R^2$ statistic was the same whether we had 18 total observations or 72 total observations. Because the $R^2$ does not take sample size
+into account, we may prefer to look at a standardized statistic (something analogous to the t-statistic) that reflects both the sample size and the leftover or unexplained variation.
+
+
+
+
+## Other Choices of Statistics The F-statistic is one such statistic.
+
+Named after famous statistician R. A. Fisher, the F-statistic compares the explained to unexplained variance, adjusting for the sample size and number of groups, using the degrees of freedom for both the SSError and SSModel. See Example 1.4 for more on the interpretation of the F-statistic.
+
+$$F= \left[ \frac{R^2}{1-R^2}\right]\times\left[\frac{n-\# \ of \ groups}{\#\ of \ groups - 1}\right]= \left[\frac{SSModel}{SSError}\right]$$
+
+
+>16. Create the null distribution for the F-statistic and determine the approximate p-value.
+
+
+>17. How does the F-statistic for the original data compare to the F-statistic for the four copies dataset? As you expected? The p-value?
+
+
+## Theoretical F Distribution:
+
+One advantage of the F-statistic is when certain validity conditions are met, it is well-approximated by a probability distribution, the F-distribution (also named after R. A. Fisher).
+
+
+### Validity Conditions: 
+
+To use the F-distribution to find the p-value for the F-statistic requires that
+
+1. the samples are independent of each other,
+2. the standard deviations of the treatment groups are similar (e.g., the largest is not more than twice the size of the smallest), and
+3. the distributions of the treatment groups are approximately symmetric (implying the distribution of the residuals is approximately normal) or all group sizes are larger than 20 with no extreme skewness or outliers.
+
+
+
+>18. Go through each validity condition and determine whether or not they are met for this study. 
+
+
+>19. Does the theoretical F-distribution do a good job of approximating the shuffled null distribution even in the original study with such small sample sizes?
+
+
+>20. Based on your p-value (the simulated and theory-based p-values should be similar), what conclusions will you draw regarding the null hypothesis?
+
+>21. Based on your analysis so far, summarize the conclusions you would draw from this study. Be sure to address statistical significance, generalizability, and causation. Also be sure to put your comments into the context of this research study and your conclusions about Bergmann’s rule.
+
+>22. Suggest at least one way you would improve the study if you were to carry it out, or an extension to the research. 
+
+
+But, have we really answered the research question? Not yet! So far, we’ve only found evidence of an association between length and location. To determine whether Bergmann’s Rule applies, we need to understand the nature of the association between length and location. We need to address questions such as:
+
+
+• Do squirrels from colder locations tend to be longer, on average?
+
+• Which population mean or means is/are different than the others? How much do they differ?
+
+• Does the average length differ in every one of these four populations? Maybe just one of them?
+
+
+## Post-hoc Analyses 
+
+Once we find a significant association, the natural follow-up question is the nature of that association. The process of following up a statistically significant F-test is called post-hoc analysis. A *post hoc analysis* is the process of assessing how the means of the treatment groups relate to one another, a follow up analysis to a significant F-Test.
+
+
+### Pairwise Comparisons of the Treatment Groups:
+
+Arguably the most common type of post-hoc analysis involves comparing each group mean to each other group mean by conducting pairwise comparisons.
+
+### Definition
+*Pairwise comparisons* are used to compare each treatment group to every other treatment group. Often pairwise comparisons take place as part of a post-hoc analysis.
+
+
+
+>23. Why do you think it is considered OK to conduct pairwise comparisons as part of a post- hoc (follow-up) analysis to a significant F-test, but not before the F-test?
+
+
+
+>24. Do any of these confidence intervals contain 0? If so, which one(s) and what does it mean when the confidence interval for a difference of means contains 0?
+
+
+>25. Write a brief summary of your findings from the pairwise confidence intervals. Be sure to address whether/how these support the application of Bergmann’s Rule to the golden mantled squirrel in California.
+
+
+
+Confidence Intervals on Other Parameters The confidence intervals for the
+difference in means allows us to compare the mean lengths of squirrels from two locations.
+However, what if we also wanted to estimate the average length of the population of squirrels
+from Big Bear Lake?
+Definition
+A one-sample t-interval for a population mean is:
+
+$$\bar{y_i}\pm (t^*_{df})\frac{residual \ SE}{\sqrt{n_i}}$$
+
+Where $n_i$ is the sample size of the treatment group, and the $t^*$ multiplier is again approximately 2 for 95% confidence intervals.
+
+
+
+
+>26. Create confidence intervals and write an interpretation of one of these intervals in the context of this study.
+
+
+
+
+>27. How would increasing the sample size of the treatment groups change these intervals? What if the confidence was changed to 99%? 
+
+
+
+
+## Prediction Intervals
+Up until now, our focus has been on confidence intervals for population means (or differences in means). These intervals provide estimates of ranges of plausible values for the unknown population mean value. These confidence intervals for the mean do not allow us to make predictions about the lengths of individual squirrels (e.g., how long we would estimate a squirrel to be if we randomly sampled one more squirrel from a particular location).
+
+
+### Definition
+A *prediction interval* gives an interval of values within which we predict the response of a new individual observation (e.g., person) to occur with some degree of confidence. For example, a 95% *prediction interval* means we are 95% confident that the responses for 95% of individuals in the population will be captured in the interval.
+
+
+
+$$\bar{y_i}\pm t^*\times(SE\ of\ residuals)\sqrt{1+\frac{1}{n}}$$
+
+   
+>28. Create prediction intervals and write an interpretation of one of the prediction intervals. Comment on how your
+interpretation of this interval differs from the interpretation of the confidence intervals. 
+
+
+
+
+>29. Comment on the differences between the types of intervals and talk about the effect of sample size. 
+
+
+## Validity Condition for Confidence Intervals and Prediction Intervals on Means
+
+• The data distribution should be reasonably bell-shaped and symmetric, especially if the sample sizes are small. This condition is particularly important for prediction intervals. (With confidence intervals, the distribution of the sample mean should become more normal when the sample size increases, but the distribution of the responses themselves does not change shape as we increase sample size.)
+
+• Note: For comparing a subset of two treatment group means, the confidence interval of the difference requires approximately equal standard deviations among all of the treatment groups. This is because these confidence intervals use the residual standard error from the separate-means model.
+
+
+>30. Based on the dotplots of the squirrel data, do you think that the validity conditions are met? How are you deciding?
+
+
+
