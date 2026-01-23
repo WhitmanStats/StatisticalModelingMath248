@@ -1,0 +1,329 @@
+---
+title: "Math 248: Exploration PB"
+author: "Solutions"
+header-includes:
+  - \usepackage{float}
+  - \floatplacement{figure}{H}
+output:
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo=TRUE,message=FALSE,warning=FALSE, fig.align = 'center', out.width="80%" )
+library(ImSIwithR)
+library(tidyverse)
+library(broom)
+```
+
+## Exploration PB: Housing Prices in Michigan
+
+# STEP 1: Ask a research question.
+
+> 1.  I want to predict how much should I expect to pay for a home. What explanatory variables might explain variation in home prices?
+
+To predict home prices, we might look at location, square footage, number of bathrooms, and number of bedrooms, among many other possibilities.
+
+# STEP 2: Design a study an collect data.
+
+In 2015, we sampled 13 homes that were for sale just north of Lake Macatawa in Michigan, and recorded the sale price (in thousands of dollars) as listed on Zillow.
+
+> 2.  Identify the observational units and the response variable of interest. Is the response variable quantitative or categorical? What kinds of graphs and numerical summaries can you use to explore these data?
+
+Observational units: homes for sale just north of Lake Macatawa, Michigan in 2015. Response variable: sale price (in thousands of dollars) as listed on Zillow. This is quantitative.
+
+We would look at a histogram or boxplot to explore the data visually because the response is quantitative. We would use the mean or median to explore the typical price; and range, or standard deviation, or max and min to explore the variability of the sale prices.
+
+# STEP 3: Explore the data.
+
+Since `price` is a quantitative variable, histogram is one of the appropriate plots to visualize this variable. First we need to `read` data into R.
+
+The data in `housing_data.csv` file posted on Canvas. Upload the `housing_data.csv` file to R studio.
+
+Then, read this `housing_data.csv` file into R Markdown with the commands included in the R chunk below.
+
+*Hint*: to get the correct path to include between the quotation marks, locate the csv file in the *Files* tab, click on the down arrow to the right of *More(Blue Wheel Icon)* and choose *Copy folder path to Clipboard* from the drop-down menu.
+
+In my case the path copied to Clipboard is *"\~/Documents/Math 248 Materials/Math 248 Resources/Data"*. Paste this path before `/housing_data.csv` within the quotation marks in R code chunk below. Thus, *my full path* is :*"\~/Documents/Math 248 Materials/Math 248 Resources/Data/housing_data.csv".*
+
+Use `head` command to make sure that the file is read correctly.
+
+Remove **eval=FALSE** after running the code.
+
+```{r, read the data from CSV file }
+library(readr)
+housing_data <- read_csv("~/Documents/Math 248 Materials/Math 248 Resources/Data/housing_data.csv")
+head(housing_data,n=3)
+```
+
+```{r,create a histogram of the price variable with ggplot}
+# Basic histogram
+ggplot(housing_data, aes(x = price)) +
+  geom_histogram(binwidth = 150, fill = "lightblue", color = "black")
+```
+
+> 3.  Describe the shape of the home prices in this sample.
+
+The distribution of home sale prices in this sample is skewed to the right. There are more values below the mean than above it.
+
+> 4.  Suppose we want to estimate or predict a typical home price based on these 13 homes. Do you think the mean would be a reasonable value to use? Explain why or why not.
+
+The mean would not be a reasonable value to estimate a typical home price because the distribution is not symmetric. Because the data are skewed to the right, the large values would inflate the mean. Instead, we look at the median.
+
+> 5.  Do you think the mean is larger or smaller than the median? Explain.
+
+The data are skewed to the right, so the mean will be larger than the median. The mean is pulled up by the large values and will "follow the tail."
+
+Let's check your answer:
+
+```{r, numerical summary of the price variable}
+summarize(housing_data,  
+          mean_price = mean(price), 
+          median_price = median(price),
+          sd_price = sd(price, na.rm = TRUE)
+          )
+```
+
+> 6.  What is the standard deviation of these home prices from the output above? (What are the units?) Provide a one-sentence interpretation of this value. (Hint: How accurately can we predict a home price?) What are some possible explanations for this variation in home prices? (Of course, we also need to be a little wary in using the standard deviation with skewed data like this, as the deviations from the mean tend to be smaller for homes below the mean compared to homes above the mean.)
+
+The standard deviation of these home prices is $\$240,920$. Roughly, the typical distance of a home is $\$240,920$ away from the mean. This will not provide an accurate prediction of home prices. Some possible explanations for this variation in home prices are size and location. We might expect the price of a home in the same location to cost more as size increases, and homes in a desirable location, such as close to a lake, may cost more.
+
+
+> 7.  The first home in the data set sold for \$639,000. If we had used the mean to predict that sale price, how far off would we have been?
+
+Observed Price: $\$639,000$
+Predicted Price (using the mean): $\$408,060$
+Residual (Observed - Predicted): $\$639,000 - \$408,060 = \$230,940$
+
+Based on using the mean as our prediction, we would have under-predicted the actual price by $230,940.
+
+
+> 8.  Using the mean as our prediction, did we over-predict or under-predict the price of the first house. (Hint: Is the residual positive or negative?)
+
+We underpredicted the price of the first house, so the residual is positive.
+
+Now, let's calculate the differences between each price value and the average price and name them `residual_mean`. We then create the histogram of the residuals from the mean to answer the question:
+
+> 9.  Roughly how often do you find a positive residual (under-prediction) and how often do you find a negative residual (over-prediction)?.
+
+There are seven negative and six positive residuals, spread relatively equally around 0.
+
+```{r, residuals of the model that only uses mean price to predict price}
+residuals_mean<-housing_data %>% 
+  mutate(diff_from_mean = price - mean(price))
+
+# # Plot the histogram of the residuals ( differences from the mean)
+# ggplot(residuals_mean, aes(x = diff_from_mean)) +
+#   geom_histogram(binwidth = 150, fill = "skyblue", color = "black") +
+#   labs(title = "Histogram of Residuals from the Mean",
+#        x = "Residual from the Mean Value",
+#        y = "Frequency") +
+#   theme_minimal()
+
+ggplot(residuals_mean, aes(x = diff_from_mean)) +
+  geom_dotplot(
+    binwidth = 5,       # Adjust this value to control how "thick" each stack of dots is
+    stackdir = "center", # How the dots stack: "up", "down", "center", "centerwhole"
+    dotsize = 2.5,      # Adjust the size of the individual dots
+    fill = "lightblue",
+    color = "black"
+  ) +
+  labs(
+    title = "Dotplot of Residuals from from the Mean",
+    subtitle = "Variability in time not explained by average price",
+    x = "Residuals",
+    y = "Count of Residuals" # Updated y-axis label for dotplot
+  ) +
+  theme_minimal() +
+  # Add a vertical line at 0 for reference, as residuals ideally center around 0
+  geom_vline(xintercept = 0, color = "red", linetype = "dashed", size = 1)
+
+```
+
+*Let's also calculate the mean and the standard deviation of the distribution of the residuals from the mean.*
+
+```{r, Calculating the average and standard error of the residuals from the mean}
+options(scipen = 999)#avoids scientific notation
+summarize(residuals_mean,  
+          mean_residuals = mean(diff_from_mean), 
+          SE_residuals = sd(diff_from_mean, na.rm = TRUE)
+          )
+```
+
+*In fact, when the mean is used to predict the observed response values, the average of the residuals will always be zero (within rounding).*
+
+**Definition**
+
+We will define a **statistical model** as consisting of the equation that predicts the outcome of the response and a measure of the precision of those predictions.
+
+For example, here we could use the following statistical model:
+
+$$Predicted \ \ price=408.062  \ \ thousand \ \ dollars$$
+
+$$Standard \ \ Error \ \ of \ \ residuals = 240.92 \ \ thousand \\ dollars$$
+
+*The **Standard Error (SE) of the residuals** is a measure of a typical prediction error from the model. Because the above model uses the overall mean as the prediction, the residual standard error is the same as the standard deviation of the home prices. Using more complex models will change the residual SE. We’ll discuss the computation of the residual SE more in Chapter 1.*
+
+The residual SE for this statistical model is still pretty large considering the values of these home prices (the standard deviation is about half the size of the mean). With so much unexplained variation remaining, this is a pretty uninformative model; can we improve our model using more information about these homes?
+
+*Let’s use information about the size of the house in our predictions to see whether we can reduce the sizes of the residuals overall. First, since both variables are quantitative we can create a scatterplot to visualize the relationship. `price` is the response variabe and should be on the y-axis,`sqft` is the explanatory variable that should be on the x-axis.*
+
+```{r, scatterplot of price vs size}
+ggplot(data = housing_data, aes(x = sqft, y = price)) +
+  geom_point()
+```
+
+> 10. Based on the scatterplot above describe the association between home price and square footage (strength, direction, linearity?). Does the association behave as you would have predicted? Explain.
+
+There is a moderate positive linear association between home price and square footage. A onethousand square foot increase in size is associated with a price increase of approximately $200,000. This is what we predicted.
+
+
+Let's estimate a new `statistical model` predicting price using the size of the house (`sqft`). First, let's add the regression line to the scatterplot.
+
+```{r, Scatterplot of price vs size with added regression line}
+ggplot(data = housing_data, aes(x = sqft, y = price)) +
+  geom_point()+
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(
+    title = "Scatterplot of Price vs. Size",
+    x = "Size of the house in square ft",
+    y = "Price of the house"
+  ) 
+```
+
+Now, let's obtain the `estimated equation of regression line`:
+
+```{r, Fit the linear model using sqfr to predict price}
+
+model_fit <- lm(price ~ sqft, data = housing_data)
+
+# Get a tidy tibble of the coefficients and statistics
+tidy_output <- tidy(model_fit)
+print(tidy_output)
+```
+
+Thus the predicted/fitted regression line is:
+
+$$\widehat{Price}=-59.3687 + 0.2127 sqft$$
+
+> 11. Using the statistical model:
+
+> > a.  Provide interpretations, in context, of the slope and intercept of the line.
+
+The intercept,$-59,370$, is the predicted home price when the square footage is zero.
+
+The slope of $212.74$ means that each _one square foot increase_ in size predicts an increase of $\$212.7$ in sale price.
+
+Note that predicted price is in thousands of dollars. 
+
+> > b.  What residual does this give you for the first home in the dataset? Is this residual smaller or larger than before?
+
+
+
+
+```{r, Add residuals and fitted values back to the original data}
+augmented_housing_data <- augment(model_fit, newdata = housing_data)
+head(augmented_housing_data, n = 5)
+```
+
+> > c.  From the R output below, is the standard error of the residuals larger or smaller than before (it was around 240)? Explain what this tells you.
+
+The standard error of the residuals for the mean housing price is $\$240,920$ and for the linear model with square footage as a predictor is $\$185,073$. It is lower for the linear model, indicating that the model accounting for square footage is better on average at predicting home prices
+
+
+```{r, Rename the residuals, calculate mean and SE of residuals using sqft to predict price}
+augmented_housing_data <- augmented_housing_data  %>% 
+  mutate(regression_residuals = .resid) 
+
+
+options(scipen = 999)# avoids scientific notation
+summarize(augmented_housing_data,  
+          mean_regression_residuals = mean(regression_residuals), 
+          SE_regression_residuals = sd(regression_residuals, na.rm = TRUE)
+          )
+
+```
+
+*Now consider the location of the home. In this dataset, the homes have been classified as lake front or not. Let's use R to examine separate regression lines for lake front and non-lake front homes.*
+
+```{r, scatterplots of price vs sqft for each lake location}
+ggplot(housing_data, aes(x = price, y = sqft, color = lake)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) + # 'se=FALSE' removes confidence bands
+  labs(title = "Price vs Size by Lake", x = "Price of the house", y = "Size of the house in sqft")
+```
+
+> 12) Let's Fit separate regression lines for lakefront and non-lakefront homes. How do the two lines compare (think about both the slopes and the intercepts). Do these comparisons make sense in this context?
+
+
+
+```{r, Model for lake front}
+# Create separate models for each 'lake' level
+model_lake1 <- lm(price ~ sqft, data = housing_data[housing_data$lake == "lakefront", ])
+# Get tidy output 
+tidy_lake1 <- tidy(model_lake1)
+print(tidy_lake1)
+```
+
+$$\widehat{Price_{Lakefront}}=86.76 + 0.22 sqft$$
+
+
+```{r, Model for not lake front}
+model_lake2 <- lm(price ~ sqft, data = housing_data[housing_data$lake == "notlakefront", ])
+tidy_lake2 <- tidy(model_lake2)
+print(tidy_lake2)
+```
+
+$$\widehat{Price_{NotLakefront}}=58.11 + 0.0839 sqft$$
+
+The intercept for `lakefront` homes ($\$86,760$) is greater than for `nonlakefronthomes` ($\$58,110$). A zero square foot lakefront home is predicted to be more expensive than a zero square foot not lakefront home. This doesn’t really make sense in context because a house cannot be zero square feet. Maybe if we consider an empty plot of land, it makes sense. 
+
+The slope for lakefront homes ($\$219.9$) is greater than for not lakefront homes ($\$83.9$). This means that a one square foot increase in size predicts a larger increase in price if the home is a lakefront property compared to not lakefront. This makes sense in context because we might expect lakefront homes to increase in price at a faster rate as size increases.
+
+
+> 13) Use this model to predict the price of the first home in the data set. (Hint: the first house is lakefront)
+
+```{r, predicting the price of the first house in the dataset using lake model}
+Lake_housing_data <- augment(model_lake1, newdata = housing_data) %>% filter(lake=="lakefront")
+head(Lake_housing_data, n=1)
+```
+_Predicted price for first home(Lakefront)_: $\widehat{Price_{Lakefront}}=86.76+0.2199*270=\$680,490$ 
+
+> 14) Find the Standard Error of the residuals for this model
+
+```{r, mean and SE of the residuals of the lake model}
+model_interaction <- lm(price ~ sqft * lake, data = housing_data)
+
+Lakes_housing_data <- augment(model_interaction, newdata = housing_data) %>%
+                      mutate(lakes_regression_residuals = .resid) 
+
+options(scipen = 999)# avoids scientific notation
+summarize(Lakes_housing_data,  
+          mean_lakes_regression_residuals = mean(lakes_regression_residuals), 
+          SE_lakes_regression_residuals = sd(lakes_regression_residuals, na.rm = TRUE)
+          )
+```
+_Standard Error of residuals_: 42.85 thousand dollars
+
+> 15) Does including this additional location variable further reduce the standard error of the residuals?
+
+Including location further reduces the standard error of the residuals from 185.073 to 49.479 thousand dollars.
+
+> 16) Based on the scatterplot, is location (lake front or not) confounded with size of the home? Remember to consider both whether location appears to be related to price and whether location appears to be related to size. (Include any additional output you use to help you answer this question.)
+
+Location does appear to be related to price (lakefront homes are more expensive than not lakefront homes, on average), but there is only a weak association between location and size (lakefront homes tend to be larger).
+
+## STEP 4: Draw inferences beyond the data.
+
+In later chapters, we will discuss how to use confidence intervals and prediction intervals to improve statements of our predictions, their accuracy, and the reliability of the methods.
+
+# STEP 5: Formulate conclusions.
+
+> 17) Summarize the conclusions you would draw from this study, including which statistical model you would recommend and why. Is there a larger population of homes to which you are willing to generalize your conclusions? Is it reasonable to conclude that either the size of the home and/or the location of the property is causing variation in home prices? Explain.
+
+We would recommend the model with square footage and location. This model has the lowest residual standard error by a substantial amount (about 140 thousand dollars less than the model with only square footage). This reduction in residual standard error tells us that the variables size and location are accounting for variation in home prices. But we should leap to any "causal" conclusions from this observational study, there could be other variables that also change with size and location and that contribute to the home price (e.g., age). We can only apply these results to homes just north of Lake Macatawa, MI, and maybe just this time frame.
+
+# STEP 6: Looking back and ahead.
+
+> 18) Identify any limitations you see to this study. What additional data would you like to collect to answer this research question?
+
+Our scope of inference is also limited (observational study, specific location). We could look into collecting information on homes in other areas to be able to make broader conclusions.
