@@ -18,6 +18,7 @@ library(ggplot2)
 library(dplyr)
 library(mosaic)
 library(ImSIwithR)
+library(emmeans)
 ```
 
 
@@ -40,19 +41,20 @@ Bergmann’s rule is most often applied to warm-blooded animals, but there has b
 # STEP 3: Explore the Data:
 
 ```{r}
-#load in data
+#Call the Data
 data(Squirrels)
 ```
 
 > 3.  Using the graph and descriptive statistics, summarize the distribution of squirrel lengths.
 
 ```{r}
-# Simple ggplot histogram with labels 
+# Simple GGplot with labels
 ggplot(Squirrels, aes(Length))+
   geom_histogram(fill= "lightblue", color="black")+
   labs(title="Distribution of Squirrel Lengths in mm")+
   theme_classic()
 
+# Favstats for summary statistics
 favstats(~Length, data=Squirrels)
 ```
 
@@ -61,11 +63,11 @@ favstats(~Length, data=Squirrels)
 > 4.  Now look at the lengths seperated by location:
 
 ```{r}
-#Looking at Distribution of Squirrel Lengths by Location
+#Distribution of Squirrel Lengths by Location
 
-ggplot(Squirrels, aes(x=Length, fill=Location))+      # fill=trt colors bars by treatment group
+ggplot(Squirrels, aes(x=Length, fill=Location))+      # fill=trt colors bars by treatment group (or in this case location)
   geom_histogram(color="black")+
-  facet_wrap(~Location,ncol=1)+                        # facet_wrap() makes one histogram per treatment group (stacked vertically here)
+  facet_wrap(~Location,ncol=1)+                        # facet_wrap() makes one histogram per treatment group (stacked vertically here - nrow vs ncol)
   theme_classic()+
   labs(
     title = "Distribution of Squirrel Lengths by Location",
@@ -84,11 +86,12 @@ ggplot(Squirrels, aes(x=Length, fill=Location))+      # fill=trt colors bars by 
 group_means <- favstats(Length ~ Location, data = Squirrels)
 group_means %>% select(Location, mean, sd, n)
 
-# Calculate Residual Standard Error (Residual SE)
-# Formula: sqrt(SSE / (n - number of groups))
-Squirrels$Location <- factor(Squirrels$Location)
-model <- lm(Length ~ Location, data = Squirrels)
-summary(model)$sigma
+# Calculate Residual Standard Error (Residual SE)                               if doing by hand, remember-  Formula: sqrt(SSE / (n - number of groups))
+
+Squirrels$Location <- factor(Squirrels$Location)                                #Makes sure the Location is a factor
+model <- lm(Length ~ Location, data = Squirrels)                                #model with location as single predictor 
+RSE<-summary(model)$sigma                                                       #takes the residual standard error straight from the model
+print(paste("Residual Standard Error:", RSE))
 ```
 
 ## Practical Significance:
@@ -101,7 +104,9 @@ We tend to think of the difference as practically significant. When there are mo
 > 6.  Determine and Interpret R\^2 for this data.
 
 ```{r}
-rsquared(model)
+#Use rsquared function to find R^2 from our model
+r2<-rsquared(model)
+print(paste("R^2:",r2))
 ```
 
 
@@ -173,8 +178,13 @@ For the next couple questions, we duplicate the original data, so we have 4 copi
 # Replicating data 4 times
 Squirrels4 <- rbind(Squirrels, Squirrels, Squirrels, Squirrels)
 
+#Summary Statistics
 favstats(Length ~ Location, data = Squirrels4)
-rsquared(lm(Length ~ Location, data = Squirrels4))
+
+#R^2 from our model with duplicated data
+r4<- rsquared(lm(Length ~ Location, data = Squirrels4))
+
+print(paste("R^2:",r4))
 ```
 
 > 12. How have summary statistics (means and standard deviations and sample sizes) changed? How has the R\^2 value changed? (Include supporting output to answer these questions.)
@@ -239,10 +249,13 @@ prop(~Fstat > obs_F, data = null_dist_F)
 > 15. How does the F-statistic for the original data compare to the F-statistic for the four copies dataset? As you expected? The p-value?
 
 ```{r}
-# Original F
-summary(lm(Length ~ Location, data = Squirrels))$fstatistic[1]
-# 4 Copies F
-summary(lm(Length ~ Location, data = Squirrels4))$fstatistic[1]
+# Original F Statistic
+orig_F<- summary(lm(Length ~ Location, data = Squirrels))$fstatistic[1]
+print(paste("Original F Statistic:", orig_F))
+
+# 4 Copies F Statistic
+copies_F <- summary(lm(Length ~ Location, data = Squirrels4))$fstatistic[1]
+print(paste("4 Copies F Statistic:",copies_F))
 ```
 
 
@@ -317,7 +330,7 @@ Arguably the most common type of post-hoc analysis involves comparing each group
 > 22. Do any of these confidence intervals contain 0? If so, which one(s) and what does it mean when the confidence interval for a difference of means contains 0?
 
 ```{r}
-# Tukey's Honest Significant Differences (Post-hoc)
+# Tukey's Honest Significant Differences (Post-hoc) - uses a common p value adjustment for multiplicity. 
 TukeyHSD(aov(model))
 ```
 
@@ -332,14 +345,14 @@ Where $n_i$ is the sample size of the treatment group, and the $t^*$ multiplier 
 > 24. Create confidence intervals and write an interpretation of one of these intervals in the context of this study.
 
 ```{r}
-# CI for the mean of Big Bear Lake
-# Mean = 287.4, n = 5, Residual SE = 6.08
-# t* for 95% and df=14 is approx 2.145
-confint(model, level = 0.95)
+#Confidence Interval for the Mean of each location: 
+emmeans(model, ~ Location)                                                      #Automatically does the calculation from the equation after question 23. 
 ```
 
 
-> 25. How would increasing the sample size of the treatment groups change these intervals? What if the confidence was changed to 99%?
+> 25. How would increasing the sample size of the treatment groups change these intervals? What if the confidence was changed to 99%? (Hint: look at the equation for a confidence interval.)
+
+
 
 ## Prediction Intervals
 
@@ -347,23 +360,20 @@ Up until now, our focus has been on confidence intervals for population means (o
 
 ### Definition
 
-A *prediction interval* gives an interval of values within which we
-predict the response of a new individual observation (e.g., person) to
-occur with some degree of confidence. For example, a 95% *prediction
-interval* means we are 95% confident that the responses for 95% of
-individuals in the population will be captured in the interval.
+A *prediction interval* gives an interval of values within which we predict the response of a new individual observation (e.g., person) to occur with some degree of confidence. For example, a 95% *prediction interval* means we are 95% confident that the responses for 95% of individuals in the population will be captured in the interval.
 
 $$\bar{y_i}\pm t^*\times(SE\ of\ residuals)\sqrt{1+\frac{1}{n}}$$
 
-> 26. Create prediction intervals and write an interpretation of one of the prediction intervals. Comment on how your interpretation of this interval differs from the interpretation of the confidence intervals.
+> 26. Create a prediction interval and write an interpretation. Comment on how your interpretation of this interval differs from the interpretation of the confidence intervals.
 
 
 ```{r}
+#Prediction interval: 
 
-new <- data.frame(
-  Location = factor("          BigBear", levels = levels(model$model$Location))
-)
+#Set the Location and use model weights for specified location
+new <- data.frame(Location = factor("          BigBear", levels = levels(model$model$Location)))
 
+#Create prediction interval 
 predict(model, newdata = new, interval = "prediction")
 
 ```
