@@ -1,0 +1,898 @@
+---
+title: "Math 248: Explorations 1.4-1.5"
+author: "Solution"
+header-includes:
+  - \usepackage{float}
+  - \floatplacement{figure}{H}
+output:
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo=TRUE,message=FALSE,warning=FALSE, fig.align = 'center', out.width="80%" )
+library(tidyverse)
+library(ImSIwithR)
+```
+
+
+# Exploration 1.4: Golden Squirrels
+
+
+Bergmann’s rule (named after German biologist Carl Bergmann) is an ecogeological rule that states that within a species specimen will tend to be larger if they are from cooler climates or more extreme latitude. Bergmann’s rule is most often applied to warm-blooded animals, but there has been some evidence of the rule in other species as well. A former Cal Poly Biology grad student (Nora Gerdes) wanted to investigate whether Bergmann’s Rule applies to the golden mantled squirrel in California. She measured the _body lengths (mm)_ of 18 squirrels from four California _locations_:Hemet, Beg Bear Lake, Sasanville, Loop Hill. The data are stored in `Squirrels` in the `ImSIwithR` library in R.
+
+
+_First, let's load the data:_
+
+```{r, loading squarrels data from the package}
+library(ImSIwithR)# reference the library where the dataset is stored
+data(Squirrels)#load in data
+head(Squirrels)
+```
+
+# STEP 1: Ask a research question.
+
+> 1. State the research quesiton along the lines of an alternative hypothesis. Conjecture any other possible sources of variation in squirrel length.
+
+Does climate or latitude have an effect on the length of squirrels? Other possible sources of variation in squirrel length include diet, habitat, age, etc.
+
+# STEP 2: Design a study and collect data.
+
+> 2. Identify the observational units, the response variable, and the explanatory variable. Classify each. 
+
+Observational Units  - 18 squirrels
+
+Explanatory Variable -  squirrel location, categorical 
+
+Response Variable  -  squirrel length, quantitative
+
+> 3. Is this an experiment or a observational study? Include a discussion of any inclusion criteria. 
+
+Observational study, the squirrels are not randomly assigned, rather available information is collected
+
+> 4. Fill in the list of the sources of Variation components for this study:
+
+* Observed Variation in: Squirrel length   
+* Inclusion criteria: Adults, Golden Mantled
+* Sources of explained variation: Location (categorical)
+* Sources of unexplained variation: Age, sex, diet, predators,habitat, other unknown sources
+
+_Let's summarize the distribution of squirrel lengths, using both a graphical summary (histogram & boxplot) and summary statistics._
+
+```{r, numerical summary of the length variable}
+summarize(Squirrels,  
+          mean_length = mean(Length), 
+          sd_length = sd(Length, na.rm = TRUE)
+          )
+```
+
+```{r, histogram of length variable}
+ggplot(Squirrels, aes(x = Length)) +
+  geom_histogram(binwidth = 15, fill = "lightblue", color = "black")+
+  labs(title = "Histogram of squirrel lengths",
+       x = "Length",
+       y = "Count") +
+  theme_minimal()
+```
+
+> 5. Describe what you see on the graphs and what the numerical summaries tell you about this data.
+
+The distribution seems to be roughly symmetric and bell-shaped. Mean is around 263, standard deviation about 13.6.
+
+> 6. What is the `SSTotal` for this data? 
+
+```{r, calculating SSTotal}
+overall_mean_val <- mean(Squirrels$Length, na.rm = TRUE)
+print(paste("overall_mean:", overall_mean_val))
+
+SSTotal <- sum((Squirrels$Length - overall_mean_val)^2)
+print(paste("SSTotal (calculated from raw):", SSTotal))
+```
+
+$SSTotal=3136.5$
+
+_Now look at the graphical and numerical summaries of lengths separated by location._ 
+
+```{r}
+# Create the stacked histogram
+ggplot(Squirrels, aes(x = Length, fill = Location)) + 
+  geom_histogram(binwidth = 10, color = "white") + 
+  facet_wrap(~ Location, ncol = 1, scales = "free_y") +
+  labs(title = "Histograms of Length by Location (Stacked Vertically, Colored by Group)",
+       x = "Length",
+       y = "Count") +
+  theme_minimal()
+```
+
+```{r, box-plots of time for each treatment}
+# Create boxplots 
+ggplot(Squirrels, aes(x = Length, y = Location, fill = Location)) +
+  geom_boxplot(color = "black") + # 'color' sets the outline of the boxes
+  labs(
+    title = "Boxplots of Length by Location",
+    x = "Location",
+    y = "Length"
+  ) +
+  theme_minimal() +
+  theme(legend.position = "none") # Hide legend if fill is mapped to x-axis already
+
+```
+
+```{r, means and standard deviations of the Location groups}
+summary_data <- Squirrels %>%
+  group_by(Location) %>%
+  summarise(
+    mean_length = mean(Length, na.rm = TRUE), # Calculate mean
+    sd_time = sd(Length, na.rm = TRUE),       # Calculate standard deviation
+    n = n(),                                  # Count the number of observations
+   .groups = 'drop'                           # Drop the grouping structure
+  )
+
+# View the new summary data frame
+print(summary_data)
+```
+
+> 7. Does location appear to explain variation in squirrel lengths? How are you deciding?
+
+We see noticeably longer squirrels in Loophill and shorter length squirrels in Hemet.
+
+
+> 8. Use group means to write out a "seperate locations" model. Give the predicted equation and standard error of residuals. (Hint: replace `?` with appropriate values).
+
+$$
+predicted \ length = 
+\begin{cases} 
+280.75 & \text{if Loophill} \\
+262.2 & \text{if Susanville} \\
+260.75 & \text{if BigBear} \\
+252 & \text{if Hemet}
+\end{cases}
+$$
+
+```{r}
+model_squirrels <- lm(Length ~ Location, data = Squirrels)
+rse_value <- sigma(model_squirrels) # residual standard error
+print(paste("Residual Standard Error:", rse_value))
+```
+
+
+
+$Standard \ Error \  of  \ residuals =\ 9.44  mm$
+
+
+## Practical Significance: 
+
+Recall that in evaluating practical significance, you should consider the context of the research study as well as a numerical measure of group differences. When we have only two groups, we can compare the difference in means to the residual SE: $\bar{y_1}-\bar{y_2}/(Residual\ SE)$. If the difference in means is larger than one residual SE, 
+
+We tend to think of the difference as practically significant. When there are more than two groups, we can use $R^2$ to summarize how different the groups are in terms of how much variation in the response variable we are able to explain. 
+
+> 9. Are any pairs of group means farther apart than one residual standard error? In other words, are effect sizes large enough to conclude practical significance?
+
+```{r, effect size calculation }
+# compute means and check locations
+observed_means <- Squirrels %>%
+  group_by(Location) %>%
+  summarise(mean_length = mean(Length, na.rm = TRUE)) %>%
+  ungroup()
+
+# Extract the Standard Error of the Residuals 
+model_squirrels <- lm(Length ~ Location, data = Squirrels)
+rse_value <- sigma(model_squirrels)
+
+# create pairwise combinations and compute effect sizes
+pairwise_effects <- observed_means %>%
+  rename(mean = mean_length) %>%
+  mutate(key = 1) %>%
+  inner_join(., ., by = "key", suffix = c("_A", "_B")) %>%
+  filter(Location_A < Location_B) %>%
+  transmute(
+    pair = paste(Location_A, "vs", Location_B),
+    mean_diff = mean_A - mean_B,
+    effect_size = mean_diff / rse_value
+  )
+
+print(pairwise_effects)  # shows each pair, difference, and effect size
+
+```
+
+Yes, the mean length of squirrels from Loophill is more than one residual standard error from the mean length of squirrels from each of the other locations.
+
+> 10. Report and Interpret $R^2$ for this data. 
+
+```{r, extracting the r-squared value from lm function output}
+# 1. Fit the model
+model_squirrels <- lm(Length ~ Location, data = Squirrels)
+
+# 2. Get the R-squared value
+observed_r2<-summary(model_squirrels)$r.squared
+cat("Observed R-squared:", round(observed_r2, 4), "\n")
+```
+
+$R^2= 0.602$, location explains $60.2\%$ of the variation in squirrel lengths.
+
+
+# STEP 4: Draw inferences beyond the data. (Statistical Significance)
+
+_Practical significance_ is only part of the story. We also want to consider whether the observed differences in mean lengths among the four locations are plausibly due to random chance alone or strong evidence of a true association between location and length.
+
+> 10. Write out in words the null and alternative hypotheses for our significance test. (Hint: You may do so simply in terms of “association” between the response and explanatory variables or in terms of population means - being sure to define any symbols that you use.)
+
+$H_0:$ There is no association between location and squirrel length in the population
+
+$H_A:$ There is an association between location and squirrel length in the population
+
+
+## Applying the 3S Strategy
+
+1. _Choice of Statistic_
+
+First, we need one number that summarizes how different the groups are. The difference in means and t-statistic only work when we have just two groups to compare.
+
+> 11. Suggest a statistic (a formula) that we could use to summarize the differences among these four groups.
+
+Looking for a statistic that compares how different all four means are to each other at once, e.g., summing all of the pairwise differences in absolute value, $R^2$.
+
+2. _Simulation_
+
+There are several different statistics we could use; the key is getting some sense overall of how different the squirrel lengths are among the four location groups using _only one number_. This study was not a randomized experiment, but we can still shuffle the observed lengths to the four locations many, many times and determine how often we would randomly get a value for this statistic as or more extreme than that found in the actual environments. So, after each shuffle, as before, we will need to calculate the value of this statistic, and build a null distribution for the statistic. As we’ve already computed $R^2$, let’s start with $R^2$ as our statistic.
+
+_Let's create the null distribution of the $R^2$ statistic_
+
+```{r, creating the null distribution of r-squared statistic, echo=FALSE}
+# --- Step 1: Set a seed for reproducibility ---
+
+set.seed(123) 
+
+# --- Step 2: Define the number of simulations ---
+num_simulations <- 1000
+simulated_r2s <- numeric(num_simulations) # Variable to store R-squared values
+
+# --- Step 3: Perform the randomization (shuffling) test ---
+for (i in 1:num_simulations) {
+  # Shuffle the 'time' variable
+  shuffled_lengths <- sample(Squirrels$Length)
+
+  # Create temporary dataframe
+  temp_data <- data.frame(
+    length = shuffled_lengths,
+    location = Squirrels$Location
+  )
+
+  # Fit a linear model to the shuffled data
+  sim_model <- lm(length ~ location, data = temp_data)
+  
+  # Extract the R-squared value
+  simulated_r2s[i] <- summary(sim_model)$r.squared
+}
+
+# --- Step 4: Visualize ---
+sim_data_for_plot <- data.frame(r_squared = simulated_r2s)
+
+ggplot(sim_data_for_plot, aes(x = r_squared)) +
+  geom_histogram(binwidth = 0.02, fill = "skyblue", color = "black", alpha = 0.7) +
+  
+  # Vertical line for observed R-squared
+  geom_vline(xintercept = observed_r2, color = "red", linetype = "dashed", size = 1) +
+  
+  labs(
+    title = "Null Distribution of R-squared",
+    subtitle = "What R-squared values would we see if Location had NO effect?",
+    x = "Simulated R-squared",
+    y = "Frequency"
+  ) +
+  theme_minimal() +
+  
+  # Annotations
+  annotate("text", x = observed_r2, y = Inf, 
+           label = paste("Observed R2 =", round(observed_r2, 3)), 
+           vjust = 2, hjust = 1.1, color = "red", fontface = "bold") +
+    # Expand Y axis to fit labels
+  scale_y_continuous(expand = expansion(mult = c(0, 0.15)))
+
+```
+
+
+
+> 12. Describe the behavior of the null distribution of the $R^2$ statistic. Is it roughly symmetric? Does this shape make sense? Explain.
+
+
+The $R^2$ distribution is not symmetric but right skewed with a mean very close to 0. This makes sense because when the null hypothesis is true, location should not explain any (or very little) variation in squirrel length.
+
+3. _Strength of Evidence_
+
+_Let's use R to estimate the p-value._
+
+```{r, calculate P-value using r-squared distribution}
+# NOTE: R-squared is always positive. A "stronger" result is always a HIGHER R-squared.
+# Therefore, we only look at the right tail (greater than or equal to).
+p_value <- sum(simulated_r2s >= observed_r2) / num_simulations
+cat("P-value:", p_value, "\n")
+```
+
+
+> 13. Report the p-value. Does this p-value provide strong evidence against the null hypothesis of no association between location and length? Explain.
+
+Check for $R^2$ values as or more extreme than the observed value of 0.602. The p-value should be close to 0.005 providing strong evidence against the null hypothesis of no association.
+
+
+_Now, let's copy our data several times to create 4 copies of the original data._ 
+
+
+```{r}
+copies <- rep(list(Squirrels), 4)
+names(copies) <- paste0("Squirrels_copy_", 1:4)
+
+four_squirrels_copies <- bind_rows(copies, .id = "copy")
+head(four_squirrels_copies, 3)
+```
+
+
+> 14. How have summary statistics (means and standard deviations and sample sizes) changed? 
+
+```{r, means and standard deviations of the Location groups from 4 copies of the data}
+summary_data_4 <- four_squirrels_copies %>%
+  group_by(Location) %>%
+  summarise(
+    mean_length = mean(Length, na.rm = TRUE), # Calculate mean
+    sd_time = sd(Length, na.rm = TRUE),       # Calculate standard deviation
+    n = n(),                                  # Count the number of observations
+   .groups = 'drop'                           # Drop the grouping structure
+  )
+
+# View the new summary data frame
+print(summary_data_4)
+```
+
+The sample sizes are 4 times larger. The mean is unchanged, however the standard deviations have changed a little bit.
+
+> 15. How has the $R^2$ value changed? 
+
+```{r, extracting the r-squared value from lm function output for 4 copies of the data}
+# 1. Fit the model
+model_squirrels4 <- lm(Length ~ Location, data = four_squirrels_copies)
+
+# 2. Get the R-squared value
+observed_r2<-summary(model_squirrels4)$r.squared
+cat("Observed R-squared:", round(observed_r2, 4), "\n")
+```
+
+$R^2$ values remained unchanged
+
+
+> 16. Now reshuffle 1000 times. What changed in the null distribution?
+
+```{r, creating the null distribution of r-squared statistic four copies of the data, echo=FALSE}
+# --- Step 1: Set a seed for reproducibility ---
+
+set.seed(123) 
+
+# --- Step 2: Define the number of simulations ---
+num_simulations <- 1000
+simulated_r2s <- numeric(num_simulations) # Variable to store R-squared values
+
+# --- Step 3: Perform the randomization (shuffling) test ---
+for (i in 1:num_simulations) {
+  # Shuffle the 'time' variable
+  shuffled_lengths <- sample(four_squirrels_copies$Length)
+
+  # Create temporary dataframe
+  temp_data <- data.frame(
+    length = shuffled_lengths,
+    location = four_squirrels_copies$Location
+  )
+
+  # Fit a linear model to the shuffled data
+  sim_model <- lm(length ~ location, data = temp_data)
+  
+  # Extract the R-squared value
+  simulated_r2s[i] <- summary(sim_model)$r.squared
+}
+
+# --- Step 4: Visualize ---
+sim_data_for_plot <- data.frame(r_squared = simulated_r2s)
+
+ggplot(sim_data_for_plot, aes(x = r_squared)) +
+  geom_histogram(binwidth = 0.02, fill = "skyblue", color = "black", alpha = 0.7) +
+  
+  # Vertical line for observed R-squared
+  geom_vline(xintercept = observed_r2, color = "red", linetype = "dashed", size = 1) +
+  
+  labs(
+    title = "Null Distribution of R-squared for 4 copies of the data",
+    subtitle = "What R-squared values would we see if Location had NO effect?",
+    x = "Simulated R-squared",
+    y = "Frequency"
+  ) +
+  theme_minimal() +
+  
+  # Annotations
+  annotate("text", x = observed_r2, y = Inf, 
+           label = paste("Observed R2 =", round(observed_r2, 3)), 
+           vjust = 2, hjust = 1.1, color = "red", fontface = "bold") +
+    # Expand Y axis to fit labels
+  scale_y_continuous(expand = expansion(mult = c(0, 0.15)))
+
+```
+
+ The larger sample size decreases the size of the standard deviation of the null distribution making more extreme values of $R^2$ even less likely, thus strengthening the evidence of the observed value of 0.602 happening by chance alone.
+
+
+> 17. How does the p-value (our strength of evidence against the null hypothesis) change? Explain why this makes sense.
+
+```{r, calculate P-value using r-squared distribution four copies of the data}
+# NOTE: R-squared is always positive. A "stronger" result is always a HIGHER R-squared.
+# Therefore, we only look at the right tail (greater than or equal to).
+p_value <- sum(simulated_r2s >= observed_r2) / num_simulations
+cat("P-value:", p_value, "\n")
+```
+
+The updated p-value is smaller, 0.003 in this case
+
+
+_When we have more data, with the same differences in means and the same variability, we might find the additional “consistency” in the group differences more convincing, less likely to be due to “random chance” alone. The simulation reflects this, giving us a smaller p-value, but it would be nice if our statistic did so as well. The $R^2$ statistic was the same whether we had 18 total observations or 72 total observations. Because the $R^2$ does not take sample size into account, we may prefer to look at a standardized statistic (something analogous to the t-statistic) that reflects both the sample size and the leftover or unexplained variation._
+
+## Other Choices of Statistics The F-statistic is one such statistic.
+
+Named after famous statistician R. A. Fisher, the F-statistic compares the explained to unexplained variance, adjusting for the sample size and number of groups, using the degrees of freedom for both the `SSError` and `SSModel`. 
+
+$$F= \left[ \frac{R^2}{1-R^2}\right]\times\left[\frac{n-\# \ of \ groups}{\#\ of \ groups - 1}\right]= \left[\frac{SSModel}{SSError}\right]$$
+
+
+_Let's create the null distribution for the F-statistic using the four copies of the data._ 
+
+```{r, null distribution for the F-statistic }
+# compute observed F
+obs_aov <- aov(Length ~ Location, data = four_squirrels_copies)
+obs_F <- summary(obs_aov)[[1]]["Location", "F value"]
+
+# permutation function
+perm_F <- function(df) {
+  df_perm <- df %>% mutate(Location = sample(Location))  # shuffle Location labels
+  sumsq <- summary(aov(Length ~ Location, data = df_perm))[[1]]
+  sumsq["Location", "F value"]
+}
+
+# build null distribution
+set.seed(123)                # for reproducibility
+n_perm <- 2000
+null_F <- replicate(n_perm, perm_F(four_squirrels_copies))
+
+# p-value (one-sided: proportion of null F >= observed F)
+p_val <- mean(null_F >= obs_F)
+
+# optional: view null summary or plot
+#summary(null_F)
+hist(null_F, breaks = 40, main = "Null distribution of F", xlab = "F", col = "lightblue")
+abline(v = obs_F, col = "red", lwd = 2)
+```
+
+```{r, observed F-statistic and the corresponding p-value}
+cat("Observed F for 4 copies:", round(obs_F, 3), "\n")
+cat("Permutation p-value for 4 copies:", signif(p_val, 3), "\n")
+```
+
+> 18. Report the observed F statistic and corresponding p-value.
+
+The observed F statistic with four copies of the data is 34.286 with an approximate p-value of less than 0.001
+
+
+> 19. Consider the original `Squirrels` dataset with 18 observations. How does the F-statistic for the original data compare to the F-statistic for the four copies dataset? As you expected? The p-value?
+
+```{r, observed F statistic for original data}
+obs_aov <- aov(Length ~ Location, data = Squirrels)
+obs_F_org <- summary(obs_aov)[[1]]["Location", "F value"]
+cat("Observed F for original squirrels data:", round(obs_F_org, 3), "\n")
+```
+
+```{r, p-value corresponding to F statistic for original data}
+set.seed(123)                # for reproducibility
+n_perm <- 2000
+null_F_org <- replicate(n_perm, perm_F(Squirrels))
+
+# p-value (one-sided: proportion of null F >= observed F)
+p_val_org <- mean(null_F_org >= obs_F_org)
+cat("Permutation p-value for original data:", signif(p_val_org, 3), "\n")
+```
+
+The F statistic for the original data is less extreme, however it is still statistically significant as the p-value is .005. The increase in sample size is reflected in a larger F statistic.
+
+
+## Theoretical F Distribution:
+
+One advantage of the _F-statistic_ is when certain _validity conditions are met_, it is well-approximated by a probability distribution, the _F-distribution_ (also named after R. A. Fisher).
+
+### Validity Conditions: 
+
+To use the _F-distribution_ to find the p-value for the F-statistic requires that
+
+1. the samples are independent of each other,
+2. the standard deviations of the treatment groups are similar (e.g., the largest is not more than twice the size of the smallest), and
+3. the distributions of the treatment groups are approximately symmetric (implying the distribution of the residuals is approximately normal) or all group sizes are larger than 20 with no extreme skewness or outliers.
+
+Notice that these _validity conditions_ are the same conditions we used for the two-sample (pooled) t-test.
+
+
+> 20. Consider the original dataset with 18 observations. Go through each validity condition and determine whether or not they are met for this study. Hint: Use description of the data for independence, use standard deviations for each location and boxplots created in the beginning of the exploration to justify your answers.
+
+Condition 1 is met as each squirrel measured is unique (i.e., not genetically related), thus all observations are independent.
+
+Condition 2 is met as the largest and smallest standard deviations are 10.89 and 7.59 respectively. The largest is less than twice the size of the smallest.
+
+```{r, means and standard deviations of the Location groups to check equal variance}
+summary_data <- Squirrels %>%
+  group_by(Location) %>%
+  summarise(
+    mean_length = mean(Length, na.rm = TRUE), # Calculate mean
+    sd_time = sd(Length, na.rm = TRUE),       # Calculate standard deviation
+    n = n(),                                  # Count the number of observations
+   .groups = 'drop'                           # Drop the grouping structure
+  )
+
+# View the new summary data frame
+print(summary_data)
+```
+
+Condition 3 is met as there are no outliers and the distributions of squirrel lengths at each location appear to be roughly symmetric, though the small sample makes it difficult to judge.
+
+
+```{r, box-plots of time for each treatment to check normality}
+ggplot(Squirrels, aes(x = Length, y = Location, fill = Location)) +
+  geom_boxplot(color = "black") + # 'color' sets the outline of the boxes
+  labs(
+    title = "Boxplots of Length by Location",
+    x = "Location",
+    y = "Length"
+  ) +
+  theme_minimal() +
+  theme(legend.position = "none") # Hide legend if fill is mapped to x-axis already
+
+```
+
+
+
+
+
+
+
+> 21. Let's overlay F-distribution on the simulated null F distribution. Does the theoretical F-distribution do a good job of approximating the shuffled null distribution even in the original study with such small sample sizes?
+
+```{r, overlaying theoretical F distribution}
+# degrees of freedom
+k <- length(unique(Squirrels$Location))
+n <- nrow(Squirrels)
+df1 <- k - 1
+df2 <- n - k
+
+# plot histogram as density, simulated density, theoretical F, and observed F
+hist(null_F_org, breaks = 40, prob = TRUE, col = "lightblue",
+     main = "Null distribution of F with theoretical F overlay",
+     xlab = "F statistic")
+lines(density(null_F_org), col = "blue", lwd = 2) 
+# theoretical F density: choose reasonable x range covering the histogram
+x_min <- min(null_F_org)
+x_max <- max(null_F_org)
+curve(df(x, df1, df2), from = x_min, to = x_max, add = TRUE, col = "red", lwd = 2)
+
+abline(v = obs_F_org, col = "black", lwd = 2, lty = 2)
+legend("topright", legend = c("Simulated density", "Theoretical F", "Observed F"),
+       col = c("blue", "red", "black"), lwd = c(2,2,2), lty = c(1,1,2))
+```
+
+The F distribution overlay aligns closely with the simulated distribution.
+
+> 22. Based on the permutation p-value for the original data, what statistical decision can you make regarding the null hypothesis?
+
+The theoretical pvalue is 0.004, the pvalue provides strong evidence to reject the null hypothesis of no association.
+
+_Note:_ the permutation/simulated and theory-based p-values should be similar since F distribution and shuffled distributions are similar. You could obtain the theory-based p-value using the following function in R.
+
+```{r, theory-based p-value for ANOVA}
+model_squirrels <- lm(Length ~ Location, data = Squirrels)
+ANOVA_table <- anova(model_squirrels)
+p_value <- ANOVA_table["Location", "Pr(>F)"]
+cat("theory-based p-value for ANOVA:", round(p_value, 4), "\n")
+```
+
+
+# STEP 5: Formulate conclusions.
+
+> 23. Based on your analysis so far, summarize the conclusions you would draw from this study. Be sure to address statistical significance, generalizability, and causation. Also be sure to put your comments into the context of this research study and your conclusions about Bergmann’s rule.
+
+p-value of 0.004 gives strong evidence to reject the null hypothesis. This means there is strong evidence that at least one location has squirrels of different lengths on average. This study can be generalized to adult Golden Mantled squirrels in California (assuming the squirrels captured are representative), but causation cannot be inferred as this is an observational study and not an experiment. So far we can only say at least
+one location is different on average, we can’t say much about how or why the mean lengths of squirrels at the other locations differ… (see Exploration 1.5 for more on direction…)
+
+
+# STEP 6: Look back and ahead.
+
+> 24. Suggest at least one way you would improve the study if you were to carry it out, or an extension to the research. 
+
+Add more sampling locations, increase sample size, different species of squirrels, etc
+
+
+## Exploration 1.5 Golden Squirrels cont.
+
+But, have we really answered the research question? Not yet! So far, we’ve only found evidence of an association between length and location. To determine whether Bergmann’s Rule applies, we need to understand the nature of the association between length and location. We need to address questions such as:
+
+• Do squirrels from colder locations tend to be longer, on average?
+
+• Which population mean or means is/are different than the others? How much do they differ?
+
+• Does the average length differ in every one of these four populations? Maybe just one of them?
+
+
+## Post-hoc Analyses 
+
+Once we find a significant association, the natural follow-up question is the nature of that association. The process of following up a _statistically significant F-test_ is called _post-hoc analysis_.
+
+## Definition
+
+A *post hoc analysis* is the process of assessing how the means of the treatment groups relate to one another, a follow up analysis to a significant F-Test.
+
+
+### Pairwise Comparisons of the Treatment Groups:
+
+Arguably the most common type of post-hoc analysis involves comparing each group mean to each other group mean by conducting _pairwise comparisons_.
+
+## Definition
+
+The _experiment-wise Type I error rate_ is the chance of making at least one Type I error when conducting numerous tests of statistical significance. To better control this rate, we will only conduct post-hoc analyses after a significant F-test.
+
+## Key Idea
+
+We can protect against an inflated experiment-wise Type I error rate by only conducting post-hoc analyses using pairwise comparisons after obtaining a statistically significant F-statistic.
+
+_Let's use R to calcuation 95% confidence intervals for difference in means._ 
+
+```{r pairwise confidence intervals without adjustment}
+# ANOVA and pooled residual SD
+model <- aov(Length ~ Location, data = Squirrels)
+aov_tab <- anova(model)
+mse <- aov_tab["Residuals", "Mean Sq"]        # mean squared error
+sigma <- sqrt(mse)
+# group means and counts
+gm <- Squirrels %>%
+  group_by(Location) %>%
+  summarise(mean = mean(Length, na.rm = TRUE), n = n()) %>%
+  arrange(Location)
+
+# critical t for (1-alpha/2)
+df_res <- df.residual(model)
+tcrit <- qt(0.975, df_res)   # 95% CI
+
+# all pairwise combinations and CIs
+pairs <- expand.grid(i = 1:nrow(gm), j = 1:nrow(gm)) %>%
+  filter(i < j) %>%
+  rowwise() %>%
+  mutate(
+    loc_i = gm$Location[i],
+    loc_j = gm$Location[j],
+    mean_diff = gm$mean[i] - gm$mean[j],
+    se_diff = sigma * sqrt(1 / gm$n[i] + 1 / gm$n[j]),
+    lower = mean_diff - tcrit * se_diff,
+    upper = mean_diff + tcrit * se_diff
+  ) %>%
+  select(loc_i, loc_j, mean_diff, se_diff, lower, upper)
+
+pairs
+```
+
+This output mathes the output produced by the `Comparing Groups`applet.
+
+
+> 1. Do any of these confidence intervals contain 0?  If so, which one(s) and what does it mean when the confidence interval for a difference of means contains 0?
+
+Hemet vs Big Bear, Hemet vs Susanville, and Big Bear vs Susanville each contain 0.
+
+_Since these are created after determining that the F-test produced a statistically significant result, these are called Fisher's Least Squared Differences. Fisher's Least Significant Difference (LSD) produces unadjusted pairwise confidence intervals for comparing group means in ANOVA. Because it treats each comparison independently rather than adjusting for the total number of comparisons, it is more likely to find significant differences (high power) but at the cost of higher Type I error rates.It is generally used when the ANOVA F-test is significant, particularly with a small number of pairs._
+
+## Tukey’s Honest Significant Difference (Tukey’s HSD) method
+
+A commonly used method to make all the pairwise comparisons that includes a correction for doing this is called _Tukey’s Honest Significant Difference_ (Tukey’s HSD) method. Using this method allows simultaneous confidence: the 95% confidence applies to the entire set of comparisons, not just individual pairs.
+
+_Let's use R to create Tukey-adjusted confidence intervals:_
+
+```{r, Tukey adjusted confidence intervals}
+# fit ANOVA
+model <- aov(Length ~ Location, data = Squirrels)
+
+# Tukey HSD gives differences and CIs
+tuk <- TukeyHSD(model, "Location", conf.level = 0.95)
+tuk
+# as a data.frame
+as.data.frame(tuk$Location)
+```
+
+
+> 2. Do any of these Tukey-adjusted confidence intervals contain 0? How does the width of adjusted confidence interval compare to unadjusted Fisher LSD confidene intervals? Did the significance of the pairwise comparisons changed by using the adjusted confidence interval?
+
+Hemet- BigBear, Susanville- BigBear, Susanville- Hemet each contain 0. So while the intervals are wider, the conclusion regarding which pairwise comparisons are not significant ( interval contains zero) does not change.
+
+> 3. Write a brief summary of your findings from the pairwise confidence intervals. Be sure to address whether/how these support the application of Bergmann’s Rule to the golden mantled squirrel in California.
+
+The squirrels in Hemet, Big Bear, and Susanville have means lengths that are not significantly different from each other. The mean length of squirrels from Loophill is significantly different from each of the other locations. Squirrels from Loophill tend to be larger, on average. This supports Bergman’s rule as Loophill is a more extreme latitude.
+
+## Other multiplicity adjustments
+
+There are several common _multiplicity adjustments_, some are more conservative (increase the p-value a lot) than others: 
+
+* Fisher LSD (Least Significant Difference)
+
+_What it is:_ A two-step approach that first checks for any overall difference; if that test is significant, it then performs pairwise comparisons without further strong adjustment.
+
+_When to use:_ When you have a small number of groups and you’re willing to accept a higher chance of false positives for follow-up pairwise tests. Best when the overall test is significant and you want more power to detect differences.
+
+_Trade-off:_ More powerful but risks more false positives when many comparisons are made.
+
+
+* Tukey (Tukey’s Honest Significant Difference)
+
+_What it is:_ A method designed specifically for all pairwise comparisons that controls the overall error rate across every pair.
+
+_When to use:_ When you plan to compare every group against every other group (all pairwise contrasts). It balances protection against false positives with reasonable power and provides interpretable simultaneous confidence intervals.
+
+_Trade-off:_ Slightly more conservative than LSD (less chance of false positives) but generally a good default for multiple pairwise comparisons—recommended in most routine situations.
+
+* Scheffé
+
+_What it is:_ A very flexible, conservative method that protects against false positives for any possible contrast (not just pairwise).
+
+_When to use:_ When you may test many or complex contrasts (including custom combinations) and need strong protection against false positives across all of them.
+
+_Trade-off:_ Quite conservative, so it has lower power to detect true differences for specific pairwise tests.
+Bonferroni
+
+_What it is:_ A straightforward correction that divides your significance threshold by the number of comparisons.
+
+_When to use:_ When you have a small, clearly specified set of planned comparisons and want a simple, easy-to-explain adjustment.
+
+_Trade-off:_ Can be overly conservative when many comparisons are made, reducing power.
+
+### Recommendation
+
+For routine studies comparing every group to every other group, Tukey’s method is a strong default: it controls the family-wise error rate, gives simultaneous confidence intervals, and balances avoiding false positives with reasonable power. Use Fisher LSD only when you accept higher risk for greater power  (after a significant overall test); use Scheffé for broad protection over arbitrary contrasts; and use Bonferroni for a small number of planned comparisons when simplicity is preferred.
+
+## Confidence Intervals on Other Parameters
+
+The confidence intervals for the difference in means allows us to compare the mean lengths of squirrels from two locations. However, what if we also wanted to estimate the average length of the population of squirrels from Big Bear Lake?
+
+## Definition
+
+A _one-sample t-interval for a population mean_ is:
+
+$$\bar{y_i}\pm (t^*_{df})\frac{residual \ SE}{\sqrt{n_i}}$$
+
+Where $n_i$ is the sample size of the treatment group, and the $t^*$ multiplier is again approximately 2 for 95% confidence intervals.
+
+
+> 4. Use R output to report 95% confidence intervals for the mean length of all squirrels within each location. Write an interpretation of one of these intervals in the context of this study. 
+
+```{r, one-sample confidence intervals}
+conf_level <- 0.95
+
+# overall (pooled) SD of Length across all observations
+sd_length <- sd(Squirrels$Length, na.rm = TRUE)
+N_total <- sum(!is.na(Squirrels$Length))
+df <- N_total - 1
+tcrit <- qt((1 + conf_level) / 2, df)
+
+one_sample_cis_length_only <- Squirrels %>%
+  group_by(Location) %>%
+  summarise(
+    n = sum(!is.na(Length)),
+    mean = mean(Length, na.rm = TRUE),
+    se = sd_length / sqrt(n),                    # uses overall SD only
+    lower = mean - tcrit * se,
+    upper = mean + tcrit * se
+  ) %>%
+  ungroup()
+
+#cat("Overall SD of Length:", sd_length, " (df =", df, ")\n")
+print(one_sample_cis_length_only)
+```
+
+We are 95% confident that the population mean for squirrel length in Loophill will fall between 266.42 and 295.07 mm.
+
+
+> 5. How would increasing the sample size of the treatment groups change these intervals? What if the confidence was changed to 99%? 
+
+The confidence interval will become narrower with a larger sample size. The interval will broaden if the confidence level increases to 99%.
+
+> 6. Will any of the computed confidence intervals allow you to predict the length of an individual new squirrel at a particular location? Why or why not?
+
+No, confidence intervals are utilized to estimate population means, prediction intervals are used to predict a new individual observation. 
+
+
+## Prediction Intervals
+
+Up until now, our focus has been on confidence intervals for population means (or differences in means). These intervals provide estimates of ranges of plausible values for the unknown population mean value. These confidence intervals for the mean do not allow us to make predictions about the lengths of individual squirrels (e.g., how long we would estimate a squirrel to be if we randomly sampled one more squirrel from a particular location).
+
+
+### Definition
+
+A *prediction interval* gives an interval of values within which we predict the response of a new individual observation (e.g., person) to occur with some degree of confidence. For example, a 95% *prediction interval* means we are 95% confident that the responses for 95% of individuals in the population will be captured in the interval.
+
+
+$$\bar{y_i}\pm t^*\times(SE\ of\ residuals)\sqrt{1+\frac{1}{n}}$$
+
+   
+_Let's create prediction intervals_  
+
+```{r, one-sample prediction intervals}
+conf_level <- 0.95
+
+# overall SD of Length (used as residual_SE) and df for t*
+sd_length <- sd(Squirrels$Length, na.rm = TRUE)
+N_total <- sum(!is.na(Squirrels$Length))
+df <- N_total - 1
+tcrit <- qt((1 + conf_level) / 2, df)
+
+prediction_intervals <- Squirrels %>%
+  group_by(Location) %>%
+  summarise(
+    n = sum(!is.na(Length)),
+    mean = mean(Length, na.rm = TRUE)
+  ) %>%
+  mutate(
+    margin = tcrit * sd_length * sqrt(1 + 1 / n),
+    lower_pred = mean - margin,
+    upper_pred = mean + margin
+  ) %>%
+  ungroup()
+
+print(prediction_intervals)
+```
+
+> 7. Write an interpretation of one of the prediction intervals. Comment on how your interpretation of this interval differs from the interpretation of the confidence intervals.
+
+We can predict with 95% confidence that a new individual squirrel length observation in Loophill will fall between 248.71 and 312.8 mm.
+
+
+_Note: If we were to use 2 as a multiplier instead of tcrit value that depends on degrees of freedom, we would obtain slightly less precise intervals_:
+
+```{r}
+conf_level <- 0.95  # kept for reference but not used for multiplier
+multiplier <- 2     # use 2 instead of tcrit
+
+# overall SD of Length (used as residual_SE)
+sd_length <- sd(Squirrels$Length, na.rm = TRUE)
+N_total <- sum(!is.na(Squirrels$Length))
+df <- N_total - 1
+
+prediction_intervals <- Squirrels %>%
+  group_by(Location) %>%
+  summarise(
+    n = sum(!is.na(Length)),
+    mean = mean(Length, na.rm = TRUE)
+  ) %>%
+  mutate(
+    margin = multiplier * sd_length * sqrt(1 + 1 / n),
+    lower_pred = mean - margin,
+    upper_pred = mean + margin
+  ) %>%
+  ungroup()
+
+print(prediction_intervals)
+```
+
+
+> 8. Will increasing the sample size within the treatment groups have a large impact on the width of these prediction intervals? Explain why or why not.
+
+Yes, increasing the sample size will make the intervals narrower because the square root multiplier term will decrease (the sample size is in the denominator). Intuitively, larger sample sizes give higher precision in the estimate.
+
+
+> 9. In general, for a group of interest, which is wider: a 95% prediction interval or a 95% confidence interval? Explain.
+
+A 95% prediction interval because it accounts for individual observations, a wider spread of data than population means.
+
+_As we’ve seen before, these theory-based intervals have certain conditions that must be met in order to be valid._
+
+
+## Validity Condition for Confidence Intervals and Prediction Intervals on Means
+
+• The data distribution should be reasonably bell-shaped and symmetric, especially if the sample sizes are small. This condition is particularly important for prediction intervals. (With confidence intervals, the distribution of the sample mean should become more normal when the sample size increases, but the distribution of the responses themselves does not change shape as we increase sample size.)
+
+• Note: For comparing a subset of two treatment group means, the confidence interval of the difference requires approximately equal standard deviations among all of the treatment groups. This is because these confidence intervals use the residual standard error from the separate-means model.
+
+
+> 10. Based on the boxplots and standard deviations of the squirrel data, do you think that the validity conditions are met? How are you deciding? (Hint: you have checked the conditions for this data in question 20 of Exploration 1.4).
+
+Yes, the data are reasonably symmetric and the group standard deviations are similar to each other (7.59 to 10.89).

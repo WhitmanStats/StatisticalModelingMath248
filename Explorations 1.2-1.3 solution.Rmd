@@ -1,0 +1,1165 @@
+---
+title: "Math 248: Explorations 1.2 & 1.3"
+author: "Solution"
+header-includes:
+  - \usepackage{float}
+  - \floatplacement{figure}{H}
+output:
+  pdf_document: default
+editor_options: 
+  markdown: 
+    wrap: sentence
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo=TRUE,message=FALSE,warning=FALSE, fig.align = 'center', out.width="80%" )
+library(ImSIwithR)
+library(tidyverse)
+library(broom)
+
+```
+
+## Exploration 1.2: Starry Navigation
+
+The movements of dung beetles have fascinated observers for thousands of years. Some species of dung beetles, known as “rollers,” find a pile of dung which they form into a ball, and then immediately roll away from the source in order to prevent other beetles from stealing it. The goal is for the beetles to move the ball away as fast as possible.
+The nocturnal African dung beetle (Scarabaeus satyrus) is known to use celestial objects (e.g., sun, moon) to help it move along straighter (quicker) paths so its dung does not get stolen.
+
+But, what if it’s the middle of the night and the moon isn’t out (new moon); can the beetles navigate their way using just the stars? Dacke, Baird, Byrne, Scholtz, and Warrant (“Dung Beetles Use the Milky Way for Orientation,” Current Biology, 23, 2013) report on several experiments they conducted to document whether these dung beetles use stars to navigate. In one of their studies, beetles were placed on top of a dung ball at the center of a circular wooden platform (10 cm in diameter) and the researchers timed how long it took each beetle to reach the edge of the platform (another way of determining how straight a path was taken). Some of the beetles were given a small, black cardboard “cap” which obscured their view of the sky (up) but not of the edge of the platform (out), while others were given a transparent (clear) cap. On a moonless, starry night beetles wearing the clear cap took an average of 40.1 seconds to reach the edge, compared to an average time of 124.5 seconds for beetles wearing the black cardboard cap.
+
+# STEP 1: Ask a research question.
+
+> 1.  Summarize the researchers’ conjecture in collecting these data.
+
+Do dung beetles use celestial objects as guidance when rolling their balls of dung?
+
+# STEP 2: Design a study and collect data.
+
+> 2.  Explain how this is an experiment rather than an observational study. Identify the response variable and the explanatory variable. What are the treatments?
+
+The dung beetles were randomly assigned a clear or dark cap making this procedure an experiment.
+
+Explanatory Variable - type of cap 
+
+Response Variable - time to reach the edge of the platform (seconds) 
+
+Treatments - black cap and clear cap.
+
+> 3.  Identify at least one component of the _study protocol_ that was important in ensuring consistent and accurate measurements across the beetles.
+
+Same species, identical platform size, clear night with stars (not overcast)
+
+
+# STEP 3: Explore the data.
+
+One hypothesized Sources of Variation diagram for this study is shown in the table below
+
+**Possible Sources of Variation diagram for Starry Nights study**
+
++-------------------------------------------------+--------------------------------+----------------------------------+
+| Observed Variation in: Time to reach edge (sec) | Sources of explained variation | Sources of unexplained variation |
++-------------------------------------------------+--------------------------------+----------------------------------+
+| *Inclusion criteria*                            | • Type of cap                  | . Age of the beetle              |
+|                                                 |                                |                                  |
+| *Deign*                                         |                                | • Gender of beetle               |
+|                                                 |                                |                                  |
+| • Size of platform                              |                                | • Unknown                        |
++-------------------------------------------------+--------------------------------+----------------------------------+
+
+> 4.  Based on the averages provided (124.5 seconds with black cap and 40.1 seconds with clear cap), are you convinced that obscuring the beetles’ vision of the night sky causes them to have more trouble moving in a direct line away from the starting position? If not, what other information about the data would you like to know? 
+
+No, although the difference in means of 84.4 seconds seems quite large, we must first get an understanding of what kind of variation in times is reasonable/expected naturally and through the random assignment process.
+
+_The difference in means 124.5 - 40.1 = 84.4 seconds sure seems large, but we need to know more about how much variation there is from beetle to beetle. If the longest time a beetle takes to reach the edge of the circle is more than 500 seconds, then 84 seconds might not seem so large._
+
+_In the dataset `DungBeetles`, we provide data for 18 beetles (9 which wore the black cap and 9 which wore the clear cap). Note: The researchers did not provide the exact data in their publication; this file contains simulated data similar to what the researchers observed._
+
+## The Single-Mean Model
+
+As we saw in the previous section, before taking the type of cap (black or clear) into account, we can predict the dung ball rolling time using the overall mean (the single-mean model).
+
+Load the data into R.
+
+```{r}
+library(ImSIwithR)#package with data for Explorations
+data(DungBeetles)
+head(DungBeetles)
+```
+
+Since `time` is a quantitative variable, histogram is one of the appropriate plots to visualize this variable.
+
+```{r, histogram of time variable}
+# Basic histogram
+ggplot(DungBeetles, aes(x = time)) +
+  geom_histogram(binwidth = 12, fill = "lightblue", color = "black")
+```
+
+```{r, numerical summary of the time variable}
+summarize(DungBeetles,  
+          mean_time = mean(time), 
+          median_time = median(time),
+          sd_time = sd(time, na.rm = TRUE)
+          )
+```
+
+> 5a. Record the overall mean and standard deviation for the times. Use these values to write out a “single-mean” statistical model for predicting the time to reach the edge.
+
+> Prediction equation:
+
+$Predicted \ Time = 84.66  \ seconds$
+
+> Standard error of residuals:
+
+$Standard \ Error \  of  \ residuals = 46.93 \  seconds$ (SD from mean time of 84.66 seconds)
+
+
+_The standard error of the residuals from this “empty” model is the standard deviation of the times themselves:_
+
+$$SD \ of \ times = \sqrt{\frac{Sum \ of \ all \ squared \ residuals}{n-1}} = \sqrt{\frac{\sum_{all \ obs}(observed \ value - 84.66)^2}{18-1}} = \sqrt{\frac{37441.6}{17}} = 46.93 \ sec$$
+> 6. Let's create the histogram of the residuals. How does the center and shape of the histogram of the residuals compares to the histogram of time above?
+
+Same shape and variability, but the center is around zero.
+
+```{r, residuals of the model that only uses mean time to predict time}
+residuals_mean<-DungBeetles %>% 
+  mutate(diff_from_mean = time - mean(time))
+
+# Plot the histogram of the residuals ( differences from the mean)
+ggplot(residuals_mean, aes(x = diff_from_mean)) +
+  geom_histogram(binwidth = 12, fill = "skyblue", color = "black") +
+  labs(title = "Histogram of Residuals from the Mean",
+       x = "Residual from the Mean Value",
+       y = "Frequency") +
+  theme_minimal()
+```
+
+
+_Let's also calculate the mean and the standard deviation of the distribution of the residuals from the mean._
+
+```{r, calculating the average and standard error of the residuals from the mean}
+options(scipen = 999)#avoids scientific notation
+summarize(residuals_mean,  
+          mean_residuals = mean(diff_from_mean), 
+          SE_residuals = sd(diff_from_mean, na.rm = TRUE)
+          )
+```
+
+_We can see that the residuals are centered at zero and the standard error of the residuals is the same as the standard deviation of `time` variable._
+
+## Definition
+
+The numerator of this calculation is called the Sum of Squares Total, or SSTotal.
+
+$$SSTotal = Sum \ of \ all \ squared \ residuals = \sum_{all \ obs}(observed \ value - overall \ mean)^2$$
+
+We will use the `SSTotal` as one representation of the total variation in the residuals from the single-mean model or just the total variation in the response variable. Note that we divide this sum by 17 rather than 18 because we are using the sample mean in the same calculation, so once we know 17 of the values, we know what the $18^{th}$ must be.
+Therefore, we say this calculation has 17 degrees of freedom. Note that we use the symbol $\sum_{all \ obs}$ to mean “sum over all observations.”
+
+## Definition
+
+The _degrees of freedom_ for a sum of squares calculations represents how many “independent” values are being used in the computation of the sums of squares.
+
+
+## Sum of Squared Errors for the Separate-Means (“Cap”) Model
+
+> 7. Now let's use the `treatment` variable to create two subgroups. Report the mean and standard deviations of each group using the output below.
+
+$\bar{x}_{clear \ cap}= 42.78$
+
+$\bar{x}_{black \ cap}= 126.55$
+
+$s_{clear \ cap} = 15.52$
+
+$s_{black \ cap} = 22.19$
+
+```{r, means and sd of the treatment groups}
+summary_data <- DungBeetles %>%
+  group_by(treatment) %>%
+  summarise(
+    mean_time = mean(time, na.rm = TRUE), # Calculate mean
+    sd_time = sd(time, na.rm = TRUE),   # Calculate standard deviation
+    n = n(),                            # Count the number of observations
+   .groups = 'drop'                    # Drop the grouping structure
+  )
+
+# View the new summary data frame
+print(summary_data)
+```
+
+_Now, let's create the histogram for each treatment group._
+
+```{r, stacked histogram of time for each treatment}
+# Create the stacked histogram
+ggplot(DungBeetles, aes(x = time, fill = treatment)) + 
+  geom_histogram(binwidth = 12, color = "white") + 
+  facet_wrap(~ treatment, ncol = 1, scales = "free_y") +
+  labs(title = "Histograms of Time by Treatment (Stacked Vertically, Colored by Group)",
+       x = "Time",
+       y = "Count") +
+  theme_minimal()
+```
+
+> 8. Visually, does the type of cap appear to explain variation in the times?
+
+Yes, the longest clear cap time is quicker than the shortest black cap time. Furthermore, the means of black cap = 126.55 sec and clear cap = 42.78 sec are quite different.
+
+Let's now use R to calculate the _standard error of the residuals_ for this model.
+
+```{r, using lm function to obtain standard error of the residuals}
+model_dungbeetles <- lm(time ~ treatment, data = DungBeetles)
+
+# Extract the Standard Error of the Residuals 
+rse_value <- sigma(model_dungbeetles)
+
+# Display the calculated RSE.
+cat("The Standard Error of the Residuals for this model is:", rse_value, "\n")
+```
+
+
+_The standard error of the residuals for this model, taking into account the type of cap, is calculated by comparing each observation to its group mean, that is, the residual from using the group mean to predict an observation in that group:_
+
+$$SE \ of \ residuals = \sqrt{\frac{\sum_{clear}(observed \ value - 42.78)^2 + \sum_{black}(observed \ value - 126.55)^2}{18-2}}= \sqrt{\frac{SSError}{16}}$$
+
+
+> 9. Write out the statistical model using the group means to predict the times. How does the standard error of the residuals for the “cap model” compare to the single-mean model?
+
+
+$$
+predicted \ time = 
+\begin{cases} 
+126.55 & \text{if black cap} \\
+42.78 & \text{if clear cap}
+\end{cases}
+$$
+$Standard \ Error \  of  \ residuals = 19.42 \  seconds$
+
+This is a substantial improvement from the single mean model’s standard error of residuals equal to 46.93 seconds
+
+
+## Definition
+
+The numerator of this calculation is called the `Sum of Squared Errors`, or `SSError`.
+The `SSError` represents totaling the squared predictions errors (residuals) for a particular statistical model:
+
+$$SSError = \sum_{all \ obs} (observed \ value - predicted \ value)^2 = \sum_{all \ obs} residuals^2$$
+
+The `SSError` represents the leftover variation in the response variable after conditioning on the treatment group, that is the unexplained variation within the treatment groups. Notice that this time we are dividing by $18 - 2 = 16$.
+This reflects that we have used both of the group means in our calculation. Previously we only used the overall mean and divided by $18 - 1$.
+
+## Key Idea
+
+The `degrees of freedom` for a sum of squares calculation will be the _sample size minus the number of estimated parameters in the model_.
+
+Taking the square root of this “average squared deviation” gives us a measure of a typical prediction error for the model. When the sample sizes are equal, this is equivalent to averaging the two group variances and taking the square root. In other words, it is the “pooled” (across the groups) “within group variation.” Another phrasing for this is the _variation unexplained by the type of cap_. Note that this value will differ slightly from the standard deviation of the residuals which divides by $n - 1$; that’s why we called it the _standard error_ instead.
+
+## Variation Explained by the Cap Groups
+
+Let’s examine one more sum of squares value. Rather than computing the difference between the observed response and what we predict based on the treatment group, we will compare what we predict based on the treatment group to what we would predict if we ignored the treatment group. In other words, we will measure how much variation there is in the group means by comparing each to the overall mean. First, let’s introduce a new term, but with a warning: this new term, `effect`, will be used in this course and in statistics in general, with slightly different variations and meanings.
+
+## Definition
+
+The _effect_ of each treatment is the difference of the mean response in the treatment group from the overall mean response.
+
+_Let's use R to calculate the cap effect and the “no cap” effect. Note: When computing effects make sure that you subtract the overall mean from the group mean in both cases._
+
+```{r, calculating the effects of the treatment groups}
+
+# 1. Calculate Overall Mean
+overall_mean_val <- mean(DungBeetles$time, na.rm = TRUE)
+
+# 2. Create summary table (Mean, Count, Variance,and Effect)
+summary_data_with_effects <- DungBeetles %>%
+  group_by(treatment) %>%
+  summarise(
+    n = n(),                               # Calculate Group Size (n)
+    mean_time = mean(time, na.rm = TRUE),  # Calculate Group Mean
+    var_time = var(time, na.rm = TRUE), #  # Calculate Group Variance we will need it later
+    .groups = 'drop'
+  ) %>%
+  mutate(
+    overall_mean = overall_mean_val,       # Add overall mean column
+    effect = mean_time - overall_mean_val  # Calculate Effect (Group Mean - Overall Mean)
+  )
+
+print(summary_data_with_effects)
+```
+
+> 10. How do the two effects compare to each other?
+
+Black Cap effect= 126.55 - 84.66 = 41.89 seconds
+
+Clear cap effect = 42.78 - 84.66 = - 41.89 seconds
+
+
+A _positive effect_ means that group took longer than the average beetle.
+A _negative effect_ means that group was faster than the average beetle.
+If you have equal sample sizes in your groups, the sum of your effects should be zero.
+
+
+> 11. Using the overall mean and these treatment effects, suggest another way we can write out the statistical model.
+
+$$
+predicted \ time = 84.66+
+\begin{cases} 
+41.89 & \text{if black cap} \\
+-41.89 & \text{if clear cap}
+\end{cases}
+$$
+
+_To measure how much these cap means or group means vary from each other (the “between group variation”), we need a measure like the standard deviation of the group means. The numerator will sum the differences of the group means to the overall mean and the denominator will convey the degrees of freedom of that sum._
+
+## Definition
+
+The `Sum of Squares for the Model`, or `SSModel`, measures the variation in the group means from the overall mean.
+For each observation in the dataset, we find the difference between that observation’s group mean and the overall mean, then sum the squared differences. Because each observation within the same group has the same difference between the group mean and the overall mean, we can simplify the formula to focus on the squared effects and the number of observations in each group:
+
+$$SSModel = \sum_{all \ obs} (group \ mean - overall \ mean)^2 = \sum_{all \ groups} (group \ size) \times (effect)^2$$
+
+Let's calculate the `SSModel` (or “`SScap`”) for these data.
+
+```{r, calculate SSModel}
+# Formula: Sum of (Group Size * (Effect)^2)
+SSModel <- sum(summary_data_with_effects$n*(summary_data_with_effects$effect)^2)
+print(paste("SSModel:", SSModel))               
+```
+
+> 12. What is the group size in each group (what is n)?
+
+$n=9$ for each group
+
+## Key Idea
+
+The variation in the response (as measured by `SSTotal`) is partitioned into the variability of interest (as measured by `SSModel`) and the unexplained variation (`SSError`):
+
+$$SSTotal = SSModel + SSError$$
+
+Also, $$df \  total = df  \ model + df  \ error$$
+
+_Let's verify these two identities for our data._
+
+```{r, verifying sums of squares, echo=FALSE}
+# --- 1. Calculate SSModel using summary columns ---
+# Formula: Sum of (n * effect^2)
+SSModel <- sum(summary_data_with_effects$n * (summary_data_with_effects$effect)^2)
+
+# --- 2. Calculate SSError using summary columns ---
+# Formula: Sum of ((n - 1) * variance)
+SSError <- sum((summary_data_with_effects$n - 1) * summary_data_with_effects$var_time)
+
+# --- 3. Calculate SSTotal using raw data (for verification) ---
+# Formula: Sum of (observation - grand_mean)^2
+SSTotal <- sum((DungBeetles$time - overall_mean_val)^2)
+
+# Check the Sum of Squares Identity
+print(paste("SSTotal (calculated from raw):", SSTotal))
+print(paste("SSModel(calculated from summary):", SSModel))
+print(paste("SSError (calculated from summary):", SSError))
+print(paste("SSModel + SSError (calculated from summary):", SSModel + SSError))
+```
+
+
+```{r, verifying degrees of freedom}
+# N = Total number of observations (rows in raw data)
+N <- nrow(DungBeetles) 
+
+# k = Number of groups (rows in summary data)
+k <- nrow(summary_data) 
+
+# Calculate DF
+df_total <- N - 1
+df_model <- k - 1
+df_error <- N - k 
+
+# Check the DF Identity
+print(paste("df Total:", df_total))
+print(paste("df Model:", df_model))
+print(paste("df Error:", df_error))
+print(paste("df Model + df Error:", df_model + df_error))
+```
+
+We could also use `anova` function to create a table with sums of squares and degrees of freedom.
+
+```{r, creating ANOVA table}
+# 1. Fit the model
+model_dungbeetles <- lm(time ~ treatment, data = DungBeetles)
+# 2. Create ANOVA table
+anova(model_dungbeetles)
+```
+
+The `SSModel` is interpreted as a measure of the “variation in the response explained by the model.” Therefore, we have partitioned the total variation in the times (`SSTotal`) into variation explained by the model (SSModel, from knowing the treatment) and the variation left unexplained (`SSError`).
+
+_Now, let's calculate the *percentage of variation explained* for these data:_
+
+$$\left(\frac{SSModel}{SSTotal} = 1 - \frac{SSError}{SSTotal}\right) \times 100%$$
+```{r, manually calculating percentage of variation, echo=FALSE}
+# 1. Calculate R-squared using the Explained Variation (SSModel)
+R2_method1 <- SSModel / SSTotal
+
+# 2. Calculate R-squared using the Unexplained Variation (SSError)
+R2_method2 <- 1 - (SSError / SSTotal)
+
+# 3. Convert to Percentage
+R2_percentage <- R2_method1 * 100
+
+# --- View Results ---
+print(paste("R-squared (Method 1):", round(R2_method1, 4)))
+print(paste("R-squared (Method 2):", round(R2_method2, 4)))
+
+print("------------------------------------------------")
+print(paste("Percentage of Variation Explained:", round(R2_percentage, 2), "%"))
+```
+
+## Definition
+
+$R^2$ (also known as the coefficient of determination) tells us the proportion of the total variation in the response variable which is explained by the source(s) of interest specified by the model.
+The maximum value of $R^2$ is 1 and larger values are better (more of the variation in the response is explained by the variable of interest):
+
+$$R^2 = \frac{SSModel}{SSTotal} = 1 - \frac{SSError}{SSTotal}$$
+```{r, extracting the r-squared value from lm function output}
+# 1. Fit the model
+model_dungbeetles <- lm(time ~ treatment, data = DungBeetles)
+
+# 2. Get the R-squared value
+summary(model_dungbeetles)$r.squared
+```
+
+
+> 13. Write a one-sentence interpretation of this value, in context.
+
+The type of cap worn by the beetle accounts for $84.3\%$ of the variation in times.
+
+_In the next section, we will look at methods for deciding whether this amount of variation explained is statistically significant. For now, we will consider whether this research result is *practically significant*._
+
+## Definition
+
+_Practical significance_ refers to whether the treatment effects and group differences are large enough to be of value in context. It can be difficult to evaluate practical significance without subject matter knowledge and/or something to compare to.
+
+One way to assess practical significance is to compare the difference between the groups to the “leftover” or unexplained variation.
+
+## Definition
+
+An `effect size` measure compares differences in group means to the standard error of the residuals.
+
+> 14. Let's calculate the difference in the two treatment means divided by the standard error of the residuals.
+Is this larger than one or two? (Often values larger than one or two are considered noteworthy . . .) 
+
+Difference in group means = 126.55 - 42.78 = 83.77 seconds
+
+83.77/19.146 =  4.38 standard errors
+
+The large result of the effect (over 4 times larger than the residual SE) indicates _practical significance_ for the difference in means.
+
+```{r, effect size calculation}
+observed_means <- DungBeetles %>%
+  group_by(treatment) %>%
+  summarise(mean_time = mean(time, na.rm = TRUE))
+
+mean_clear_cap <- observed_means %>% filter(treatment == "clearcap") %>% pull(mean_time)
+mean_black_cap <- observed_means %>% filter(treatment == "blackcap") %>% pull(mean_time)
+
+observed_diff <- mean_black_cap-mean_clear_cap # Calculate difference between blackcap and clearcap
+
+Effect_Size<-observed_diff/rse_value
+#rse_value is SE residuals calculated in question 7
+
+print(paste("Effect Size:", round(Effect_Size, 3)))
+```
+
+
+# STEP 5: Formulate conclusions.
+
+> 15. Summarize what you have learned so far from this study, in context. For example, do you find the difference in times impressive? How are you deciding? Do you think there could be any confounding variables or alternative explanations for why the beetles traveled faster with the clear cap?
+
+The difference in times for each treatment group is quite impressive, beetles with the black cap took nearly three times as long as those with a clear cap. There should be no confounding variables as a result of the random assignment in the study design.
+
+
+# STEP 6: Look back and ahead.
+
+> 16. Suggest at least one way you would improve this study if you were to carry it, or a follow-up study, out yourself.
+
+Increase sample size, use different sized platforms, use a middle darkness cap, etc.
+
+
+## Exploration 1.3: Starry Navigation cont.
+
+In Exploration 1.2 we found that the type of cap used (whether they could see the night sky or not, nine beetles in each group) explained 84.3% of the variation in times for a beetle to roll the ball to the edge, and the difference in times of 83.77 seconds was large compared to the standard error of the residuals (19.77 seconds). This seems like a large and meaningful difference between the two groups, as also shown by the lack of overlap between the two sample distributions. We seem to have strong evidence that the difference between the two groups is larger than just natural variation in beetle times. But - is it possible that there really is no treatment effect from the type of cap, and the random assignment process alone was responsible for the large difference between the two treatment groups? In other words, what if the cap didn't make a difference and each beetle’s time would be exactly the same no matter which cap they had been using; could we have been so unlucky that the nine fastest beetles happened to end up in the “no cap” group?
+
+Thus, we have two competing explanations here for the observed difference in the groups:
+
+* There is an _effect_ on dung beetles’ rolling speed when they are not able to see the night sky.
+* There is _no difference_ between whether or not dung beetles can see the night sky, and the only reason we saw a difference between the two groups in our study is “random chance.” 
+
+You may recall from your first statistics course that the first statement, our research conjecture, is often set up as the alternative hypothesis and the second statement is often set up as the null hypothesis.
+
+## Key Idea
+
+In assessing statistical significance, we typically define null and alternative hypotheses.
+
+* The _null hypothesis_ $(H_0)$ is the “by-chance-alone” explanation for the observed results.
+* The _alternative hypothesis_ $(H_A)$ typically corresponds to the research conjecture (e.g., the imposed treatments explain variation in the response variable).
+
+You also may recall that a parameter summarizes the population or process, but the statistic is what we calculate from the observed sample data. Suppose we define our parameter to be $\mu_{black \ cap}$ and $\mu_{clear \ cap}$ where $\mu_{clear \ cap}$ is the mean time to reach the edge for this population of beetles if they can see the sky, and $\mu_{black \ cap}$ is the mean time to reach the edge for this population of beetles if the view of the sky is blocked.
+
+> 1. Restate the null hypothesis and the alternative hypothesis in terms of these $\mu$ values. 
+Hint:
+
+$$H_0: \mu_{black \ cap}  =  \mu_{clear \ cap}$$
+$$H_A: \mu_{black \ cap}  > \mu_{clear \ cap}$$
+
+**Notes:** If you are looking for evidence of a difference in the average times, you state a two-sided (not equal to) alternative hypothesis. If you are looking for evidence that the beetles are faster when they can see the night sky, you specify a one-sided alternative. Also note that the null hypothesis says our single-mean model is adequate, whereas the alternative hypothesis includes our separate-means model.
+
+> 2. For the data we provided you for this study, what was the observed value of the statistic corresponding to this parameter?
+
+Observed difference in means is  83.768
+
+```{r, Calculate difference between blackcap and clearcap}
+observed_means <- DungBeetles %>%
+  group_by(treatment) %>%
+  summarise(mean_time = mean(time, na.rm = TRUE))
+
+mean_clear_cap <- observed_means %>% filter(treatment == "clearcap") %>% pull(mean_time)
+mean_black_cap <- observed_means %>% filter(treatment == "blackcap") %>% pull(mean_time)
+
+observed_diff <- mean_black_cap-mean_clear_cap 
+print(paste("Observed difference in means:", round(observed_diff, 3)))
+```
+
+
+_One way to decide between these two competing explanations (hypotheses), is what we call the 3S Strategy._
+
+**3S Strategy for Measuring Strength of Evidence**
+
+1. **Statistic:** Compute a statistic from the observed sample data which measures the comparison of interest (e.g., difference in group means).
+2. **Simulate:** Identify a “by-chance-alone” explanation for the data (the null hypothesis).
+Then use a computer to repeatedly simulate values of the statistic, mirroring the randomness of the study design, that could have happened if the chance explanation is true.
+3. **Strength of evidence:** If the observed statistic is unlikely to have occurred when the chance explanation is true, then we say we have “strong evidence” against the reasonableness of chance alone as an explanation for the study results.
+
+In other words, we are going to _assume the null hypothesis is true_ and simulate thousands of outcomes for the study that could happen in that case. We will then be able to determine whether our observed result from the actual study (where we don’t know whether the null hypothesis is true) is consistent with these simulated outcomes (where we do know the null hypothesis is true). We will do this by mimicking the randomness that was involved in the study protocol, in this case the random assignment of the beetles to the type of cap. Therefore, we will assume that which cap they are assigned to had no impact on their performance, they would have had the same time either way. But the _statistic_, in this case the _difference in the treatment means_, could change depending on how the random assignment had turned out.
+
+If we were to do this _simulation process manually_, we could take the following steps:
+
+* Take enough index cards to represent each beetle. How many index cards do you need?
+
+* Write each beetle’s time on a different card. This represents the beetle times not changing regardless of which treatment group they will be assigned.
+
+* Shuffle the cards and deal them out in two groups, matching the group sizes of the study.
+
+* Calculate the mean time for each group and calculate the difference in means (clear cap - black cap).
+
+We need to _repeat this process a large number of times_ to see what values are possible for the re-randomized differences in means.
+
+```{r, calculate the difference in means for this shuffled dataset, echo=FALSE}
+# --- Step 1: Set a seed for reproducibility ---
+set.seed(123) # This makes your random results repeatable
+
+# --- Step 2: Define the number of simulations ---
+num_simulations <- 1000
+simulated_diffs <- numeric(num_simulations)
+
+# --- Step 3: Perform the randomization (shuffling) test ---
+for (i in 1:num_simulations) {
+  # Shuffle the 'time' variable, breaking its association with 'treatment'
+  # This simulates what would happen if 'treatment' had no effect
+  shuffled_times <- sample(DungBeetles$time)
+
+  # Create a temporary dataframe with shuffled times and original treatments
+  temp_data <- data.frame(
+    time = shuffled_times,
+    treatment = DungBeetles$treatment
+  )
+
+  # Calculate the difference in means for this shuffled dataset
+  sim_means <- temp_data %>%
+    group_by(treatment) %>%
+    summarise(mean_time = mean(time, na.rm = TRUE))
+
+  sim_mean_clear <- sim_means %>% filter(treatment == "clearcap") %>% pull(mean_time)
+  sim_mean_black <- sim_means %>% filter(treatment == "blackcap") %>% pull(mean_time)
+
+  simulated_diffs[i] <- sim_mean_black - sim_mean_clear  
+}
+
+simulated_diffs<-data.frame(diffs = simulated_diffs)
+head(simulated_diffs, n=3)# "print" the first 3 rows of data
+```
+
+
+> 3. What is the $2^{nd}$ simulated difference in this dataset? Will it be the same if you change the `seed`?
+
+Depends on the seed, will be different with a different seed.
+
+
+## Definition
+
+A _randomization test_ assumes the null hypothesis to be true and examines all possible re-random assignments of the observed responses among the groups, recalculating the statistic each time. Instead of doing all possible arrangements, we can repeat the process a large number of times to approximate the null distribution of the statistic.
+
+_Let's visualize the null distribution_
+
+```{r, visualize the null distribution , echo=FALSE}
+# --- Step 4: Calculate the p-value ---
+p_value <- sum(abs(simulated_diffs) >= abs(observed_diff)) / num_simulations
+
+# --- Step 5: Visualize the null distribution ---
+ggplot(data.frame(diffs = simulated_diffs), aes(x = diffs)) +
+  geom_histogram(binwidth = 5, fill = "skyblue", color = "black", alpha = 0.7) +
+  
+  # Vertical lines
+  geom_vline(xintercept = observed_diff, color = "red", linetype = "dashed", size = 1) +
+  geom_vline(xintercept = -observed_diff, color = "red", linetype = "dashed", size = 1) + 
+  
+  labs(
+    title = "Null Distribution of Differences in Means (Black - Clear)",
+    x = "Simulated Difference in Mean Time (Black - Clear)",
+    y = "Frequency"
+  ) +
+  theme_minimal() +
+  
+  # --- ANNOTATIONS ---
+  annotate("text", x = observed_diff, y = Inf, 
+           label = paste("Observed =", round(observed_diff, 2)), 
+           vjust = 2, hjust = 1.1, color = "red", fontface = "bold") +
+  
+  # P-value label (Placed in the center top)
+  annotate("text", x = 0, y = Inf, 
+           label = paste("two-sided p-value =", p_value), # divide by 2 to get one-sided p-value
+           vjust = 2, color = "darkgreen", fontface = "bold") +
+
+  # Expand Y axis top margin for labels
+  scale_y_continuous(expand = expansion(mult = c(0, 0.15))) +
+  
+  # Expand X axis slightly to ensure the red line isn't exactly on the edge
+  scale_x_continuous(expand = expansion(mult = 0.1))
+
+```
+
+
+> 4. Describe the shape, center, and variability of the null distribution of shuffled differences in means.
+
+The shuffled values should yield a relatively bellshaped distribution centered at a mean near 0. The standard deviation (shufflebyshuffle variability) is around 22. (Answers will vary because this plot is a result of 1000 random shuffles.
+
+
+> 5. Did your shuffles ever produce a difference in means as large or larger than 83.77? Is it possible we could find a difference in means that positive? Is it very probable?
+
+
+Difference in means of 83.77 or larger never occurred in 1,000 random assignments. Though possible, it is extremely unlikely that a difference of  83.77 came as a result of random assignment alone. 
+
+_Remember that this simulation mimics what would happen by random assignment alone if we assume the treatments have no effect. In other words, if the null hypothesis of no treatment differences is true. We will reject this null hypothesis if the likelihood of the actual study’s observed statistic is too small to plausibly occur by chance alone when the null hypothesis is true._
+
+
+> 6. How often does shuffling create a difference in means of 83.77 or larger?
+
+ 0 out of 1,000 randomizations or 0%, this corresponds to a p-value of less than 0.001.
+
+
+## Key Idea
+
+The _p-value_ for a randomized experiment is how often random assignment alone could have produced a statistic at least as extreme as the statistic found in the actual study. A small p-value (e.g., below 0.05) constitutes strong evidence against the null hypothesis of “random chance alone,” with even smaller values (e.g., below 0.01 or 0.001) providing even stronger and stronger evidence against the null hypothesis. When the p-value is small, we say that the observed difference is statistically significant, meaning the observed value of the statistic is unlikely to have happened by random chance alone. Note that the values we consider “at least as extreme” as the observed statistic in determining the p-value will depend on the direction of the alternative hypothesis and whether that hypothesis is one-sided or two-sided.
+
+## Other Choices of Statistics
+
+_Let's see how the results change when we use R-squared value as a statistic of interest instead of the difference in means_
+
+```{r, creating the null distribution of r-squared statistic with shaded p-value, echo=FALSE}
+# --- Step 0: Calculate Observed R-squared ---
+# We need to know the actual R-squared to compare our simulations against
+obs_model <- lm(time ~ treatment, data = DungBeetles)
+observed_r2 <- summary(obs_model)$r.squared
+
+cat("Observed R-squared:", round(observed_r2, 4), "\n")
+
+# --- Step 1: Set a seed for reproducibility ---
+set.seed(123) 
+
+# --- Step 2: Define the number of simulations ---
+num_simulations <- 1000
+simulated_r2s <- numeric(num_simulations) # Variable to store R-squared values
+
+# --- Step 3: Perform the randomization (shuffling) test ---
+for (i in 1:num_simulations) {
+  # Shuffle the 'time' variable
+  shuffled_times <- sample(DungBeetles$time)
+
+  # Create temporary dataframe
+  temp_data <- data.frame(
+    time = shuffled_times,
+    treatment = DungBeetles$treatment
+  )
+
+  # --- CHANGE: Calculate R-squared instead of Diff in Means ---
+  # Fit a linear model to the shuffled data
+  sim_model <- lm(time ~ treatment, data = temp_data)
+  
+  # Extract the R-squared value
+  simulated_r2s[i] <- summary(sim_model)$r.squared
+}
+
+# --- Step 4: Calculate P-value ---
+# NOTE: R-squared is always positive. A "stronger" result is always a HIGHER R-squared.
+# Therefore, we only look at the right tail (greater than or equal to).
+p_value <- sum(simulated_r2s >= observed_r2) / num_simulations
+
+cat("P-value:", p_value, "\n")
+
+# --- Step 5: Visualize ---
+sim_data_for_plot <- data.frame(r_squared = simulated_r2s)
+
+ggplot(sim_data_for_plot, aes(x = r_squared)) +
+  geom_histogram(binwidth = 0.02, fill = "skyblue", color = "black", alpha = 0.7) +
+  
+  # Vertical line for observed R-squared
+  geom_vline(xintercept = observed_r2, color = "red", linetype = "dashed", size = 1) +
+  
+  labs(
+    title = "Null Distribution of R-squared",
+    subtitle = "What R-squared values would we see if Treatment had NO effect?",
+    x = "Simulated R-squared",
+    y = "Frequency"
+  ) +
+  theme_minimal() +
+  
+  # Annotations
+  annotate("text", x = observed_r2, y = Inf, 
+           label = paste("Observed R2 =", round(observed_r2, 3)), 
+           vjust = 2, hjust = 1.1, color = "red", fontface = "bold") +
+  annotate("text", x = 0.1, y = Inf, 
+           label = paste("p-value =", p_value), 
+           vjust = 2, color = "darkgreen", fontface = "bold", size = 5) +
+           
+  # Expand Y axis to fit labels
+  scale_y_continuous(expand = expansion(mult = c(0, 0.15)))
+
+```
+
+```{r, Mean and SD of the Null Distribution or r-squared}
+
+mean_null_r2 <- mean(simulated_r2s)
+sd_null_r2 <- sd(simulated_r2s)
+
+cat("Mean of Null R-squared:", round(mean_null_r2, 4), "\n")
+cat("SD of Null R-squared:", round(sd_null_r2, 4), "\n")
+```
+
+> 7. How does the null distribution change (shape, center, variability)?
+
+The distribution is right skewed with a mean slightly above 0. The standard deviation of R squared is about 0.08.
+
+
+> 8. What is the observed value of the $R^2$ statistic for these data?
+
+
+Observed value is $R^2=0.843$
+
+
+> 9. What is the new p-value?
+
+The new p-value is still less than 0.001.
+
+> 10. Has it changed much by changing this statistic?
+
+ Using $R^2$ as a statistic did not change that
+
+
+_Typically, when the $R^2$ value is large, the p-value will be small. But the p-value also considers the sample sizes involved in the study. If the sample sizes are quite large, then even a modest $R^2$ value could still be statistically significant.In general, it is good practice to comment on both statistical and practical significance._
+
+Another possible statistic that you may remember from your first course is a “t-statistic.” The upcoming formula is called a _two-sample pooled t-statistic_ because it assumes the standard deviation of the response outcomes is the same for both treatments and uses one value to estimate that standard deviation.
+You maybe have also seen the “unpooled” version which does not assume the population standard deviations are the same and so uses a different estimate for the standard error of the statistic (see Example 1.3).
+
+The point is we are now not just dividing by the unexplained variation in the data but are also taking the sample sizes into account. Including the sample sizes in the denominator, which approximates the shuffle to shuffle variation in the statistic, is referred to as_ standardizing the statistic_.
+
+$$t = \frac{(\bar{y}_1 - \bar{y}_2) - 0}{(SE \ of \ residuals) \times \sqrt{\frac{1}{n_1} + \frac{1}{n_2}}}$$
+
+_Let's see how the results change when we use t-statistic value as a statistic of interest instead of the difference in means_
+
+```{r, calculating observed t-statistic based on the difference in means , echo=FALSE}
+# --- Step 0: Prepare data and Calculate Observed Pooled t-statistic ---
+# Define factor levels such that t.test calculates (mean of black - mean of clear)
+DungBeetles$treatment_fct <- factor(DungBeetles$treatment, levels = c("blackcap", "clearcap"))
+
+# Calculate the observed t-statistic
+t_test_obs <- t.test(time ~ treatment_fct, data = DungBeetles, var.equal = TRUE)
+observed_t_statistic <- t_test_obs$statistic
+
+cat("Observed Pooled t-statistic (Black Cap Mean - Clear Cap Mean):", round(observed_t_statistic, 4), "\n")
+
+```
+
+> 11. What value is reported for the observed t-statistic?
+
+Observed Pooled t-statistic (Black Cap Mean - Clear Cap Mean) is  9.2814 
+
+
+_Let's create the null distribution of null statistic, calculate the p-value and visualize the distribution._
+
+```{r, creating the null distribution of t-statistic and calculating the p-value , echo=FALSE}
+# --- Step 1: Set a seed for reproducibility ---
+set.seed(456) 
+
+# --- Step 2: Define the number of simulations ---
+num_simulations <- 1000
+simulated_t_stats <- numeric(num_simulations)
+
+# --- Step 3: Perform the randomization (shuffling) test ---
+for (i in 1:num_simulations) {
+  shuffled_times <- sample(DungBeetles$time)
+
+  # Create temporary dataframe with shuffled times and original (factored) treatments
+  temp_data <- data.frame(
+    time = shuffled_times,
+    treatment_fct = DungBeetles$treatment_fct # Use the factored treatment
+  )
+
+  # Calculate the pooled t-statistic for this shuffled dataset
+  # Using var.equal = TRUE for pooled variance
+  sim_t_test <- t.test(time ~ treatment_fct, data = temp_data, var.equal = TRUE)
+  simulated_t_stats[i] <- sim_t_test$statistic
+ }
+
+# --- Step 4: Calculate P-value ---
+p_value <- sum(abs(simulated_t_stats) >= abs(observed_t_statistic)) / num_simulations
+cat("P-value from randomization test (two-sided):", p_value, "\n")
+```
+
+> 12. What is the p-value corresponding to the observed t-statistic?
+
+The p-value is less than 0.001. The observed value of t=-9.28 falls in the extreme left tail of the distribution. Zero of 1,000 randomizations of the t-statistic observed a value this extreme or smaller.
+
+_Let's visualize the t-distribution_
+
+```{r, visualizing the randomization null distribution of t-statistic with shaded p-value, echo=FALSE}
+# Visualize the null distribution of the t-statistic 
+sim_data_for_plot <- data.frame(t_statistic = simulated_t_stats)
+bin_width_hist <- 0.5 
+
+ggplot(sim_data_for_plot, aes(x = t_statistic)) +
+  geom_histogram(aes(y = ..count..), binwidth = bin_width_hist, fill = "lightgreen", color = "black", alpha = 0.7) +
+   # Vertical line for observed t-statistic
+  geom_vline(xintercept = observed_t_statistic, color = "red", linetype = "dashed", size = 1) +
+  # Vertical line for the negative of the observed t-statistic (for two-sided test)
+  geom_vline(xintercept = -observed_t_statistic, color = "red", linetype = "dashed", size = 1) + 
+  
+  labs(
+    title = "Null Distribution of Pooled t-statistic",
+    subtitle = paste0("Simulated (", num_simulations, ")"),
+    x = "t-statistic (Black Cap - Clear Cap)", 
+    y = "Frequency"
+  ) +
+  theme_minimal() +
+  
+  # Annotations for visibility
+  annotate("text", x = observed_t_statistic, y = Inf, 
+           label = paste("Observed t =", round(observed_t_statistic, 2)), 
+           vjust = 2, hjust = 1.1, color = "red", fontface = "bold") + 
+  annotate("text", x = 0, y = Inf, # Centered horizontally
+           label = paste("p-value =", p_value), 
+           vjust = 2, color = "darkblue", fontface = "bold", size = 5) +
+           
+  # Expand Y axis top margin for labels
+  scale_y_continuous(expand = expansion(mult = c(0, 0.15))) +
+  # Expand X axis slightly to ensure lines/text aren't cut off
+  scale_x_continuous(expand = expansion(mult = 0.1))
+
+```
+
+One advantage to the t-statistic is it puts our results all on the same scale. We can compare t-statistics from different studies directly against each other. Typically, t-values larger than 2 (or smaller than -2) are considered extreme.
+Thus, once we see a t-statistic below -9, we already know we are going to rule out the random assignment process as a plausible explanation for the differences in mean times between the treatment groups.
+
+Another advantage to the _t-statistic_ is it is often well-approximated by a probability model, the t-distribution (“discovered” by W. S. Gosset and published under the name “Student” in 1908).
+
+## Validity Conditions
+
+For the _pooled t-statistic_, when comparing two population means, _IF_:
+
+* the samples are independent of each other, 
+* the sample standard deviations are roughly equal (e.g., the larger SD is not more than twice the size of the smaller), 
+* the sample distributions are roughly symmetric or both sample sizes are at least 20 without strong skewness or outliers in the distributions
+
+_THEN_ we can approximate the null distribution of the t-statistic with a t-distribution with (total sample size - 2) degrees of freedom.
+
+> 13. Examine the data to see whether this is a case where the _t-distribution_ is likely to be a good approximation of the null distribution.
+> a. Did the study protocol involve random assignment to two treatment groups? If so, then we will consider condition (1) to be met.
+
+The caps were randomly assigned to each of the 18 beetles
+
+> b. Is the larger standard deviation less than twice the size of the smaller standard deviation? If so, then we will consider condition (2) to be met.
+
+```{r, means and standard deviations of the treatment groups}
+summary_data <- DungBeetles %>%
+  group_by(treatment) %>%
+  summarise(
+    mean_time = mean(time, na.rm = TRUE), # Calculate mean
+    sd_time = sd(time, na.rm = TRUE),   # Calculate standard deviation
+    n = n(),                            # Count the number of observations
+   .groups = 'drop'                    # Drop the grouping structure
+  )
+
+# View the new summary data frame
+print(summary_data)
+```
+
+The standard deviations of 22.19 and 15.52 for black cap and clear cap respectively meet this criterion (22.19/15.52 <2)
+
+> c. Does either treatment group show severe skewness or extreme outliers? If not, then we will consider condition (3) to be met.
+
+```{r, box-plots of time for each treatment}
+# Create boxplots of Time by Treatment
+ggplot(DungBeetles, aes(x = treatment, y = time, fill = treatment)) +
+  geom_boxplot(color = "black") + # 'color' sets the outline of the boxes
+  labs(
+    title = "Boxplots of Time by Treatment",
+    subtitle = "Comparing distribution of rolling time for each cap type",
+    x = "Treatment (Cap Type)",
+    y = "Time (seconds)"
+  ) +
+  theme_minimal() +
+  theme(legend.position = "none") # Hide legend if fill is mapped to x-axis already
+
+```
+
+_Note:_ An even better graph to examine here is a _distribution of the residuals_.If that distribution is approximately normal, we will consider this condition met.
+
+```{r, distribution of the residuals for dungbettle model predicting time with treatment , echo=FALSE}
+# --- Step 1: Fit a linear model to get the residuals ---
+model_dungbeetles <- lm(time ~ treatment, data = DungBeetles)
+
+# --- Step 2: Extract the residuals ---
+residuals_data <- data.frame(
+  residual = residuals(model_dungbeetles) 
+)
+
+# --- Step 3: Create the histogram of the residuals ---
+ggplot(residuals_data, aes(x = residual)) +
+  geom_histogram(binwidth = 12, fill = "lightblue", color = "black", alpha = 0.8) + # Adjust binwidth as needed
+  labs(
+    title = "Histogram of Residuals from Time ~ Treatment Model",
+    subtitle = "Variability in time not explained by cap treatment",
+    x = "Residuals",
+    y = "Frequency"
+  ) +
+  theme_minimal() +
+  # Add a vertical line at 0 for reference, as residuals ideally center around 0
+  geom_vline(xintercept = 0, color = "red", linetype = "dashed", size = 1)
+
+
+```
+
+There are no outliers or skewness in the data and the residuals are approximately normally distributed.
+
+> d. Do you consider all three conditions met for this study?
+
+Because each of the three validity conditions are met, the t-distribution is a viable approximation of the null distribution of t-statistics
+
+_Let's use R to overlay t distribution on the null distribution of t-statistics._
+
+```{r,overlaying t distribution , echo=FALSE}
+# --- Step 1: Set a seed for reproducibility ---
+set.seed(456) 
+
+# --- Step 2: Define the number of simulations ---
+num_simulations <- 1000
+simulated_t_stats <- numeric(num_simulations)
+
+# --- Step 3: Perform the randomization (shuffling) test ---
+for (i in 1:num_simulations) {
+  shuffled_times <- sample(DungBeetles$time)
+
+  # Create temporary dataframe with shuffled times and original (factored) treatments
+  temp_data <- data.frame(
+    time = shuffled_times,
+    treatment_fct = DungBeetles$treatment_fct # Use the factored treatment
+  )
+
+  # Calculate the pooled t-statistic for this shuffled dataset
+  # Using var.equal = TRUE for pooled variance
+  sim_t_test <- t.test(time ~ treatment_fct, data = temp_data, var.equal = TRUE)
+  simulated_t_stats[i] <- sim_t_test$statistic
+ }
+
+# --- Step 4: Calculate P-value ---
+p_value <- sum(abs(simulated_t_stats) >= abs(observed_t_statistic)) / num_simulations
+#cat("P-value from randomization test (two-sided):", p_value, "\n")
+
+# --- Step 5: Calculate Degrees of Freedom for Theoretical t-distribution ---
+N_total <- nrow(DungBeetles)
+k_groups <- nlevels(DungBeetles$treatment_fct) 
+df_error <- N_total - k_groups
+
+# --- Step 6: Visualize the null distribution of the t-statistic with Theoretical Overlay ---
+sim_data_for_plot <- data.frame(t_statistic = simulated_t_stats)
+bin_width_hist <- 0.5 
+
+ggplot(sim_data_for_plot, aes(x = t_statistic)) +
+  geom_histogram(aes(y = ..count..), binwidth = bin_width_hist, fill = "lightgreen", color = "black", alpha = 0.7) +
+  
+  # Overlay Theoretical t-distribution
+  stat_function(
+    fun = function(x) dt(x, df = df_error) * num_simulations * bin_width_hist,
+    color = "blue",
+    linetype = "solid",
+    size = 1
+  ) +
+  
+  # Vertical line for observed t-statistic
+  geom_vline(xintercept = observed_t_statistic, color = "red", linetype = "dashed", size = 1) +
+  # Vertical line for the negative of the observed t-statistic (for two-sided test)
+  geom_vline(xintercept = -observed_t_statistic, color = "red", linetype = "dashed", size = 1) + 
+  
+  labs(
+    title = "Null Distribution of Pooled t-statistic with Theoretical Overlay",
+    subtitle = paste0("Simulated (", num_simulations, ") vs. Theoretical t-distribution (df=", df_error, ")"),
+    x = "t-statistic (Black Cap - Clear Cap)", 
+    y = "Frequency"
+  ) +
+  theme_minimal() +
+  
+  # Annotations for visibility
+  annotate("text", x = observed_t_statistic, y = Inf, 
+           label = paste("Observed t =", round(observed_t_statistic, 2)), 
+           vjust = 2, hjust = 1.1, color = "red", fontface = "bold") + 
+  annotate("text", x = 0, y = Inf, # Centered horizontally
+           label = paste("p-value =", p_value), 
+           vjust = 2, color = "darkblue", fontface = "bold", size = 5) +
+           
+  # Expand Y axis top margin for labels
+  scale_y_continuous(expand = expansion(mult = c(0, 0.15))) +
+  # Expand X axis slightly to ensure lines/text aren't cut off
+  scale_x_continuous(expand = expansion(mult = 0.1))
+
+```
+
+
+> 14. Does the $t$ probability distribution appear to predict the simulation results reasonably well (is it a good approximation of the null distribution)?
+
+The simulated tdistribution aligns closely with the overlaid tdistribution.
+
+
+> 15. Use the R output below to report the degrees of freedom (df) for this _theory-based_ test. Where have you seen this value before?
+
+```{r, printing the error degrees of freedom}
+cat("Error degrees of freedom used in creating the t distribution:", df_error, "\n")
+```
+
+16, this is the same as df Error
+
+
+## Key Idea
+
+There is actually a _family of t-distributions_, indexed by a “degrees of freedom” value. For a two-sample pooled t-test, this will equal the degrees of freedom for the `SSError` calculation, _total sample size minus two._
+
+_Technical notes:_ You should find that, visually, the simulation and theory-based t-statistic distributions show good agreement. This is because the validity conditions are met, even though our prediction of the standard deviation of the null distribution of difference in means was much too small. This underestimation of the null distribution standard deviation can happen when the treatment effects are large, as found in this study.
+The theory-based t-statistic assumes the data are coming from separate populations with the same mean, but the within group variation is estimated by “averaging” the within group variation.
+This average (after adjusting for the group differences) will be much smaller than when we pool all the observations together in the randomization test. The t-statistic corrects for this in a way—when the numerator is large the denominator will tend to be smaller—and things tend to balance out like a t-distribution would predict.
+Another huge advantage to the t-distribution is we can use it to predict how far the statistic is likely to fall from the parameter we are trying to determine. In other words, we can use the t-distribution to calculate confidence intervals.
+
+## Estimating the Size of the Difference
+
+In this study, the parameter we are trying to estimate is the underlying difference in the treatment means ($\mu_{black} - \mu_{clear}$). The statistic is the observed difference in group means ($\bar{y}_1 - \bar{y}_2$).
+
+A _confidence interval_ will start with this estimate, plus and minus a margin of error, an indication of the precision of the estimate. Confidence intervals typically have the form: statistic $\pm$ (multiplier) (standard error of statistic) where the multiplier comes from a probability distribution.
+
+When the _validity conditions are met, we will use the t distribution_ to find the multiplier corresponding to our confidence level, an indication of the reliability of the procedure.
+
+## Definition
+
+A _two-sample (pooled) t-confidence interval for the difference in two population means_, assuming the population standard deviations are equal is
+
+$$\bar{y}_1 - \bar{y}_2 \pm t^* \times (std \ error \ of \ residuals) \sqrt{\frac{1}{n_1} + \frac{1}{n_2}}$$
+
+where the $t^*$ critical value comes from the t distribution with (total sample size - 2) degrees of freedom.
+For a 95% confidence interval, the multiplier will be roughly 2.
+
+_Let's use R to find the $95%$ pooled t-interval confidence interval for difference in means._
+
+```{r, manually obtaining the pooled t confidence interval for difference in means , echo=FALSE}
+# To ensure consistent subtraction order (mean_blackcap - mean_clearcap),
+# we set 'blackcap' as the first level.
+DungBeetles$treatment_fct <- factor(DungBeetles$treatment, levels = c("blackcap", "clearcap"))
+
+# --- Step 1: Calculate Group Means and Sample Sizes ---
+group_stats <- DungBeetles %>%
+  group_by(treatment_fct) %>%
+  summarise(
+    n = n(),
+    mean_time = mean(time, na.rm = TRUE),
+    sd_time = sd(time, na.rm = TRUE),
+    .groups = 'drop'
+  )
+
+# Extract values for blackcap (Group 1) and clearcap (Group 2)
+n1 <- group_stats %>% filter(treatment_fct == "blackcap") %>% pull(n)
+mean1 <- group_stats %>% filter(treatment_fct == "blackcap") %>% pull(mean_time)
+sd1 <- group_stats %>% filter(treatment_fct == "blackcap") %>% pull(sd_time)
+
+n2 <- group_stats %>% filter(treatment_fct == "clearcap") %>% pull(n)
+mean2 <- group_stats %>% filter(treatment_fct == "clearcap") %>% pull(mean_time)
+sd2 <- group_stats %>% filter(treatment_fct == "clearcap") %>% pull(sd_time)
+
+# --- Step 2: Calculate the Observed Difference in Means (Mean1 - Mean2) ---
+diff_means_observed <- mean1 - mean2
+
+# --- Step 3: Calculate Degrees of Freedom (df) for the pooled t-test ---
+df_error <- n1 + n2 - 2
+
+# --- Step 4: Calculate the Pooled Standard Deviation (sp) ---
+# This is equivalent to the 'std error of residuals' or RMSE from an ANOVA model
+# Formula: sp = sqrt( ((n1-1)*s1^2 + (n2-1)*s2^2) / (n1+n2-2) )
+# Or, more directly, from the Residual Standard Error of an lm model (which is sp)
+model_for_sp <- lm(time ~ treatment_fct, data = DungBeetles)
+pooled_sd_residuals <- summary(model_for_sp)$sigma
+
+# --- Step 5: Calculate the Standard Error of the Difference (SE_diff) ---
+# Formula: SE_diff = sp * sqrt(1/n1 + 1/n2)
+SE_diff <- pooled_sd_residuals * sqrt(1/n1 + 1/n2)
+
+# --- Step 6: Find the Critical t-value (t*) for a 95% Confidence Interval ---
+# For a 95% CI, we need the t-value that cuts off 2.5% in each tail (i.e., 97.5% cumulative probability)
+confidence_level <- 0.95
+alpha <- 1 - confidence_level
+t_star <- qt(1 - alpha/2, df = df_error)
+
+# --- Step 7: Calculate the Margin of Error (ME) ---
+ME <- t_star * SE_diff
+
+# --- Step 8: Calculate the 95% Confidence Interval ---
+lower_ci <- diff_means_observed - ME
+upper_ci <- diff_means_observed + ME
+
+# --- Print Results ---
+cat("--- Pooled t-Confidence Interval Calculation --- \n")
+cat("Mean (Black Cap):", round(mean1, 2), " (n=", n1, ")\n")
+cat("Mean (Clear Cap):", round(mean2, 2), " (n=", n2, ")\n")
+cat("Observed Difference in Means (Black - Clear):", round(diff_means_observed, 2), "\n")
+cat("Degrees of Freedom:", df_error, "\n")
+cat("Pooled Standard Deviation (std error of residuals):", round(pooled_sd_residuals, 2), "\n")
+cat("Standard Error of the Difference:", round(SE_diff, 2), "\n")
+cat("Multiplier t-value (t* for 95% CI, df=", df_error, "):", round(t_star, 3), "\n")
+cat("--------------------------------------------------\n")
+cat("Margin of Error (ME):", round(ME, 2), "\n")
+cat("95% Confidence Interval for Difference in Means:", 
+    round(lower_ci, 2), "to", round(upper_ci, 2), "\n")
+```
+
+```{r, R built-in t.test}
+# --- Verification (optional, but good for checking work) ---
+# You can compare these manual calculations with  R built-in t.test output
+t.test(time ~ treatment_fct, data = DungBeetles, var.equal = TRUE, conf.level = 0.95)
+```
+
+
+> 16. What is the margin of error (i.e., half-width) of this interval?  Write a one-sentence interpretation of this interval.(Hint: Pay attention to the order of subtraction of the group means in the code.) 
+
+Margin of Error (ME): 19.13 
+
+Under the conditions presented by the treatments, we are 95% confident that the difference in longrun treatment means falls in the interval of (64.64,102.90). In other words, we are 95% confident that beetles (like these) wearing clear caps will reach the edge between 64.6 and 102.9 seconds faster, on average, than beetles wearing the dark caps.
+
+# STEP 5: Formulate conclusions.
+
+> 17. Write a summary of your conclusions from this study, including discussion of significance, estimation (from the confidence interval), generalizability, and causation. Does this tell you whether the view of the stars makes a difference in whether a beetle can keep their ball away from others?
+
+The treatments make a statistically significant impact (p-value < .001) on the time for a dung beetle to make it to the edge of the platform. This conclusion may not be generalizable to all beetles because this was not a random sample of beetles, but it may be generalized to beetles like the ones that were used in this study. Causation can be inferred due to the random assignment employed in the study design. The statistical significance of the treatment shows that view of the stars helps these beetles roll their balls of dung away from the starting point faster.
+
+# STEP 6: Look back and ahead.
+
+> 18. Suggest at least one way you would improve this study if you were to carry it, or a follow-up study, out yourself.
+
+Increased sample size, larger platform, middle level of darkening
+
+
