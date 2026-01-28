@@ -1,0 +1,120 @@
+---
+title: "Math 248: Exploration 2.1"
+author: "Your name here"
+header-includes:
+  - \usepackage{float}
+  - \floatplacement{figure}{H}
+output:
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo=TRUE,message=FALSE,warning=FALSE, fig.align = 'center', out.width="80%" )
+library(tidyverse)
+library(ggplot2)
+library(dplyr)
+library(mosaic)
+library(ImSIwithR)
+```
+
+```{r}
+#load in data
+data(MeltingTimes)
+```
+
+# Exploration 2.1 - Chip Melting Times
+
+Industrial-scale baking requires a precise understanding of how recipe ingredients behave when baked. For example, bakers want to know and understand how different types of baking chips respond to different oven temperatures. In this study you will compare the melting times of chocolate chips and butterscotch chips. You are going to be the participants, and the response variable will be the amount of time, from placing a chip on your tongue and holding it steadily to the roof of your mouth, until the chip is completely melted. Of course, there are more precise ways of measuring melting times, but this approach is tastier!
+
+> 1.  Outline a study protocol for investigating this question. Specifically, how will you design your study? How will you use random assignment? What about inclusion criteria?
+
+> 2.  Brainstorm a Sources of Variation diagram, including discussion of any “controls” you will use in the study to minimize unexplained variation.
+
+> 3.  Reviewing your sources of unexplained variation, do they have anything in common? Based on this commonality, can you suggest a way to improve the design of your study to try to address these sources?
+
+### Definition : Matched Pairs Design
+
+A *matched pairs design* pairs experimental units that are similar to each other and randomly assigns each member within a pair to one of the two treatment groups. A special type of matched pairs design is *repeated measures* where the same individual receives both treatments in a randomly assigned order.
+
+> 4.  Is a repeated measures type of matched pairs design feasible in this study? Describe how it would work and its main benefits.
+
+### Key Idea
+
+By having the same experimental unit (e.g., person) complete both treatments, the variability from experimental unit to experimental unit (e.g., person to person) is held constant and is no longer “unexplained variation.”
+
+> 5.  Does random assignment still play an important role in a matched pairs design? Explain why it matters and what could happen if you didn’t use random assignment.
+
+
+
+> 6.  Would a two-sample t-test (or a separate means model) be an appropriate analysis to compare the two melting time means for our matched pairs study design? Explain.
+
+### Key Idea
+
+In a paired design, it is not reasonable to consider the multiple observations on the same individual as independent, so we cannot carry out a procedure (e.g., a two-sample t-test) that assumes we have two independent samples.
+
+To analyze a paired design you can either use a one-sample t-test (and confidence interval) on the differences or a simulation that maintains the paired nature of the study design (e.g., randomizing the order of the two treatments on the same individual). The validity condition of the one-sample t-test is that the distribution of the differences is reasonably symmetric or the sample size is large with no severe skewness or outliers (e.g., larger than 30).
+
+### To work through a simulation-based analysis that simulates random assignment of the treatment within each pair or to conduct a one-sample t-test on the differences (i.e., the paired t-test that you may have seen in your first course), refer to the Homework Exercises. The paired t-test approach only works with two treatments and so we will show you a more general method here. (Data from one of the authors’ classes can be found in MeltingTimes.)
+
+> 7.  Use favstats to find the following- 
+
+Overall mean melting time:
+
+SSTotal:
+
+Mean melting time of chocolate: Mean melting time of butterscotch:
+
+Effect of chocolate: Effect of butterscotch:
+
+SSchip ∑all groups(group size) × (effect)2):
+
+SSError (recall SSTotal = SSchip + SSError):
+
+
+The following procedure is easily expandable to more than two treatment groups. The goal of this analysis is to take the paired nature of the design into account. That is, we wantto account for the person-to-person variation. To do that, we need to determine how much variation in the data is explained by the participants. Then, once we determine the SSperson, we can take that variation out of the unexplained SSError. To find the SSperson we need to know the effect of each person. As with the treatment effects, the person effects can be found by (“group” mean − overall mean).
+
+
+
+> 8. Choose one person (you, if you recognize your values in the data table) and calculate the average of that person’s two melting times.
+
+
+
+
+> 9. How does your average melting time compare to the overall mean melting time? This is the “effect” of you (or the person you chose).
+
+
+
+> 10. Find the effect of each person by doing the following:
+
+> a. Find the mean melting time (across the two types of chips) for each person.
+> b. Find the overall mean of all chip melting. 
+> c. Find the difference in mean for each person to the overall mean. 
+
+> 11. Explain what it means for a person to have a larger positive effect than another person. Explain what it means for a person to have a larger negative effect.
+
+
+> 12. Now we find SSperson (sum of squares person), found by squaring each person effect, then multiplying by two, then summing all of those together. 
+
+
+**explain how this is related to sources of variation**
+
+> 13. Look at the ANOVA table and recognize any similarities. 
+
+
+> 14. What proportion of the total variation is explained by chip type? What proportion is explained by person?
+
+
+> 15. Now compute an F-statistic for comparing the melting times of the chip types by dividing the Mean Square for chips by the Mean Square for Error. Is this person-adjusted F-statistic large? Statistically significant? Recall that F-statistics greater than 4 are strong evidence against the null (just like t-statistics greater than 2).
+
+
+> 16. Write out a prediction equation for the predicted melting time based on the individual and the type of chip. (Hint: overall mean should also be included)
+
+
+
+> 17. Find a prediction for one individual based on your prediction equation. 
+
+
+
+> 18. If there were three types of chips being tested, how would your results and analysis change? How would ANOVA calculations change? 
+
+
