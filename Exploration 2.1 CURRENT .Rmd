@@ -49,9 +49,16 @@ Industrial-scale baking requires a precise understanding of how recipe ingredien
 
 A *matched pairs design* pairs experimental units that are similar to each other and randomly assigns each member within a pair to one of the two treatment groups. A special type of matched pairs design is **repeated measures** where the same individual receives both treatments in a randomly assigned order.
 
+```{r}
+ggplot(MeltingTimes, aes(time, fill = chiptype))+
+  geom_histogram(color="white")+
+  theme_classic()+
+  labs(title="Melting Times Distribution by Chiptype")
+```
 
 
 > 4.  Is a repeated measures type of matched pairs design feasible in this study? Describe how it would work and its main benefits.
+
 
 
 
@@ -131,7 +138,7 @@ sstable
 
 ```
 
-> 7. For both tables, (summary and Sum of Squares), take at least one output and interpret in the context of the study. 
+> 7. Write a couple sentences discussing any key features from the previous tables. 
 
 
 
@@ -221,9 +228,8 @@ single_person_mean
 
 > 9. How does your person's average melting time compare to the overall mean melting time? This is the “effect” of you (or the person you chose).
 
-Remove **eval=FALSE** after running the code. 
 
-```{r, eval=FALSE}
+```{r}
 overall_mean_melting_time <- mean(merged_data$time)
 cat("Overall mean melting time:",overall_mean_melting_time,"\n")
 cat("Single person mean melting time:", single_person_mean$mean_time)
@@ -256,9 +262,10 @@ head(all_person_means)
 
 > 12. Now we find SSperson (sum of squares person), found by squaring each person effect, multiplying by the number of trials per each effect (2), then taking the summation. 
 
+
 ```{r}
 # Using R as a calculator
-SSperson_merged <- sum(2*(all_person_means$person_effect^2))
+SSperson_merged <- sum(2*(all_person_means$person_effect^2))    #uses the equation for sum of squares. 
 cat("Sum of Squares (person effect):",SSperson_merged)
 ```
 
@@ -288,7 +295,7 @@ anova_table <- tibble(
   MS = c(SSChip_merged/df_chip, SSPerson_merged/df_person, SSError_merged/df_error, NA)
 )
 
-cat(anova_table)
+print(anova_table)
 ```
 
 
@@ -303,7 +310,7 @@ variations <- tibble(
 )
 
 #shows the table
-cat(variations)
+print(variations)
 ```
 
 
@@ -341,7 +348,7 @@ Remove **eval=FALSE** after running the code.
 # Making a prediciton based on your inputs: 
 
 target_student <- "Initials"      # Change to your student code
-target_chip <- "chocolate"        # change to the chip type you want to predict ("butterscotch" or "chocolate")
+target_chip <- "chiptype"        # change to the chip type you want to predict ("butterscotch" or "chocolate")
 
 
 # call for the effect of chiptype: 
