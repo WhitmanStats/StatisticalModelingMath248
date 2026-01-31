@@ -30,25 +30,33 @@ Because clamshells have holes in them, air can circulate from outside the clamsh
 
 
 
->1. Identify the observational units, the explanatory variable, and the response variable. Complete the hypothesized Sources of Variation diagram.
+>1. Identify the observational units, the explanatory variable, and the response variable. Complete the hypothesized Sources of Variation table. 
 
-Sources of explained variation- 
-
-Inclusion criteria: 
-
-Design: 
-
-
-Sources of unexplained variation- 
-
-Inclusion criteria: 
-
-Design: 
+ | Observed variation in | Sources of explained variation | Sources of explained variation |
+ |-----------------------|--------------------------------|--------------------------------|
+ | Inclusion criteria    |                                |                                |
+ |                       |                                |                                |
+ | Design                |                                |                                |
 
 
 
 >2. Consider the following outputs: 
 
+```{r}
+ggplot(Strawberries, aes(Firmness))+
+  geom_histogram(fill="red", color="white")+
+  theme_classic()+
+  labs(title = "Firmness Distribution")
+```
+
+```{r}
+ggplot(Strawberries, aes(Firmness, fill = Storage))+
+  geom_boxplot()+
+  facet_wrap(~Storage, ncol=1)+
+  theme_classic()+
+  labs(title="Distribution of Firmness by Storage Type")
+  
+```
 
 
 >a. Calculate the observed effects for each storage method: 
@@ -60,7 +68,7 @@ stats <- Strawberries %>%
     grand_mean = mean(Firmness),
     mean_Air = mean(Firmness[Storage == "Air"]),
     mean_Control = mean(Firmness[Storage == "Control"]),
-    mean_Mod = mean(Firmness[Storage == "Modified"])
+    mean_Mod = mean(Firmness[Storage == "ModifiedAir"])
   )
 
 # Calculate Effects (Group Mean - Grand Mean)
@@ -90,12 +98,13 @@ obs_F <- anova(model_1)$F[1]
 ```
 
 
-> How much variation in firmness values is explained by the storage method? Based on the F-statistic and the null distribution, should we find a large p-value or a small p-value? How are you deciding?
+> How much variation in firmness values is explained by the storage method? Based on the F-statistic and the null distribution, should we find a large p-value or a small p-value? How are you deciding? (Hint: Look back at 2.1, question 14.)
 
 
 
 
 >4. Suggest some possible explanations for finding an insignificant result here.
+
 
 
 
@@ -109,7 +118,7 @@ Rather than limiting themselves to one type of strawberry (i.e., using inclusion
 
 ```{r}
 # Visualizing Variety differences
-ggplot(Strawberries, aes(x = Variety, y = Firmness)) +
+ggplot(Strawberries, aes(x = Variety, y = Firmness, fill = Variety)) +
   geom_boxplot() +
   geom_jitter(width = 0.1) +
   theme_bw() +
@@ -122,7 +131,7 @@ ggplot(Strawberries, aes(x = Variety, y = Firmness)) +
 
 
 ```{r}
-# Plotting Variety and Storage
+# Plotting Variety and Storage on Firmness
 ggplot(Strawberries, aes(x = Variety, y = Firmness, color = Storage)) +
   geom_point(size = 3) +
   theme_bw() +
@@ -155,20 +164,27 @@ Modifying the Analysis to Consider Blocking Now that we know more about the actu
 
 # Analysis 1: Ignore Blocking Effect
 
->9, Record the mean and standard deviation of this “completely randomized” null distribution.
+>9, Record the mean and standard deviation of this “completely randomized” null distribution. So only the effect of the storage type is taken into account. 
 
-```{r, EVAL = FALSE}
-set.seed(123) #SET YOUR own seed. 
+Remove **eval=FALSE** after running the code.
+
+```{r, eval = FALSE}
+set.seed(1) #SET YOUR own seed. 
+
 # Simulation 1: Completely Randomized (ignoring blocks)
-null_dist_1 <- do(1000) * anova(aov(Firmness ~ shuffle(Storage), data = Strawberries))
+null_distribution_CRD <- do(1000) * aov(Firmness ~ shuffle(Storage), data = Strawberries)
 
-# Filter for the F statistic of Storage (the first row of anova output usually)
-# Note: do() * anova() creates columns like "F"
-# We only want the F-statistic for the model term, not residuals
-null_dist_1 <- null_dist_1 %>% filter(!is.na(F))
+#filter for the F values
+Fstat <- null_distribution_CRD%>%
+  filter(!is.na(F))
 
-mean(null_dist_1$F)
-sd(null_dist_1$F)
+#create a distribution
+ggplot(Fstat, aes(x = F)) +
+  geom_histogram(bins = 30, fill = "skyblue", color = "white") +
+  labs(title = "Simulated Null Distribution of F-statistics, Ignoring Blocking Effect",
+       x = "F-statistic",
+       y = "Frequency") +
+  theme_minimal()
 ```
 
 
@@ -210,23 +226,26 @@ But we still want to know whether, after adjusting for variety, the variability 
 
 ```{r}
 set.seed(123)
-# Simulation 2: Restricted Randomization (Shuffling within blocks)
+# Simulation 2: Randomized Complete Block Design (Shuffling within blocks)
 # We calculate the F-statistic for the model: Firmness ~ Storage + Variety
 # But we only shuffle Storage within Variety
 # Note: F-statistic of interest is for Storage
 
-null_dist_2 <- do(1000) * anova(aov(Firmness ~ shuffle(Storage, groups = Variety) + Variety, data = Strawberries))
+null_distribution_RCBD <- do(1000) * aov(Firmness ~ shuffle(Storage, groups= Variety)+ Variety, data = Strawberries)
 
-# Extract F stat for Storage (usually the first row if Storage is first in formula)
-# However, aov output via do() might stack rows. We filter for term == "Storage" equivalent.
-# Inspect names if needed. usually it captures F.1 (Storage) and F.2 (Variety)
-# Let's assume F comes from the Storage row.
+#filter for the F values
+Fstat_RCBD <- null_distribution_RCBD%>%
+  filter(!is.na(F))
 
-head(null_dist_2)
-# Calculating stats for the F-statistic associated with Storage
-# (Check column names in your actual R session, usually 'F' corresponds to first term)
-mean(null_dist_2$F)
-sd(null_dist_2$F)
+#create a distribution
+ggplot(Fstat_RCBD, aes(x = F)) +
+  geom_histogram(bins = 100, fill = "skyblue", color = "white") +
+  labs(title = "Simulated Null Distribution of F-statistics for RCBD",
+       x = "F-statistic",
+       y = "Frequency") +
+  theme_minimal()
+
+
 ```
 
 
@@ -236,14 +255,14 @@ sd(null_dist_2$F)
 
 ### Key Idea: 
 
-The the null distribution is typically less variable when shuffling within blocks,
-which makes observed values of the statistic of interest more extreme, providing more
-evidence against the null hypothesis.
+The the null distribution is typically less variable when shuffling within blocks, which makes observed values of the statistic of interest more extreme, providing more evidence against the null hypothesis.
 
 
 
 
 >15. How will the smaller standard deviation in the shuffled within blocks null distribution impact the strength of evidence provided by the observed F-statistic, 0.995 ≈ 1.0? Explain.
+
+
 
 
 >16. How has the strength of evidence (p-value) against the null hypothesis changed when considering blocks (Analysis #2) vs. Analysis #1 which did not consider the blocks? Why?
@@ -261,7 +280,10 @@ p_val_2
 
 Simulated p-value without blocking (Question #10):
 
-Simulated p-value using blocking:
+Simulated p-value using blocking (just found in Question #16):
+
+
+
 
 
 
@@ -272,9 +294,11 @@ We conducted multiple analyses (one that considered the blocking design and one 
 
 Because the actual study used blocking and we modified the simulation to account for the blocking variable, we need to modify the null and alternative hypothesis being tested as shown here.
 
-Null hypothesis: The long-run average firmness of strawberries in each of the three experimental conditions is the same, after accounting for differences in firmness between different varieties of strawberries.
 
-Alt hypothesis: At least one of the three experimental conditions have a different long-run average firmness of strawberries, after accounting for differences in firmness between different varieties of strawberries.
+
+**Null hypothesis** $H_0$: The long-run average firmness of strawberries in each of the three experimental conditions is the same, after accounting for differences in firmness between different varieties of strawberries.
+
+**Alternative hypothesis**  $H_a$: At least one of the three experimental conditions have a different long-run average firmness of strawberries, after accounting for differences in firmness between different varieties of strawberries.
 
 
 >17. Based on the prior modified null and alternative hypotheses and your simulation analysis considering the blocking variable, state a conclusion about the study.
@@ -285,13 +309,14 @@ Alt hypothesis: At least one of the three experimental conditions have a differe
 
 
 ```{r}
-grand_mean <- mean(Strawberries$Firmness)
+
+overall_mean <- mean(Strawberries$Firmness)
 
 block_effects <- Strawberries %>%
   group_by(Variety) %>%
   summarize(
     variety_mean = mean(Firmness),
-    block_effect = variety_mean - grand_mean
+    block_effect = variety_mean - overall_mean
   )
 
 print(block_effects)
@@ -329,6 +354,8 @@ sd(Strawberries$Firmness_Adj)
 
 When simulating the null distribution of the F-statistic on the adjusted data you no longer need to re-randomize within the blocks—instead, re-randomize the treatments across all of the experimental units (ignoring the blocks). The blocks have already been accounted for in the analysis by adjusting the data up front. If strawberries had come to us with the same firmness (on the same scale), we wouldn’t need to re-randomize within the blocks.
 
+
+
 >22. Compare the following null distribution to the one obtained earlier shuffling within blocks. How has the null distribution changed?
 
 ```{r}
@@ -338,6 +365,8 @@ obs_F_adj <- anova(aov(Firmness_Adj ~ Storage, data = Strawberries))$F[1]
 
 null_dist_adj <- do(1000) * anova(aov(Firmness_Adj ~ shuffle(Storage), data = Strawberries))
 
+
+
 mean(null_dist_adj$F)
 sd(null_dist_adj$F)
 ```
@@ -346,6 +375,7 @@ sd(null_dist_adj$F)
 
 
 Mean:
+
 Standard Deviation:
 
 
@@ -382,13 +412,14 @@ Recall that theory-based approaches like those you have been using require certa
 
 
 ```{r}
-# Checking validity conditions
-# 1. Sample size < 20, check symmetry of adjusted response
-ggplot(Strawberries, aes(x = Storage, y = Firmness_Adj)) +
+#look for skewness and outliers or approximately symmetric
+ggplot(Strawberries, aes(x = Storage, y = Firmness_Adj, fill= Storage)) +
   geom_boxplot() +
   labs(title = "Adjusted Firmness by Storage")
+```
 
-# 2. Check SDs
+```{r}
+#check Standard deviations
 Strawberries %>%
   group_by(Storage) %>%
   summarize(sd_adj = sd(Firmness_Adj))
@@ -398,6 +429,9 @@ Strawberries %>%
 
 
 >26. Summarize the conclusions you would draw from this study, including generalizability and causation (for both the method and the variety).
+
+
+
 
 
 
