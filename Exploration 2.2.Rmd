@@ -1,3 +1,4 @@
+
 ---
 title: "Math 248: Exploration 2.2"
 author: "Your name here"
@@ -175,16 +176,20 @@ set.seed(1) #SET YOUR own seed.
 null_distribution_CRD <- do(1000) * aov(Firmness ~ shuffle(Storage), data = Strawberries)
 
 #filter for the F values
-Fstat <- null_distribution_CRD%>%
+Fstat_CRD <- null_distribution_CRD%>%
   filter(!is.na(F))
 
 #create a distribution
-ggplot(Fstat, aes(x = F)) +
-  geom_histogram(bins = 30, fill = "skyblue", color = "white") +
-  labs(title = "Simulated Null Distribution of F-statistics, Ignoring Blocking Effect",
+ggplot(Fstat_CRD, aes(x = F)) +
+  geom_histogram(bins = 100, fill = "skyblue", color = "white") +
+  labs(title = "Simulated Null Distribution of F-statistics (CRD)",
        x = "F-statistic",
        y = "Frequency") +
   theme_minimal()
+
+# Calculate stats
+mean(Fstat_CRD$F)
+sd(Fstat_CRD$F)
 ```
 
 
@@ -198,7 +203,7 @@ Std Dev:
 
 ```{r}
 # P-value for Analysis 1
-prop(~ F >= obs_F, data = null_dist_1)
+prop(~ F >= obs_F, data = Fstat_CRD)
 ```
 
 
@@ -207,8 +212,6 @@ prop(~ F >= obs_F, data = null_dist_1)
 
 
 But we still want to know whether, after adjusting for variety, the variability explained by storage method is statistically significant. It appears likely, given that within each variety, the modified air method has consistently larger firmness values.
-
-
 
 
 # Analysis 2: Revising the Simulation to Account for the Blocking
@@ -224,27 +227,26 @@ But we still want to know whether, after adjusting for variety, the variability 
 >13. What are the mean and standard deviation of the simulated null distribution of F-statistics shuffling within blocks? How do these compare to the mean and standard deviation obtained earlier using a completely randomized approach (Analysis #1)?
 
 
-```{r}
-set.seed(123)
+Remove **eval = FALSE** after running code. 
+
+```{r, eval= FALSE}
+set.seed("your own seed")
 # Simulation 2: Randomized Complete Block Design (Shuffling within blocks)
-# We calculate the F-statistic for the model: Firmness ~ Storage + Variety
-# But we only shuffle Storage within Variety
-# Note: F-statistic of interest is for Storage
+null_distribution_RCBD <- do(1000) * anova(aov(Firmness ~ shuffle(Storage, groups = Variety) + Variety, data = Strawberries))
 
-null_distribution_RCBD <- do(1000) * aov(Firmness ~ shuffle(Storage, groups= Variety)+ Variety, data = Strawberries)
+# Filter for the F values
+# We only use .row == 1 because "Storage" is the first term in the model
+Fstat_RCBD <- null_distribution_RCBD %>%
+   filter(.row == 1) %>% 
+   filter(!is.na(F))
 
-#filter for the F values
-Fstat_RCBD <- null_distribution_RCBD%>%
-  filter(!is.na(F))
-
-#create a distribution
+#visualize the null distribution 
 ggplot(Fstat_RCBD, aes(x = F)) +
   geom_histogram(bins = 100, fill = "skyblue", color = "white") +
   labs(title = "Simulated Null Distribution of F-statistics for RCBD",
        x = "F-statistic",
        y = "Frequency") +
   theme_minimal()
-
 
 ```
 
@@ -273,7 +275,7 @@ model_2 <- aov(Firmness ~ Storage + Variety, data = Strawberries)
 obs_F_blocked <- anova(model_2)$F[1] # F-stat for Storage
 
 # Simulated p-value using blocking
-p_val_2 <- prop(~ F >= obs_F_blocked, data = null_dist_2)
+p_val_2 <- prop(~ F >= obs_F_blocked, data = null_distribution_RCBD)
 p_val_2
 ```
 
@@ -309,9 +311,10 @@ Because the actual study used blocking and we modified the simulation to account
 
 
 ```{r}
-
+#calculate overall mean
 overall_mean <- mean(Strawberries$Firmness)
 
+#summarize and calculate blocking effect. 
 block_effects <- Strawberries %>%
   group_by(Variety) %>%
   summarize(
@@ -338,8 +341,12 @@ head(Strawberries %>% select(Variety, Firmness, block_effect, Firmness_Adj))
 >20. Compare the block-adjusted firmness values to the original firmness values. In terms of the variation, how do the two sets of data compare?
 
 ```{r}
-sd(Strawberries$Firmness)
-sd(Strawberries$Firmness_Adj)
+#call the variation for both firmnes values. 
+FirmSD<- sd(Strawberries$Firmness)
+FirmSD_Adj<-sd(Strawberries$Firmness_Adj)
+cat("Firmness SD:",FirmSD, "\nFirmness SD Adj:", FirmSD_Adj)
+
+
 ```
 
 
@@ -359,16 +366,29 @@ When simulating the null distribution of the F-statistic on the adjusted data yo
 >22. Compare the following null distribution to the one obtained earlier shuffling within blocks. How has the null distribution changed?
 
 ```{r}
+set.seed(1235)
 # Analysis 3: Adjusted Data (Complete Randomization on Adjusted Data)
 # We verify the validity of using adjusted data with a simple one-way ANOVA simulation
 obs_F_adj <- anova(aov(Firmness_Adj ~ Storage, data = Strawberries))$F[1]
 
-null_dist_adj <- do(1000) * anova(aov(Firmness_Adj ~ shuffle(Storage), data = Strawberries))
+null_distribution_Adj <- do(1000) * anova(aov(Firmness_Adj ~ shuffle(Storage), data = Strawberries))
+
+Fstat_Adj <- null_distribution_Adj %>%
+   filter(.row == 1) %>% 
+   filter(!is.na(F))
+
+obs_F_adj
+mean(Fstat_Adj$F)
+sd(Fstat_Adj$F)
 
 
-
-mean(null_dist_adj$F)
-sd(null_dist_adj$F)
+#visualize the null distribution 
+ggplot(Fstat_Adj, aes(x = F)) +
+  geom_histogram(bins = 100, fill = "skyblue", color = "white") +
+  labs(title = "Simulated Null Distribution of F-statistics for Adjusted Values",
+       x = "F-statistic",
+       y = "Frequency") +
+  theme_minimal()
 ```
 
 
@@ -383,7 +403,7 @@ Standard Deviation:
 
 
 ```{r}
-prop(~ F >= obs_F_adj, data = null_dist_adj)
+prop(~ F >= obs_F_adj, data = null_distribution_adj)
 ```
 
 
@@ -429,9 +449,3 @@ Strawberries %>%
 
 
 >26. Summarize the conclusions you would draw from this study, including generalizability and causation (for both the method and the variety).
-
-
-
-
-
-
