@@ -1,0 +1,110 @@
+---
+title: "Math 248: Exploration 2.3"
+author: "Your name here"
+header-includes:
+  - \usepackage{float}
+  - \floatplacement{figure}{H}
+output:
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo=TRUE,message=FALSE,warning=FALSE, fig.align = 'center', out.width="80%" )
+library(tidyverse)
+library(ggplot2)
+library(dplyr)
+library(mosaic)
+library(ImSIwithR)
+```
+
+# Exploration 2.3 Car Acceleration
+
+One commonly cited metric in car commercials is the time it takes the car to accelerate from 0 to 60 mph. In this exploration, we will consider what car features might help explain faster acceleration (shorter times) using data on 406 cars (Quinlan, “Combining Instance-based and Model-based Learning,” Proceedings on the Tenth International Conference of Machine Learning, 236–243, 1993; used in the 1983 ASA Data Graphics Exposition).
+
+*Do heavier cars accelerate faster?* The `carmpg` file within `library(ImSIwithR)` contains data on the weight of the car (whether or not the car weighs over 2800 kg) and the time it takes to accelerate to 60 mph (measured in seconds). (This dataset has been around the internet for a while but details on the data collection are limited. We use the version with 392 complete records.)
+
+Let's load the data.
+
+!!! Remove **eval=FALSE** after inserting the path and successfully running the code AND *remove this note*.
+
+```{r, load in data,eval=FALSE}
+library(ImSIwithR)
+data(carmpg)
+head(carmpg,2)
+```
+
+*Let's convert character variables in the dataset: `weight` and `horsepower` into factor variables.*
+
+```{r, convert all character columns to factors}
+carmpg <- carmpg %>%
+  mutate(across(where(is.character), as.factor))
+
+head(carmpg, 2)
+```
+
+```{r, ANOVA table for CRD model, eval=FALSE}
+model_weight <- aov(acceleration ~ weight, data = carmpg)
+anova(model_weight)
+```
+
+```{r, ANOVA table with confounding variablesequential sums of squares, eval=FALSE}
+model_horsepower_weight <- aov(acceleration ~ horsepower + weight, data = carmpg)
+anova(model_horsepower_weight) # sequential sums of squares - Type 1
+```
+
+Note that this does not match the output you get with the applet. We get the same output for weight, but horsepower calculations for sums of squares and F statistic are not the same. Let's try to figure out what's happening.
+
+!!! Change the path and remove **eval=FALSE** after uploading the image to Server and updating the path.
+
+```{r include_image2, echo=FALSE, out.width="80%", fig.align="center", eval=FALSE}
+knitr::include_graphics("~/Documents/Math 248 Materials/Math 248 Resources/ISI2 Math 248/Type 3 ANOVA carmpg.png")
+```
+
+It turns out that there are generally two different types of calculations for sums of squares in the ANOVA table.
+
+### Type I vs. Type III Sums of Squares
+
+*Type I (Sequential) Sums of Squares*: The order in which variables are entered into the model affects the results because each variable is adjusted only for those that precede it in the model. This type is generally not recommended for unbalanced observational studies with correlated predictors (confounding variables) because the shared variance is attributed to the variable entered first, which can lead to biased interpretation.
+
+*Type III (Marginal) Sums of Squares:* Each effect is evaluated after adjusting for all other effects in the model, including interactions. This ensures that the hypothesis tested for each main effect is consistent regardless of the order of the variables in the model. This is especially useful in observational studies where data are typically unbalanced and confounding variables are present.
+
+In observational studies with *unbalanced data* and confounding variables, you should generally use *Type III sums of squares*. This approach is used because it assesses the effect of each variable after adjusting for all other terms in the model. *Note: For balanced designs (same number of treatments in each block) Type 1 and Type 3 sums of squares produce the same result - see Exploration 2.2 solutions.*
+
+We can match the output in the book by using the marginal/partial sums of squares that look at the effect of horsepower on acceleration after accounting for weight and the effect of weight on acceleration after accounting for horsepower.
+
+```{r, marginal/partial sums of squares - Type 3}
+library(car)
+options(contrasts = c("contr.sum", "contr.poly"))
+
+model_horsepower_weight <- lm(acceleration ~ horsepower + weight, data = carmpg)
+a3 <- Anova(model_horsepower_weight, type = 3)
+
+# display Type III ANOVA without the intercept row
+a3[rownames(a3) != "(Intercept)", , drop = FALSE] 
+```
+
+The book in their explanation uses the following chart: The association between weight and horsepower creates *covariation* in acceleration times. Because weight and horsepower change together (they are associated) these two variables explain some of the same variation in acceleration times.
+
+!!! Change the path and remove **eval=FALSE** after uploading the image to Server and updating the path.
+
+```{r include_image3, echo=FALSE, out.width="80%", fig.align="center",eval=FALSE}
+knitr::include_graphics("~/Documents/Math 248 Materials/Math 248 Resources/ISI2 Math 248/sums of squares piechart carmpg.png")
+```
+
+### Do We Always Have Covariation?
+
+Well, think about the Strawberry Storage study. In that experimental design, each strawberry variety had the same distribution of storage methods, meaning strawberry variety and storage method were not associated. (In fact, the researchers made sure that each storage method was assigned to only one clamshell of each variety so there was zero covariation in that study.)Thus Type I Sums of Squares and Type 3 Sums of Squares will be the same. But in this observational study, weight and horsepower are associated because the researchers have no control over which car is in which group. Thus, in observational studies with that usually have *unbalanced data* and *confounding variables*, you should generally use *Type III sums of squares*.
+
+### Key Idea
+
+By making sure each block has the same distribution of treatments, that is, each treatment occurs the same number of times within each block, the randomized complete block design ensures there is no relationship between the blocking variable and the treatment variable and therefore *no covariation*.
+
+In this case, the *covariation* is not all that large and our adjusted associations were each statistically significant. It’s possible that this covariation could be large enough to hinder the significance of an individual adjusted association or that an adjusted association could become insignificant if the new variable explains a lot of the same association in the response. If you are choosing variables to include in your model, there are advantages to finding variables that explain different aspects of the variation in the response variables (i.e., variables that are associated with the response but not with each other).
+
+### Key Idea
+
+Using two variables that are associated with each other will not decrease the `SSError` (or increase `SSModel`) as much as using two variables that are not associated with each other.
+
+> 22. Create a Sleleton ANOVA table (Hit: use the Visual mode to insert the table)
+
+> 23. Use the combined column of the skeleton ANOVA to write out the theoretical model in words ( Hint: follow the Modeling Construction Process posted on Canvas)
