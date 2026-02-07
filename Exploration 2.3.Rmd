@@ -52,9 +52,9 @@ model_horsepower_weight <- aov(acceleration ~ horsepower + weight, data = carmpg
 anova(model_horsepower_weight) # sequential sums of squares - Type 1
 ```
 
-Note that this does not match the output you get with the applet. We get the same output for weight, but horsepower calculations for sums of squares and F statistic are not the same. Let's try to figure out what's happening.
+Note that this does not match the output you get with the applet. We get the same output for weight, but the horsepower calculations for sums of squares and F statistic are not the same. Let's try to figure out what's happening.
 
-!!! Change the path and remove **eval=FALSE** after uploading the image to Server and updating the path.
+!!! Change the path and remove **eval=FALSE** after uploading the image to the server and updating the path.
 
 ```{r include_image2, echo=FALSE, out.width="80%", fig.align="center", eval=FALSE}
 knitr::include_graphics("~/Documents/Math 248 Materials/Math 248 Resources/ISI2 Math 248/Type 3 ANOVA carmpg.png")
@@ -68,7 +68,7 @@ It turns out that there are generally two different types of calculations for su
 
 *Type III (Marginal) Sums of Squares:* Each effect is evaluated after adjusting for all other effects in the model, including interactions. This ensures that the hypothesis tested for each main effect is consistent regardless of the order of the variables in the model. This is especially useful in observational studies where data are typically unbalanced and confounding variables are present.
 
-In observational studies with *unbalanced data* and confounding variables, you should generally use *Type III sums of squares*. This approach is used because it assesses the effect of each variable after adjusting for all other terms in the model. *Note: For balanced designs (same number of treatments in each block) Type 1 and Type 3 sums of squares produce the same result - see Exploration 2.2 solutions.*
+In observational studies with *unbalanced data* and confounding variables, you should generally use *Type III sums of squares*. This approach is used because it assesses the effect of each variable after adjusting for all other terms in the model. *Note: For balanced designs (same number of treatments in each block), Type 1 and Type 3 sums of squares produce the same result - see Exploration 2.2 solutions.*
 
 We can match the output in the book by using the marginal/partial sums of squares that look at the effect of horsepower on acceleration after accounting for weight and the effect of weight on acceleration after accounting for horsepower.
 
@@ -82,10 +82,9 @@ a3 <- Anova(model_horsepower_weight, type = 3)
 # display Type III ANOVA without the intercept row
 a3[rownames(a3) != "(Intercept)", , drop = FALSE] 
 ```
+One of the assumptions for blocked design structures is that there is no treatment-by-block interaction. However, it is easier to control in experiments. With observational studies, there is likely an interaction between the confounding variable we would like to control for and the treatment. The book in their explanation uses the following chart: The association between weight and horsepower creates *covariation* in acceleration times. Because weight and horsepower change together (they are associated), these two variables explain some of the same variation in acceleration times. The book in their explanation uses the following chart: The association between weight and horsepower creates *covariation* in acceleration times. Because weight and horsepower change together (they are associated), these two variables explain some of the same variation in acceleration times.
 
-The book in their explanation uses the following chart: The association between weight and horsepower creates *covariation* in acceleration times. Because weight and horsepower change together (they are associated) these two variables explain some of the same variation in acceleration times.
-
-!!! Change the path and remove **eval=FALSE** after uploading the image to Server and updating the path.
+!!! Change the path and remove **eval=FALSE** after uploading the image to the server and updating the path.
 
 ```{r include_image3, echo=FALSE, out.width="80%", fig.align="center",eval=FALSE}
 knitr::include_graphics("~/Documents/Math 248 Materials/Math 248 Resources/ISI2 Math 248/sums of squares piechart carmpg.png")
@@ -99,12 +98,12 @@ Well, think about the Strawberry Storage study. In that experimental design, eac
 
 By making sure each block has the same distribution of treatments, that is, each treatment occurs the same number of times within each block, the randomized complete block design ensures there is no relationship between the blocking variable and the treatment variable and therefore *no covariation*.
 
-In this case, the *covariation* is not all that large and our adjusted associations were each statistically significant. It’s possible that this covariation could be large enough to hinder the significance of an individual adjusted association or that an adjusted association could become insignificant if the new variable explains a lot of the same association in the response. If you are choosing variables to include in your model, there are advantages to finding variables that explain different aspects of the variation in the response variables (i.e., variables that are associated with the response but not with each other).
+In this case, the *covariation* is not all that large, and our adjusted associations were each statistically significant. It’s possible that this covariation could be large enough to hinder the significance of an individual adjusted associatio,n or that an adjusted association could become insignificant if the new variable explains a lot of the same association in the response. If you are choosing variables to include in your model, there are advantages to finding variables that explain different aspects of the variation in the response variables (i.e., variables that are associated with the response but not with each other).
 
 ### Key Idea
 
 Using two variables that are associated with each other will not decrease the `SSError` (or increase `SSModel`) as much as using two variables that are not associated with each other.
 
-> 22. Create a Sleleton ANOVA table (Hit: use the Visual mode to insert the table)
+> 22. Create a Skeleton ANOVA table (Hint: use the Visual mode to insert the table)
 
 > 23. Use the combined column of the skeleton ANOVA to write out the theoretical model in words ( Hint: follow the Modeling Construction Process posted on Canvas)
