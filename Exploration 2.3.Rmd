@@ -1,5 +1,5 @@
 ---
-title: "Math 248: Exploration 2.3"
+title: "Math 248: Exploration 2.2"
 author: "Your name here"
 header-includes:
   - \usepackage{float}
@@ -15,6 +15,7 @@ library(ggplot2)
 library(dplyr)
 library(mosaic)
 library(ImSIwithR)
+library(ggrepel)
 ```
 
 # Exploration 2.3 Car Acceleration
@@ -42,23 +43,52 @@ carmpg <- carmpg %>%
 head(carmpg, 2)
 ```
 
+> 1. Was this an observational study or a randomized experiment? How are you deciding? 
+
+
+> 2. Identify all variables, be sure to specify the response variable and explanatory variable(s). 
+
+
+ 
+ > 3. Compare the distributions of acceleration times between light and heavy cars, comment on the boxplot
+
+
+```{r}
+ggplot(carmpg, aes(x= weight, y=acceleration, fill = weight))+
+  geom_boxplot()+
+  labs(title="Acceleration Distribution by Weight Class")
+```
+
+
+>4. Conduct a one-variable analysis evaluating the association between acceleration and car weight. Is there a statistically significant relationship between acceleration time and car weight? 
+
+
 ```{r, ANOVA table for CRD model, eval=FALSE}
 model_weight <- aov(acceleration ~ weight, data = carmpg)
 anova(model_weight)
 ```
 
-```{r, ANOVA table with confounding variablesequential sums of squares, eval=FALSE}
+> 5. Now we run another ANOVA, including the explanatory variable: horsepower. What has changed versus the original approach, and is there any statistically significant relationships between explanatory variables (horsepower and weight) and acceleration?
+
+
+```{r, ANOVA table with confounding variable sequential sums of squares, eval=FALSE}
 model_horsepower_weight <- aov(acceleration ~ horsepower + weight, data = carmpg)
 anova(model_horsepower_weight) # sequential sums of squares - Type 1
 ```
 
-Note that this does not match the output you get with the applet. We get the same output for weight, but the horsepower calculations for sums of squares and F statistic are not the same. Let's try to figure out what's happening.
 
-!!! Change the path and remove **eval=FALSE** after uploading the image to the server and updating the path.
+
+> Variance Sources plot:
+
 
 ```{r include_image2, echo=FALSE, out.width="80%", fig.align="center", eval=FALSE}
 knitr::include_graphics("~/Documents/Math 248 Materials/Math 248 Resources/ISI2 Math 248/Type 3 ANOVA carmpg.png")
 ```
+
+It turns out that there are generally two different types of calculations for sums of squares in the ANOVA table.
+
+This is a product from the applet which shows some covariation as a source of variation in acceleration.  _Note that this does not match the output as for our simple CRD or ANOVA with confounding variable._ We get the same output for weight (as the second anova), but the horsepower calculations for sums of squares and F statistic are not the same. Let's try to figure out what's happening. 
+
 
 It turns out that there are generally two different types of calculations for sums of squares in the ANOVA table.
 
@@ -72,6 +102,7 @@ In observational studies with *unbalanced data* and confounding variables, you s
 
 We can match the output in the book by using the marginal/partial sums of squares that look at the effect of horsepower on acceleration after accounting for weight and the effect of weight on acceleration after accounting for horsepower.
 
+
 ```{r, marginal/partial sums of squares - Type 3}
 library(car)
 options(contrasts = c("contr.sum", "contr.poly"))
@@ -82,12 +113,45 @@ a3 <- Anova(model_horsepower_weight, type = 3)
 # display Type III ANOVA without the intercept row
 a3[rownames(a3) != "(Intercept)", , drop = FALSE] 
 ```
+
 One of the assumptions for blocked design structures is that there is no treatment-by-block interaction. However, it is easier to control in experiments. With observational studies, there is likely an interaction between the confounding variable we would like to control for and the treatment. The book in their explanation uses the following chart: The association between weight and horsepower creates *covariation* in acceleration times. Because weight and horsepower change together (they are associated), these two variables explain some of the same variation in acceleration times. The book in their explanation uses the following chart: The association between weight and horsepower creates *covariation* in acceleration times. Because weight and horsepower change together (they are associated), these two variables explain some of the same variation in acceleration times.
+
 
 !!! Change the path and remove **eval=FALSE** after uploading the image to the server and updating the path.
 
 ```{r include_image3, echo=FALSE, out.width="80%", fig.align="center",eval=FALSE}
-knitr::include_graphics("~/Documents/Math 248 Materials/Math 248 Resources/ISI2 Math 248/sums of squares piechart carmpg.png")
+#knitr::include_graphics("~/Documents/Math 248 Materials/Math 248 Resources/ISI2 Math 248/sums of squares piechart carmpg.png")
+
+# Take unique SS from model.
+ss_hp     <- a3["horsepower", "Sum Sq"]
+ss_weight <- a3["weight", "Sum Sq"]
+ss_error  <- a3["Residuals", "Sum Sq"]
+
+# Calculate Sum of Squares Total
+ss_total  <- sum((carmpg$acceleration - mean(carmpg$acceleration))^2)
+
+# Shared = Total - (Unique HP + Unique Weight + Error)
+ss_covar  <- ss_total - (ss_hp + ss_weight + ss_error)
+
+# Make dataframe for the plot
+plot_data <- data.frame(
+  Source = c("Horsepower", "Cov", "wt", "Error"),
+  Value = c(ss_hp, ss_covar, ss_weight, ss_error)
+) %>%
+  mutate(Percentage = round((Value / ss_total) * 100))
+
+
+# Create the plot
+  
+ggplot(plot_data, aes(x = 1.6, y = Value, fill = Source)) + # Moved x to 1.6
+  geom_bar(aes(x = 1), stat = "identity", width = 1, color = "white") + # Keep bar at 1
+  coord_polar("y", start = 0) +
+  theme_void() +
+  geom_text(aes(label = paste0(Source, "\n(", Percentage, "%)","\n",round(Value,2))), 
+            position = position_stack(vjust = 0.5),check_overlap = TRUE, 
+            size = 3) +
+  scale_x_continuous(limits = c(0,2.9))+
+  labs(title="Variance Sources for Acceleration")
 ```
 
 ### Do We Always Have Covariation?
@@ -107,3 +171,9 @@ Using two variables that are associated with each other will not decrease the `S
 > 22. Create a Skeleton ANOVA table (Hint: use the Visual mode to insert the table)
 
 > 23. Use the combined column of the skeleton ANOVA to write out the theoretical model in words ( Hint: follow the Modeling Construction Process posted on Canvas)
+
+
+
+
+
+
