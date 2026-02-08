@@ -88,7 +88,7 @@ anova(model_weight)
 |            |           | car    | 392-1=391 | *car\|H&W* | **391-2=389** |
 | **Total**  | 392-1=391 | Total  | 392-1=391 | **Total**  | 392-1=391     |
 
-*In this Skeleton ANOVA both horsepower and weight are included in the Treatment* column. Cars are still observational units on which both treatments are observed. Thus, car line in the *Design* column should be underneath both horsepower and weight. After observing horsepower and weight on cars, cars have 389 df left. This term is denoted in the table as `car|H&W`. It represent model residual.
+*In this Skeleton ANOVA both horsepower and weight are included in the Treatment* column. Cars are still observational units on which both treatments are observed. Thus, the car line in the *Design* column should be underneath both horsepower and weight. After observing horsepower and weight on cars, cars have 389 df left. This term is denoted in the table as `car|H&W`. It represent model residual.
 
 If, however, we think of it as a potential *confounding variable* that we want to "block by" then horsepower should be included in the *Design* column.
 
