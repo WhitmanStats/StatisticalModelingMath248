@@ -121,9 +121,9 @@ prop.table(frequency_table, margin = 2)#column conditional proportions
 
 The table appears to indicate an association between weight and horsepower. The conditional proportions of high horsepower in vehicles are 151/196 or 77% for heavy cars, while only 16/196 or 8% for light cars. Thus, horsepower is a confounding variable in the study because heavier cars tend to have more horsepower, which plays a key role in quicker acceleration times.
 
-*What that means for the analysis is that horsepower interacts with weight and thus we are not able to see the full picture when we treat horsepower as a grouping/blocking variable. That means that we will treat horsepower as a treatment ( explanatory variable).*
+*What that means for the analysis is that horsepower interacts with weight and thus we are not able to see the full picture when we treat horsepower as a grouping/blocking variable. That means that we will treat horsepower as a treatment (explanatory variable).*
 
-*Let's add horsepower to the model*. Note that the output of the R code below does NOT match the output you get with the applet. We get the same output for weight, butthe horsepower calculations for sums of squares and F statistic are not the same. Let's try to figure out what's happening.
+*Let's add horsepower to the model*. Note that the output of the R code below does NOT match the output you get with the applet. We get the same output for weight, but the horsepower calculations for sums of squares and F statistic are not the same. Let's try to figure out what's happening.
 
 !!! Remove **eval=FALSE** after inserting the path and successfully running the code, and *remove this note*.
 
