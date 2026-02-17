@@ -1,0 +1,389 @@
+---
+title: "Math 248: Exploration 3.2"
+author: "Your name here"
+header-includes:
+  - \usepackage{float}
+  - \floatplacement{figure}{H}
+output:
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo=TRUE,message=FALSE,warning=FALSE, fig.align = 'center', out.width="80%" )
+library(tidyverse)
+library(ggplot2)
+library(dplyr)
+library(mosaic)
+library(emmeans)
+library(ImSIwithR)
+```
+
+# Exploration 3.2 Optimizing Ads
+
+Rossiter and Percy (Adv. Cons. Res., 1978) examined the effects of visual imaging and visual/verbal stimuli on consumer response in advertising. Consumers were first exposed to two new brands of beer via separate print advertisements. The brand names were fictional and were previously determined to not affect attitude. Previous studies had focused on verbal processing information, for example, whether the consumers’ responses to an ad depended on whether the claims about the product were highly concrete (“winner of 5 of 5 taste tests”) or highly abstract and vague (“great taste”). In this study, the researchers wanted to focus on the type of visual imagery and how that might mitigate any effects of the type of claim (concrete vs. abstract). The ad for one brand was presented with a large picture of the product and a small verbal copy (words) underneath (“strong visual”). This strong visual ad was then paired with both the concrete and abstract claims. The ad for the other brand was presented with a large verbal copy and a small picture underneath (“strong verbal”). This strong verbal ad was paired with both the concrete and abstract claims. Note: The researchers chose not to use a control ad with no picture because they felt a beer ad with no pictures would not be very realistic. After viewing the ad, consumers were asked to rate their attitude toward the brand using four -3 to 3 scales (so total scores can range from -12 to 12). Participants were 44 men and 44 women recruited from a typical Midwestern suburban shopping center. All respondents were beer drinkers, and attempts were made to recruit individuals of a variety of ages.
+
+> 1.  Identify the experimental units (how many are there?) and the explanatory variables in this study. How many levels of each explanatory variable are there?
+
+> 2.  Identify the four possible treatments in this study. How many participants were assigned to each treatment? How should the assignment be carried out? What are the implications of that method of assignment?
+
+Let's load the data.
+
+!!! Change the path and remove eval=FALSE after uploading the image to Server and updating the path.
+
+```{r, load in data, eval=FALSE}
+library(ImSIwithR)
+data(ad_data)
+ad_data <- ad_data %>%
+  mutate(across(where(is.character), as.factor)) # transforming character variables into factor variables
+head(ad_data,2)
+```
+
+## Approach #1: One-Variable Analysis - flawed -do not use
+
+One analysis approach for a 2 × 2 factorial design could be to look at 4 treatment combinations as 4 levels of one treatment factor. Skeleton ANOVA for one-way ANOVA using "treatment":
+
+| Treatment | df        | Design      | df      | Combined               | df          |
+|------------|---------|------------|---------|----------|------------|
+| Treatment | 4-1=**3** |             |         | Treatment              | 4-1=3       |
+|           |           | participant | 88-1=87 | participant\|treatment | **87-3=84** |
+| **Total** | 88-1=87   | **Total**   | 88-1=87 | **Total**              | 88-1=87     |
+
+The corresponding theoretical model is:
+
+`Rating = Treatment + Error`,
+
+Validity conditions:
+
+-   Equal SD/Variances
+
+-   Independent observations
+
+-   Normally distributed response variable
+
+!!! Change the path and remove eval=FALSE after uploading the image to Server and updating the path.
+
+```{r, one-way ANOVA that uses treatment combinations as four seprate levels of a single treatment, eval=FALSE}
+model_simplified <- aov(rating ~ claim:imagery, data = ad_data)
+summary(model_simplifies)
+```
+
+With this output, all we can conclude is that at least one of the combinations of claims and imagery is significantly different from the rest. But this is a very simplified approach.
+
+## Approach #2: Two-Variable Analysis - better but still flawed
+
+The second approach in Section 3.1 was a two-variable model that estimates the treatment effects for each variable and separates the two sources of variation in the ANOVA table.
+
+| Treatment | df | Design | df | Combined | df |
+|------------|---------|------------|----------|------------|------------|
+| Claim | 2-1=**1** |  |  | Claim | 2-1=1 |
+| Imagery | 2-1=**1** |  |  | Imagery | 2-1=1 |
+|  |  | participant | 88-1=87 | participant\|Claim, Imagery | **87-2=85** |
+| **Total** | 88-1=87 | Total | 88-1=87 | **Total** | 88-1=87 |
+
+The corresponding theoretical model is:
+
+`Rating = Claim + Imagery + Error`,
+
+Validity conditions:
+
+-   Equal SD/Variances
+
+-   Independent observations
+
+-   Normally distributed response variable
+
+!!! Change the path and remove eval=FALSE after uploading the image to Server and updating the path.
+
+```{r, two-way additive model, eval=FALSE}
+model_additive <- aov(rating ~ claim + imagery, data = ad_data)
+summary(model_additive)
+```
+
+This model is better, because we can look at each of the factors separately, but it doesn't account for a possible interaction between these factors.
+
+## Statistical Interaction
+
+A key *advantage of a factorial treatment structure* over a one-variable-at-a-time design was the *ability to estimate the effects of both of the individual variables* (e.g., claim and imagery) within the same experiment. The *factorial treatment structure* also allows us to consider *whether the effect of one variable could change depending on the category/value of the other variable*. When this is the case, we say that the explanatory variables *interact*.
+
+## Definition
+
+A *statistical interaction* occurs between two variables when the effect (or association) of one explanatory variable on the response variable changes based on the value of the other variable. In other words, *one variable modifies the effect of the other variable*.
+
+An *interaction plot* displays the treatment means on the vertical axis, with one factor on the horizontal axis and the other factor coding the lines with different colors or styles (it doesn’t matter which factor is which).
+
+Factorial treatment structures can be used to investigate several types of treatment effects. These are:
+
+-   *simple effects*, i.e. how levels of one factor affect the response variable holding the other factor constant at a given level,
+
+-   *interactions,* i.e. how levels of one factor affect the response variable across levels of another factor, that is do the simple effects remain constant (no interaction) or do they change (interaction)
+
+-   *main effects*, i.e. overall differences between levels of each factor averaged over all the levels of the other factor. The simplest factorial treatment design is the 2 x 2 factorial. It is a good place to start to establish the essentials of understanding and working with factorial experiments.
+
+Refer to the mean for a factorial experiment with two treatment factors $A$ and $B$ as the $A*B$ mean or, more precisely, the $A_i*B_j$ mean, where $i= 1,2$ references the level of factor A and $j=1, 2$ references the level for factor B. For modeling and effect definition purposes, denote the $A_i*B_j$ mean as $\mu_{ij}$.
+
+The *simple effect* of $A$ holding $B$ constant at level $B_1$ is $A \mid B_1 = \mu_{11} - \mu_{21}$
+
+Similarly, the *simple effect* of $A$ holding $B$ constant at level $B_2$ is $A \mid B_2 = \mu_{12} - \mu_{22}$
+
+We can also look at the *simple effects of B at different levels of A*:
+
+the *simple effect* of $B$ holding $A$ constant at level $A_1$ is $B \mid A_1 = \mu_{11} - \mu_{12}$
+
+the *simple effect* of $B$ holding $A$ constant at level $A_2$ is $B \mid A_2 = \mu_{21} - \mu_{22}$
+
+*Interaction* occurs when the *simple effects differ*:
+
+$A \mid B_1 \neq A \mid B_2 \quad\text{or equivalently}\quad B \mid A_1 \neq B \mid A_2$
+
+This leads to the *interaction contrast:* $\mu_{11} - \mu_{12} - \mu_{21} + \mu_{22} \neq 0$
+
+*No interaction* is defined by: $\mu_{11} - \mu_{12} - \mu_{21} + \mu_{22} = 0$
+
+Since no interaction implies equal simple effects, $\mu_{11} - \mu_{21} = \mu_{12} - \mu_{22}$
+
+This rearranges to the *null hypothesis for the interaction:* $H_0:\; \mu_{11} - \mu_{12} - \mu_{21} + \mu_{22} = 0$
+
+The *interaction plot* is an essential visual aid for identifying and interpreting interactions.
+
+!!! Change the path and remove eval=FALSE after uploading the image to Server and updating the path.
+
+```{r, interaction plot, echo=FALSE, eval=FALSE}
+summary_df <- ad_data %>%
+  group_by(claim, imagery) %>%
+  summarise(mean_rating = mean(rating), .groups = "drop")
+
+# Compute simple-effect range (difference across claims) at each imagery level
+simple_df <- summary_df %>%
+  group_by(imagery) %>%
+  summarise(
+    ymin = min(mean_rating),
+    ymax = max(mean_rating),
+    diff = ymax - ymin,
+    .groups = "drop"
+  ) %>%
+  mutate(imagery = factor(imagery, levels = levels(factor(summary_df$imagery))))
+
+ggplot(summary_df,
+       aes(x = imagery, y = mean_rating, color = claim, group = claim)) +
+  geom_line(size = 1) +
+  geom_point(size = 3) +
+  # Dashed connector showing simple effect (claim differences) at each imagery level
+  geom_segment(
+    data = simple_df,
+    aes(x = imagery, xend = imagery, y = ymin, yend = ymax),
+    inherit.aes = FALSE,
+    linetype = "dashed",
+    color = "grey35",
+    position = position_nudge(x = 0.08)   # small offset to avoid overlapping points
+  ) +
+  # Optional: label the difference (Δ)
+  geom_text(
+    data = simple_df,
+    aes(x = imagery, y = ymax, label = sprintf("Δ = %.2f", diff)),
+    inherit.aes = FALSE,
+    vjust = -0.6,
+    color = "grey35",
+    position = position_nudge(x = 0.08),
+    size = 3.5
+  ) +
+  labs(
+    x = "Imagery",
+    y = "Mean Rating",
+    color = "Claim",
+    title = "Interaction Plot",
+    subtitle="Claim × Imagery (simple effects shown)"
+  ) +
+  theme_minimal(base_size = 14) +
+  coord_cartesian(clip = "off") +  # so labels can sit slightly above the panel
+  theme(plot.margin = margin(10, 30, 10, 10))
+
+```
+
+The plot reveals that the *difference between concrete and abstract ads is not the same for both imagery levels*. To interpret the interaction in this study, we can say that the type of imagery the ad used modifies (or changes) the effect of the claim on the ratings.
+
+In particular, the impact of using a *concrete ad* rather than an abstract ad is *much larger for the visual ads* than for the verbal ads. Equivalently, we can say that the benefit of using a *visual ad* rather than a verbal ad is *much larger for the concrete ads than the abstract ads*.
+
+*Let's now create an interaction plot that switches the axes for claims and imagery.*
+
+!!! Change the path and remove eval=FALSE after uploading the image to Server and updating the path.
+
+```{r, same interaction plot but with claim on the x-axis, echo=FALSE, eval=FALSE}
+summary_df <- ad_data %>%
+  group_by(claim, imagery) %>%
+  summarise(mean_rating = mean(rating), .groups = "drop")
+
+# For each claim (x position), compute the min–max of means across imagery levels
+simple_df <- summary_df %>%
+  group_by(claim) %>%
+  summarise(
+    ymin = min(mean_rating),
+    ymax = max(mean_rating),
+    diff = ymax - ymin,
+    .groups = "drop"
+  ) %>%
+  # Keep factor order if claim is already a factor in the data
+  mutate(claim = factor(claim, levels = levels(factor(summary_df$claim))))
+
+# Interaction plot with flipped roles:
+#   x = claim, color/group = imagery, dashed vertical segments show simple effects for imagery within each claim
+ggplot(summary_df,
+       aes(x = claim, y = mean_rating, color = imagery, group = imagery)) +
+  geom_line(size = 1) +
+  geom_point(size = 3) +
+  # Dashed connector (simple effect of imagery within each claim)
+  geom_segment(
+    data = simple_df,
+    aes(x = claim, xend = claim, y = ymin, yend = ymax),
+    inherit.aes = FALSE,
+    linetype = "dashed",
+    color = "grey35",
+    position = position_nudge(x = 0.08)  # slight offset so it doesn't sit directly under points
+  ) +
+  # Optional: label the difference (Δ)
+  geom_text(
+    data = simple_df,
+    aes(x = claim, y = ymax, label = sprintf("Δ = %.2f", diff)),
+    inherit.aes = FALSE,
+    vjust = -0.6,
+    color = "grey35",
+    position = position_nudge(x = 0.08),
+    size = 3.5
+  ) +
+  labs(
+    x = "Claim",
+    y = "Mean Rating",
+    color = "Imagery",
+    title = "Interaction Plot",
+    subtitle= "Claim × Imagery (simple effects across imagery within each claim)"
+  ) +
+  theme_minimal(base_size = 14) +
+  coord_cartesian(clip = "off") +
+  theme(plot.margin = margin(10, 30, 10, 10))
+
+```
+
+Based on the interaction plot, with `verbal ads`, there does not appear to be much of an `Imagery` effect illustrating the problem with interpreting main effects in the presence of an interaction. When we do have an interaction, our analysis tends to focus on estimating and interpreting the significance of the interaction.
+
+Since the simple effects seem to be different depending on the level of the other treatment the proper analysis should include interaction between `Claim` and `Imagery`.
+
+## Approach #3 - Two-variable analysis that includes interaction
+
+The second approach in Section 3.1 was a two-variable model that estimates the treatment effects for each variable and separates the two sources of variation in the ANOVA table.
+
+| Treatment | df | Design | df | Combined | df |
+|------------|------------|------------|------------|------------|------------|
+| Claim | 2-1=**1** |  |  | Claim | 2-1=1 |
+| Imagery | 2-1=**1** |  |  | Imagery | 2-1=1 |
+| Claim\*Imagery | (2-1)\*(2-1)=**1** |  |  | Claim\*Imagery | (2-1)\*(2-1)=**1** |
+|  |  | participant | 88-1=87 | participant\|C, I, C\*I | **87-3=84** |
+| **Total** | 88-1=87 | Total | 88-1=87 | **Total** | 88-1=87 |
+
+The corresponding theoretical model is:
+
+`Rating = Claim + Imagery + Claim*Imagery + Error`,
+
+Validity conditions:
+
+-   Equal SD/Variances
+
+-   Independent observations
+
+-   Normally distributed response variable
+
+!!! Change the path and remove eval=FALSE after uploading the image to Server and updating the path.
+
+```{r, two-way ANOVA model with interaction, eval=FALSE}
+library(emmeans)
+# Fit the two-way ANOVA model with interaction
+model_interaction <- aov(rating ~ claim * imagery, data = ad_data)
+summary(model_interaction)
+```
+
+The null hypothesis for the `claim:imagery` interaction term is $$H_0:\; \mu_{verbal \ abstract} - \mu_{verbal \ concrete} - \mu_{visual \ abstract} + \mu_{visual \ concrete} = 0$$ The small p-value for the interaction term `claim:imagery` tells us that when predicting people’s responses, it’s not enough to "add together" the imagery effect and the claim effect. Instead, we need to reflect that the imagery effects for the two claims differ and vice versa. Thus, we need to calculate simple effects to reflect this differing behavior at various claim/imagery combinations.
+
+!!! Change the path and remove eval=FALSE after uploading the image to Server and updating the path.
+
+```{r, simple-effects-claim, eval=FALSE}
+cat("### Simple Effects of Claim (within each level of Imagery)\n")
+simple_effects_claim <- emmeans(model_interaction, ~ claim | imagery)
+summary(simple_effects_claim, adjust = "sidak")# sidak adjustment
+cat("\n### Pairwise Comparisons of Claim (within Imagery)\n")
+pairs(simple_effects_claim, reverse = TRUE, infer = TRUE)
+# reverse=TRUE matches the order of the difference with the plot, you may not always need it
+```
+
+The *simple effect* of $Imagery$ holding $Claim$ constant at level $Verbal \ Claim$ is
+
+$Imagery \mid Verbal \ Claim = \mu_{verbal \ abstract} - \mu_{verbal \ concrete}$
+
+The *simple effect* of $Imagery$ holding $Claim$ constant at level $Visual \ Claim$ is
+
+$Imagery \mid Visual  \ Claim= \mu_{visual \ abstract} - \mu_{visual \ concrete}$
+
+> 3.  Based on the above output, for the *verbal ads*, what is the difference in mean ratings (concrete - abstract)?
+
+$\text{for verbal ads the difference in mean ratings (concrete - abstract)}= ?$
+
+> 4.  For the *visual ads*, what is the difference in mean ratings (concrete - abstract)?
+
+$\text{for visual ads the difference in mean ratings (concrete - abstract)}= ?$
+
+> 5.  Are the two previous values the same? What is the "difference of the two differences" you just computed (visual - verbal )?
+
+
+> 6.  What do you conclude about treatment differences based on the confidence intervals produced by pairwise comparisons of `Claim`?
+
+We can also look at the *simple effects of* `Imagery`. *Typically, we don't need to look at simple effects for both treatment factors and can **choose to use the one that we prefer**.*
+
+!!! Change the path and remove eval=FALSE after uploading the image to Server and updating the path.
+
+```{r, simple-effects-imagery, eval=FALSE}
+cat("\n### Simple Effects of Imagery (within each level of Claim)\n")
+simple_effects_imagery <- emmeans(model_interaction, ~ imagery | claim)
+summary(simple_effects_imagery, adjust = "sidak") 
+cat("\n### Pairwise Comparisons of Imagery (within Claim)\n")
+pairs(simple_effects_imagery,reverse = TRUE, infer = TRUE)
+#reverse=TRUE matches the order of the difference with the plot, you may not always need it
+```
+
+The *simple effect* of $Claim$ holding $Imagery$ constant at level $Abstract \ Imagery$ is
+
+$Claim \mid Abstract \ Imagery = \mu_{verbal \ abstract} - \mu_{visual \ abstract}$
+
+The *simple effect* of $Claim$ holding $Imagery$ constant at level $Concrete \ Imagery$ is
+
+$Claim \mid Concrete  \ Imagery= \mu_{verbal \ concrete } - \mu_{visual \ concrete}$
+
+> 7.  Based on the above output, for the *abstract claim*, what is the difference in mean ratings (visual - verbal)?
+
+> 8.  For the *concrete claim*, what is the difference in mean ratings (visual - verbal)?
+
+> 9.  Are the two previous values the same? What is the "difference of the two differences" you just computed (concrete - abstract)?
+
+> 10. What do you conclude about treatment differences based on the confidence intervals produced by pairwise comparisons of `Imagery`? Does your conclusion differ from what you conlcuded using the simple effects of `Claim`?
+
+> 11. Summarize the conclusion exercises you would draw from this study. Be sure to talk about significance, estimation (confidence intervals), generalizability, and causation.
+
+### Why do we use the Sidak adjustment in the code?
+
+When you test *simple effects*, you’re not running just one hypothesis test. You’re running multiple tests, one for each level of the treatment factor. For example, if you test: the effect of claim at each level of imagery, and the effect of imagery at each level of claim, you’ve already created a small family of tests.
+
+Each additional test increases the chance of a Type I error - falsely declaring an effect significant just by random chance. This is the classic *multiple‑comparisons problem*.
+
+**Why Sidak** **specifically?** The Sidak adjustment is a mathematically clean way to control the familywise error rate (FWER). It’s slightly less conservative than Bonferroni but still protects you from inflated false positives.
+
+Here’s the intuition: Without adjustment, each test is run at $\alpha=0.05$. With multiple tests, the overall chance of a false positive becomes greater than 0.05. Sidak adjusts the *per‑test* $\alpha$ so that the *familywise error rate stays at 0.05*.
+
+Why is the *Tukey adjustment* *not appropriate for simple effects*? Tukey’s HSD is designed for pairwise comparisons among *all levels of a single factor*, when that factor is tested in the full model, not within subgroups.
+
+In other words, the **Tukey** adjustment assumes:
+
+-   one factor
+
+-   one set of means
+
+-   all pairwise comparisons among those means
+
+-   equal variances and balanced designs (or close to it)
+
+But simple effects are not comparisons among all levels of a single factor. They are: comparisons within each level of another factor, meaning you have multiple separate families of comparisons.
