@@ -1,0 +1,179 @@
+---
+title: "Math 248: Exploration 3.3"
+author: "Your name here"
+header-includes:
+  - \usepackage{float}
+  - \floatplacement{figure}{H}
+output:
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo=TRUE,message=FALSE,warning=FALSE, fig.align = 'center', out.width="80%" )
+library(tidyverse)
+library(ggplot2)
+library(dplyr)
+library(mosaic)
+library(ImSIwithR)
+```
+
+
+Jacob's Comment: 
+question 3- are sources of variation diagram useful? 
+Q8- Generalized block design vs other terminology... (just clarity on terms)
+Between Q17 and Q18, may need to include mention of main effects vs simple effects 
+Q18, 19 and 20 could probably be combined, 
+Q22 not necessary to me 
+
+Overall very long exploration as usual, I think could just focus on the idea of replication rather than also including the factorial design. Factorial design seems to be almost thrown in later and could be the full focus of another exploration (see 3.4). This also would be important to talk about main effects vs simple effects which wasn't really covered in the exploration provided. 
+
+
+# Exploration 3.3: Hurricane Names
+
+A study by Jung et al. (Proc. Natl. Acad. Sci. USA, 2014) looked at hurricane names and their perceived threat. They thought that if hurricanes had male names they would be perceived as more dangerous than if they had female names. In one part of the study, the participants were given a weather map showing a hurricane moving toward the area where they lived. Participants were told the name of the hurricane and then rated the riskiness of the hurricane on a seven-point scale, with 1 being “not at all” (risky) and 7 being “very risky.”
+
+
+>1. Brainstorm how you might design this study. What variables would you measure? What variables would you control? What would you randomize? Why?
+
+
+
+>2, The researchers decided to block on the participant. Explain what it means to “block on the participant” in this study. Why do you think they chose that blocking variable? How does that change your randomization plan?
+
+
+
+>3. Based on your understanding of the study so far, fill in a possible Sources of Variation diagram.
+
+
+
+Suppose the researchers had two participants in their study. Blocking on participant and randomizing to two treatments is a matched pairs design as discussed in Section 2.1, and a special case of the randomized complete block designs discussed in Section 2.2. Suppose they carried out the matched pairs design for these two participants and obtained the following ratings.
+
+
+```{r}
+
+```
+
+
+
+>4. Based on this table, do male names tend to receive higher ratings than female names? Or, can you not judge such a main effect because there appears to be an interaction between participant and rating? How are you deciding?
+
+
+>5. If you re-randomized the Hurricane names within each block (participant), how many different (total) re-randomizations could you achieve? What is the smallest p-value you could obtain to evaluate statistical significance?
+
+
+>6. Fill out the following skeleton ANOVA table. Identify any potential errors. 
+
+
+## Key Idea: Saturated Model
+
+Because there are only three degrees of freedom total available in the study (4 − 1), all of the degrees of freedoms will be used up if an interaction between participant and hurricane name is included. Thus, there will be no way to estimate random error. The interaction effects and the Error are completely confounded. In Chapter 2, we simply assumed there was no interaction between the explanatory variable of interest (here male or female hurricane name) and the blocking variable (participant). 
+
+But we see some evidence from even these four data values that these two participants are reacting differently to the hurricane names, and we would like to have enough information to test the statistical significance of this interaction.
+
+
+>7. How could you modify the study in order to test for a statistically significant interaction? Would adding more participants to the study help with this issue?
+
+
+## Key Idea: Replication
+
+**Replication** means that a set of experimental or observational study measurements are repeated under similar conditions, allowing for improved estimates of natural (replicate to replicate) variation which can help improve evaluating potential interactions.
+
+
+In this study, the researchers weren’t that interested in specific hurricane names, but rather the hurricane gender (male or female). Therefore, although it probably wouldn’t make sense to have the same participant rate the same name multiple times, they can rate the same hurricane name gender multiple times. These researchers had participants rate 10 different hurricane names selected from the official 2014 Atlantic Hurricane names, 5 of which were female names (Bertha, Dolly, Fay, Laura, and Hanna) and 5 of which were male names (Arthur,
+Cristobal, Omar, Kyle, and Marco). Next, we have five repeats for each participant–gender combination, allowing us to estimate the “within participant” variation separately from the between participant and between treatment variation. When you have more than one observation for each block-treatment combination, this is often called a **generalized block design**.
+
+>8. Well-designed experiments use random assignment. Where should random assignment be used when conducting this study?
+
+
+>9. Describe the nature of the interaction shown in this graph. Do you think it will be statistically significant?
+
+
+>10. Is the interaction significant?
+
+
+## When Should We do a RCBD (Randomized Complete Block Design)?
+
+There are cases where generalized block designs are not possible. For example, observational units may get “used up” in the study, eliminating the possibility of replicates. In this case, we can carry out the randomized complete block design from Section 2.2, but we can’t assess the statistical significance of the treatment × block interaction, so we do not include it among the possible sources of variation in the response.
+
+### Key Idea: 
+
+In a randomized complete block design, with only one observation in each block by treatment group combination, we have to assume there is not a block × treatment interaction.
+
+
+## Within Block Factorial Design: 
+
+
+Hurricane names can also be classified by whether they are “old” or “young.” In this study, researchers used social security records of names to determine whether a name was an “old” name or a “young” name (based on frequency of use across decades).
+
+
+
+>11. How many treatments are in this study? How would you assign two participants to these treatments?
+
+
+
+>12. If each participant rates each of the 10 hurricanes, does this study have valid replication at the treatment level?
+
+
+## Definition: 
+
+A **within-block factorial design** allows you to assess the significance of the factor × factor interaction. Having all treatment combinations in each block gives you enough “replication” to assess the “natural variation” in the responses.
+
+We do not have replication at the treatment level if we focus on the individual hurricane names rather than the gender of the hurricane name. We also need to make sure the random assignment is carried out on the individual “replicates” not only on the blocks.
+
+
+# Explore the Data:
+
+In the actual study, the researchers used 346 students from the University of Illinois at Urbana-Champaign—participating for course credit (age 19-25 years, 208 females)—each of whom rated each of the 10 hurricane names (5 of each gender). The researchers examined several research questions but the hurricanesB file contains the results for the hurricane gender and hurricane age variables.
+
+
+```{r}
+#load data
+```
+
+
+
+>13. Based on your numerical and graphical summaries, is there much evidence of a gender effect? Is there an age effect? An interaction? Describe the nature of the interaction that is present.
+
+
+
+>14. How much variation in ratings of hurricanes is explained by this model?
+
+
+>15. Fill out a Skeleton ANOVA for updated design. 
+
+
+>16. Examine the residual plots for this model. Do you consider the validity conditions for the theory-based F-tests to be met? Include supporting evidence for your conclusions.
+
+
+>17. State the null and alternative hypotheses for the interaction. What do you conclude? Is this consistent with your interaction plot?
+
+
+## Main Effects vs Simple Effects: 
+
+
+>18. State the null and alternative hypotheses for the hurricane gender effect. What do you conclude?
+
+
+>19. Include a 95% confidence interval for this difference and interpret the interval in context.
+
+
+>20. Does this analysis support the researchers’ conjecture that male names would be perceived as more dangerous? (Hint: After adjusting?) Write a short summary of your conclusions, being sure to address significance, estimation, causation, and generalizability.
+
+
+>21. Based on your analysis, is there evidence that blocking on participant was worthwhile? Explain how you are deciding and what this means in context.
+
+
+>22. Reconsider the hurricane sex/age treatments. The researchers classified the names of the 2014 hurricane names rather than controlling the distribution of this variable. What is a limitation to this approach? (Hint: Consider the number of Old/Male names vs. the number of Young/Female names.) How would you suggest changing the selection of hurricane names used? What is the primary benefit of making this change? (Hint: We will discuss this more in the next section.)
+
+
+>23. Explain how to modify the model to consider whether the hurricane gender effect differs across the participants. Carry this out and state your conclusions in context.
+
+
+>24. Suggest another variable that you would consider including in such a study. Would it be a blocking variable or a treatment variable?
+
+
+## Key Idea: 
+
+Anytime you have a variable that is inherent in your experimental units that you believe is associated with the outcome of interest, it is a good idea to block on it. If you include a block in your design, you must also include it in your analysis. This leads us to a fairly famous set of statistical “rules.”
+
+*Block what you can; randomize what you can’t. Replicate as much as possible.*
+
