@@ -28,7 +28,7 @@ Rossiter and Percy (Adv. Cons. Res., 1978) examined the effects of visual imagin
 
 Let's load the data.
 
-!!! Change the path and remove eval=FALSE after uploading the image to Server and updating the path.
+!!! Remove eval=FALSE after inserting the path and successfully running the code AND remove this note.
 
 ```{r, load in data, eval=FALSE}
 library(ImSIwithR)
@@ -60,7 +60,7 @@ Validity conditions:
 
 -   Normally distributed response variable
 
-!!! Change the path and remove eval=FALSE after uploading the image to the server and updating the path.
+!!! Remove eval=FALSE after inserting the path and successfully running the code, and remove this note.
 
 ```{r, one-way ANOVA that uses treatment combinations as four separate levels of a single treatment, eval=FALSE}
 model_simplified <- aov(rating ~ claim:imagery, data = ad_data)
@@ -92,7 +92,7 @@ Validity conditions:
 
 -   Normally distributed response variable
 
-!!! Change the path and remove eval=FALSE after uploading the image to Server and updating the path.
+!!! Remove eval=FALSE after inserting the path and successfully running the code AND remove this note.
 
 ```{r, two-way additive model, eval=FALSE}
 model_additive <- aov(rating ~ claim + imagery, data = ad_data)
@@ -145,7 +145,7 @@ This rearranges to the *null hypothesis for the interaction:* $H_0:\; \mu_{11} -
 
 The *interaction plot* is an essential visual aid for identifying and interpreting interactions.
 
-!!! Change the path and remove eval=FALSE after uploading the image to Server and updating the path.
+!!! Remove eval=FALSE after inserting the path and successfully running the code AND remove this note.
 
 ```{r, interaction plot, echo=FALSE, eval=FALSE}
 summary_df <- ad_data %>%
@@ -205,7 +205,7 @@ In particular, the impact of using a *concrete ad* rather than an abstract ad is
 
 *Let's now create an interaction plot that switches the axes for claims and imagery.*
 
-!!! Change the path and remove eval=FALSE after uploading the image to Server and updating the path.
+!!! Remove eval=FALSE after inserting the path and successfully running the code AND remove this note.
 
 ```{r, same interaction plot but with claim on the x-axis, echo=FALSE, eval=FALSE}
 summary_df <- ad_data %>%
@@ -290,7 +290,7 @@ Validity conditions:
 
 -   Normally distributed response variable
 
-!!! Change the path and remove eval=FALSE after uploading the image to Server and updating the path.
+!!! Remove eval=FALSE after inserting the path and successfully running the code AND remove this note.
 
 ```{r, two-way ANOVA model with interaction, eval=FALSE}
 library(emmeans)
@@ -301,7 +301,7 @@ summary(model_interaction)
 
 The null hypothesis for the `claim:imagery` interaction term is $$H_0:\; \mu_{verbal \ abstract} - \mu_{verbal \ concrete} - \mu_{visual \ abstract} + \mu_{visual \ concrete} = 0$$ The small p-value for the interaction term `claim:imagery` tells us that when predicting people’s responses, it’s not enough to "add together" the imagery effect and the claim effect. Instead, we need to reflect that the imagery effects for the two claims differ and vice versa. Thus, we need to calculate simple effects to reflect this differing behavior at various claim/imagery combinations.
 
-!!! Change the path and remove eval=FALSE after uploading the image to Server and updating the path.
+!!! Remove eval=FALSE after inserting the path and successfully running the code AND remove this note.
 
 ```{r, simple-effects-claim, eval=FALSE}
 cat("### Simple Effects of Claim (within each level of Imagery)\n")
@@ -335,7 +335,7 @@ $\text{for visual ads the difference in mean ratings (concrete - abstract)}= ?$
 
 We can also look at the *simple effects of* `Imagery`. *Typically, we don't need to look at simple effects for both treatment factors and can **choose to use the one that we prefer**.*
 
-!!! Change the path and remove eval=FALSE after uploading the image to Server and updating the path.
+!!! Remove eval=FALSE after inserting the path and successfully running the code AND remove this note.
 
 ```{r, simple-effects-imagery, eval=FALSE}
 cat("\n### Simple Effects of Imagery (within each level of Claim)\n")
@@ -360,7 +360,7 @@ $Claim \mid Concrete  \ Imagery= \mu_{verbal \ concrete } - \mu_{visual \ concre
 
 > 9.  Are the two previous values the same? What is the "difference of the two differences" you just computed (concrete - abstract)?
 
-> 10. What do you conclude about treatment differences based on the confidence intervals produced by pairwise comparisons of `Imagery`? Does your conclusion differ from what you conlcuded using the simple effects of `Claim`?
+> 10. What do you conclude about treatment differences based on the confidence intervals produced by pairwise comparisons of `Imagery`? Does your conclusion differ from what you concluded using the simple effects of `Claim`?
 
 > 11. Summarize the conclusion exercises you would draw from this study. Be sure to talk about significance, estimation (confidence intervals), generalizability, and causation.
 
