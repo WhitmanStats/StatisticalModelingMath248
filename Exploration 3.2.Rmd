@@ -60,11 +60,11 @@ Validity conditions:
 
 -   Normally distributed response variable
 
-!!! Change the path and remove eval=FALSE after uploading the image to Server and updating the path.
+!!! Change the path and remove eval=FALSE after uploading the image to the server and updating the path.
 
-```{r, one-way ANOVA that uses treatment combinations as four seprate levels of a single treatment, eval=FALSE}
+```{r, one-way ANOVA that uses treatment combinations as four separate levels of a single treatment, eval=FALSE}
 model_simplified <- aov(rating ~ claim:imagery, data = ad_data)
-summary(model_simplifies)
+summary(model_simplified)
 ```
 
 With this output, all we can conclude is that at least one of the combinations of claims and imagery is significantly different from the rest. But this is a very simplified approach.
@@ -99,7 +99,7 @@ model_additive <- aov(rating ~ claim + imagery, data = ad_data)
 summary(model_additive)
 ```
 
-This model is better, because we can look at each of the factors separately, but it doesn't account for a possible interaction between these factors.
+This model is better because we can look at each of the factors separately, but it doesn't account for a possible interaction between these factors.
 
 ## Statistical Interaction
 
