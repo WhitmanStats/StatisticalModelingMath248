@@ -1,0 +1,386 @@
+---
+title: "Math 248: Exploration 2.2"
+author: "Solution"
+header-includes:
+  - \usepackage{float}
+  - \floatplacement{figure}{H}
+output:
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo=TRUE,message=FALSE,warning=FALSE, fig.align = 'center', out.width="75%" )
+library(tidyverse)
+library(ggplot2)
+library(dplyr)
+library(mosaic)
+library(ImSIwithR)
+```
+
+# Exploration 2.2 Strawberry Storage
+
+A study (Smith & Skog, “Postharvest Carbon Dioxide Treatment Enhances Firmness of Several Cultivars of Strawberry,” American Society for Horticulture Science, 27(5), 1992) was conducted in order to investigate the effects of storage method on the firmness of strawberries. As strawberries are harvested, they are placed into storage containers called “clamshells.”
+
+Because clamshells have holes in them, air can circulate from outside the clamshell into the clamshell and vice versa while the container still protects the fruit. To test the potential effect of changing the composition of the air in which strawberries are stored, researchers obtained 15 clamshells filled with strawberries of several different varieties. Five clamshells were randomly assigned to be stored in regular air (approximately 21% oxygen and 0.04% carbon dioxide) and five clamshells were randomly assigned to be stored in a modified air method (18% oxygen and 15% carbon dioxide). After two days of refrigeration at 0.5°C in one of the two different atmospheres, the strawberries were then left at room temperature in regular air for two more days. The firmness of the strawberries was then measured by the force (measured in newtons, N) needed for a probe to pierce the exterior of the strawberry. The remaining five clamshells were randomly assigned to a “control” condition which measured the strawberries immediately (not after four days like the other two conditions).The data for this study is in `Strawberries` within `library(ImSIwithR)`. Let's load the data.
+
+
+```{r, load in data}
+library(ImSIwithR)
+data(Strawberries)
+head(Strawberries)
+```
+
+
+> 1a. Identify the observational units, the explanatory variable, and the response variable. 
+
+Observational units - strawberry clamshells
+
+Explanatory variable - air composition
+
+Response variable - strawberry firmness
+
+> 1b. Fill in the list of the Sources of Variation components for this study:
+
+-   Observed Variation in:
+
+    -   Inclusion criteria:strawberry harvest time
+
+    -   Design: type of clamshell
+
+-   Sources of explained variation: air composition
+
+-   Sources of unexplained variation: initial firmness, size of berry, unknown
+
+
+> 2. Consider the following outputs: 
+
+
+```{r, histogram of firmness}
+ggplot(Strawberries, aes(Firmness))+
+  geom_histogram(binwidth=2,
+                 fill="red",
+                 color="white")+
+  theme_classic()+
+  labs(title = "Firmness Distribution")
+```
+
+```{r, side by side boxplot of firmness vs storage}
+ggplot(Strawberries, aes(Firmness, fill = Storage))+
+  geom_boxplot()+
+  facet_wrap(~Storage, ncol=1)+
+  theme_classic()+
+  labs(title="Distribution of Firmness by Storage Type")
+  
+```
+
+
+> a. Calculate the observed effects for each storage method: 
+
+```{r, Calculate group means and overall mean}
+stats <- Strawberries %>%
+  summarize(
+    grand_mean = mean(Firmness),
+    mean_Air = mean(Firmness[Storage == "Air"]),
+    mean_Control = mean(Firmness[Storage == "Control"]),
+    mean_Mod = mean(Firmness[Storage == "ModifiedAir"])
+  )
+
+# Calculate Effects (Group Mean - Grand Mean)
+effects <- stats %>%
+  transmute(
+    Effect_Air = mean_Air - grand_mean,
+    Effect_Control = mean_Control - grand_mean,
+    Effect_Mod = mean_Mod - grand_mean
+  )
+
+print(effects)
+```
+Observed effect for air is: -0.66
+
+Observed effect for control is: -0.56
+
+Observed effect for modified air is: 1.22
+
+> b. Based on the plots and effects, does the storage method appear to explain some of the variability in the firmness levels? How are you deciding? 
+
+Yes, the modified air strawberries tend to be the firmest of the air compositions (there are noticeable differences among the three group means).
+
+> 3. Consider a simulated null distribution of the F-statistic produced by R below. How much variation in firmness values is explained by the storage method? Based on the F-statistic and the null distribution, should we find a large p-value or a small p-value? How are you deciding? 
+
+Storage method explains 14.2% of the variation in firmness. Based on the F-statistic value being much smaller than 4, the p-value will be relatively large and insignificant.
+
+```{r, null distribution for the F-statistic}
+set.seed(1)
+
+# Simulation 1: Completely Randomized (ignoring blocks)
+null_distribution_CRD <- do(1000) * aov(Firmness ~ shuffle(Storage), data = Strawberries)
+
+# filter for the F values (drop NA if any)
+Fstat_CRD <- null_distribution_CRD %>% filter(!is.na(F))
+
+# summary stats for null distribution
+null_mean <- mean(Fstat_CRD$F)
+null_sd   <- sd(Fstat_CRD$F)
+
+model_storage <- aov(Firmness ~ Storage, data = Strawberries)
+# observed F 
+obs_F <- summary(model_storage)[[1]]["Storage", "F value"]
+
+# formatted label
+label_text <- paste0(
+  "Null mean = ", round(null_mean, 3), "\n",
+  "Null SD   = ", round(null_sd, 3), "\n",
+  "Observed F= ", round(obs_F, 3), "\n")
+
+# plot with annotation in the top-right
+ggplot(Fstat_CRD, aes(x = F)) +
+  geom_histogram(bins = 100, fill = "skyblue", color = "white") +
+  geom_vline(xintercept = obs_F, color = "red", size = 1) +
+  labs(title = "Simulated Null Distribution of F-statistics (CRD)",
+       x = "F-statistic",
+       y = "Frequency") +
+  theme_minimal() +
+  annotate("text", x = Inf, y = Inf, label = label_text,
+           hjust = 1.05, vjust = 1.1, size = 3.8)
+```
+
+> 4. Suggest some possible explanations for finding an insignificant result here.
+
+This analysis fails to block for each type of air composition, leaving far too much unexplained variation.
+
+## Blocking Decision: 
+
+Rather than limiting themselves to one type of strawberry (i.e., using inclusion criteria of one type of strawberry) which would most likely have given them a smaller *SSError*, the researchers decided to include five different varieties of strawberries in the study allowing them to generalize to a more diverse population of strawberries. Suspecting that different varieties of strawberries have different firmness ratings, that is, believing variety is associated with firmness (the response variable), the researchers opted to block on strawberry variety. In this way the variation explained by variety will be accounted for in the analysis by removing it from the unexplained variation.
+
+
+
+> 5. Based on the following output, do the data confirm or refute the researchers’ prediction that different strawberry varieties tend to have different firmness ratings? Is there strawberry variety that tends to have very low firmness? Very high?
+
+The data confirms that strawberry varieties tend to have different firmness ratings. Vesper tends to have a low firmness whereas Selva tends to have a high firmness.
+
+```{r, Visualizing Variety differences}
+ggplot(Strawberries, aes(x = Variety, y = Firmness, fill = Variety)) +
+  geom_boxplot() +
+  geom_jitter(width = 0.1) +
+  theme_bw() +
+  labs(title = "Firmness by Strawberry Variety")
+```
+
+
+```{r, means and standard deviations of the Variety groups}
+summary_data <- Strawberries %>%
+  group_by(Variety) %>%
+  summarise(
+    mean_firmness = mean(Firmness, na.rm = TRUE), # Calculate mean
+    sd_firmness = sd(Firmness, na.rm = TRUE),       # Calculate standard deviation
+    n = n(),                                  # Count the number of observations
+   .groups = 'drop'                           # Drop the grouping structure
+  )
+
+# View the new summary data frame
+print(summary_data)
+```
+
+> 6. The following graph colors the observations in the graph in #5 (black dots) by the storage method. For the Allstar variety, which storage method had the largest firmness? Is this the case for all of the varieties? Looking at this graph, do you think the storage method effect will be statistically significant after adjusting for variety? Explain your reasoning.
+
+Modified air has the largest firmness for Allstar and this extends to all varieties. Storage method will be statistically significant after adjusting for variety because modified air is noticeably higher for each variety.
+
+```{r, Plotting Variety and Storage on Firmness}
+ggplot(Strawberries, aes(x = Variety, y = Firmness, color = Storage)) +
+  geom_point(size = 3) +
+  theme_bw() +
+  labs(title = "Firmness by Variety and Storage Method")
+```
+
+
+> 7. Outline a study design for these 15 clamshells that will allow you to compare the 3 storage methods adjusting for the variation in firmness in the 5 varieties.
+
+
+Block the strawberries based on variety and randomize the three firmness values from each air composition within each variety to create a hypothetical null distribution. Calculate and measure significance using the observed Fstatistic
+
+## Key Idea: RCBD (Randomized Complete Block Design)
+
+
+To start, samples of harvested Allstar strawberries were randomly placed into three clamshells and each clamshell was then randomly assigned to one of the three storage methods. This procedure was implemented for the four remaining strawberry varieties, as well. This restricted random assignment guarantees that there is one clamshell of each variety for each storage method. See the diagram for an illustration of this random assignment process.
+
+```{r include_image, echo=FALSE, fig.cap="Number of ways to pick items", out.width="80%", fig.align="center"}
+knitr::include_graphics("~/Documents/Math 248 Materials/Math 248 Resources/ISI2 Math 248/Strawberry Diagram.png")
+```
+
+The experimental unit in this study is the clamshell, not the individual strawberries because the treatments were assigned to the clamshells.
+
+A _block study design_ creates _blocks of experimental units that are similar to each other-, randomly assigns the treatments _within each block-, and then analyzes the data in a way which accounts for _block-to-block variations_. 
+
+When there are _only two groups being compared a block study design is called a matched pairs design-. The term block comes from the first block designs which were agricultural experiments in large fields where separate parts of the field were called “blocks.”
+
+
+## Modifying the Analysis to Consider Blocking
+
+Now that we know more about the actual way this study was designed, we know that an analysis that ignores this “restricted randomization” is incorrect. Instead, the analysis should reflect the study design that was used.
+
+## Key Idea:
+
+**The data analysis should correspond to the study’s design.**
+
+_Because the study design was actually a randomized complete block design, we need to re-consider how to simulate the behavior of the F-statistic assuming the null hypothesis to be true._
+
+
+# Analysis 1: Ignore Blocking Effect - Incorrect
+
+
+```{r include_image1, echo=FALSE, fig.cap="Number of ways to pick items", out.width="80%", fig.align="center"}
+knitr::include_graphics("~/Documents/Math 248 Materials/Math 248 Resources/ISI2 Math 248/Strawberry CRD.png")
+```
+
+```{r,  ANOVA table CRD}
+model_storage <- aov(Firmness ~ Storage, data = Strawberries)
+anova(model_storage)
+```
+
+> 8. What is the p-value for storage? What coulcusion would you make if you used this model?
+
+The p-value for storage without accounting for variety is 0.3981. I would conclude that there is not sufficient evidence to claim that storage conditions ( air types) have a significant effect on strawberry firmness. In other words, air type doesn't seem to matter.
+
+
+But we still want to know whether, _after adjusting for variety,_ the variability explained by storage method is statistically significant. It appears likely, given that within each variety, the modified air method has consistently larger firmness values.
+
+
+# Analysis 2: Revising the F-statistic to Account for Blocking
+
+```{r include_image3, echo=FALSE, fig.cap="Number of ways to pick items", out.width="80%", fig.align="center"}
+knitr::include_graphics("~/Documents/Math 248 Materials/Math 248 Resources/ISI2 Math 248/Strawberry RCBD.png")
+```
+
+
+```{r, ANOVA table for RCBD model}
+model_variety_storage <- aov(Firmness ~ Variety + Storage, data = Strawberries)
+anova(model_variety_storage)
+```
+
+```{r, marginal/partial sums of squares - Type 3}
+library(car)
+options(contrasts = c("contr.sum", "contr.poly"))
+
+model_variety_storage <- lm(Firmness ~ Variety + Storage, data = Strawberries)
+a3 <- Anova(model_variety_storage, type = 3)
+
+# display Type III ANOVA without the intercept row
+a3[rownames(a3) != "(Intercept)", , drop = FALSE] 
+```
+
+
+> 9. Explain how each degrees of freedom value is calculated in the ANOVA table above.
+
+As you can see in the Skeleton ANOVA diagram above, when we include Variety it has 5 levels and thus 4 df are designated to this effect. Storage conditions are still applied to clamshells. but these clamshells are now within each variety. There are 3 different clamshells within each variety (block) and thus there are 3-1=2 df for clamshells within blocks ( clamshell(block) term in the skeleton ANOVA). Since air type is not applied to variety, variety keep its 4 df in the combined colums, air type also keeps its df as 3-1=2, the subtraction happens at the point where treatment (air) is applied to units within blocks (clamshells within each variety). After this application clamshell within variety has 10-2=8 df left. These represent SSE degrees of freedom.
+
+
+> 10. What percentage of the variation in the response is due to the blocking variable and what percentage is due to the storage method? What does this say about the importance of this blocking variable in this study? 
+
+
+```{r, proportion of explained variation calculation}
+# ANOVA table (type I sums of squares - sequential sums of squares)
+anova_tab <- anova(model_variety_storage)
+
+# total sum of squares about the grand mean (explicit, handles NAs)
+
+
+# proportions for terms (student, chiptype, Residual)
+term_SS <- c(variety_explained_variability = anova_tab["Variety", "Sum Sq"],
+             storage_explained_variability = anova_tab["Storage", "Sum Sq"],
+             Residual = anova_tab["Residuals", "Sum Sq"])
+
+SS_total <-anova_tab["Variety", "Sum Sq"]+anova_tab["Storage", "Sum Sq"]+anova_tab["Residuals", "Sum Sq"]
+  
+prop_term <- term_SS / SS_total
+
+# results
+prop_term         # proportion of total SS explained by each term
+```
+
+
+
+81 % of variability in firmness is explained by variety and 14% of variability in firmness is explained by storage condition after accounting for variety. This highlights the vital importance of blocking.
+
+
+> 11. The observed F-statistic for Storage is now 11.4. How does that affect the p-value of Storage after accounting for variety compared to the model that does not account for variety? Will p-value be smaller or larger?
+
+After accounting for variety storage has a very small p-value of 0.0045, which now suggests that storage conditions have a statistically significant effect on firmness.  There is a statistically significant difference that at least one of the storage firmness means differs after adjusting for strawberry variety.
+
+
+
+> 12. Was blocking by Variety effective? We answer this by looking at the block effect p-value when blocks are treated as fixed ( when they are included in ANOVA table they are fixed).  What is the p-value for Variety? Was it an important term to include in the model?
+
+
+Blocking by variety was important/ effective in this study since the p-value for variety is very small.
+
+
+### Important Note:
+
+_We conducted two analyses (one that considered the blocking design and one that did not) on the same data in order to illustrate the benefits of blocking. In practice, we analyze data only in a manner that reflects the study design. Using multiple analysis methods on the same data did help to clarify for us just how important consideration of the blocking variable is in this case._
+
+Because the actual study used blocking and we modified the analysis to account for the blocking variable, we need to modify the null and alternative hypothesis being tested as shown here.
+
+**Null hypothesis** $H_0$: The long-run average firmness of strawberries in each of the three experimental conditions is the same, after accounting for differences in firmness between different varieties of strawberries.
+
+**Alternative hypothesis**  $H_a$: At least one of the three experimental conditions have a different long-run average firmness of strawberries, after accounting for differences in firmness between different varieties of strawberries.
+
+
+> 13. Based on the prior modified null and alternative hypotheses and your simulation analysis considering the blocking variable, state a conclusion about the study.
+
+
+## Validity conditions for ANOVA with a blocking variable
+
+Recall that theory-based approaches like those you have been using require certain validity conditions to be met. Here are the validity conditions for ANOVA with a blocking variable.
+
+
+### The F-distribution is a good approximation to the null distribution of the F-statistic as long as:
+
+- Either the sample size is at least 20 for each of the groups being compared, without skewness or outliers; *or* if the sample sizes are less than 20 for each group, then the distribution of adjusted response variable within each group is approximately symmetric. 
+
+- The standard deviations of the adjusted response variable samples in each group being compared are approximately equal to each other. (Largest SD is not more than twice the smallest SD)
+
+- The experimental units are randomly assigned to the treatments within each block.
+
+
+> 14. Comment on how the analysis you just conducted meets the validity conditions by evaluating the three conditions listed in the Validity conditions box.
+
+The clamshell data has no strong outliers or skewness meeting the first validity condition. The standard deviations range are similar ranging from 1.933 to 3.049, and the clamshells were randomly assigned to blocks meeting the final validity conditions
+
+```{r, adjusted response variable in each group}
+#calculate overall mean
+overall_mean <- mean(Strawberries$Firmness)
+
+#summarize and calculate blocking effect. 
+block_effects <- Strawberries %>%
+  group_by(Variety) %>%
+  summarize(
+    variety_mean = mean(Firmness),
+    block_effect = variety_mean - overall_mean
+  )
+
+# Join effects back to main data and calculate adjusted firmness
+Strawberries <- Strawberries %>%
+  left_join(block_effects, by = "Variety") %>%
+  mutate(Firmness_Adj = Firmness - block_effect)
+
+FirmSD<- sd(Strawberries$Firmness)
+FirmSD_Adj<-sd(Strawberries$Firmness_Adj)
+
+#look for skewness and outliers or approximately symmetric
+ggplot(Strawberries, aes(x = Storage, y = Firmness_Adj, fill= Storage)) +
+  geom_boxplot() +
+  labs(title = "Adjusted Firmness by Storage")
+```
+
+```{r, check standard deviations}
+Strawberries %>%
+  group_by(Storage) %>%
+  summarize(sd_adj = sd(Firmness_Adj))
+```
+
+
+> 15. Summarize the conclusions you would draw from this study, including generalizability and causation (for both the method and the variety).
+
+There is a statistically significant difference in the strawberry firmness in at least one of the air compositions, after adjusting for strawberry variety. This can be generalized to these five varieties of strawberries. Because of the random assignment, we can conclude that the air composition influenced the ending firmness of the strawberry.
+
+

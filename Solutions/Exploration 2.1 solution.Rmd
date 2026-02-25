@@ -1,0 +1,434 @@
+---
+title: "Math 248: Exploration 2.1"
+author: "Solution"
+header-includes:
+  - \usepackage{float}
+  - \floatplacement{figure}{H}
+output:
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo=TRUE,message=FALSE,warning=FALSE, fig.align = 'center', out.width="80%" )
+library(tidyverse)
+library(ggplot2)
+library(dplyr)
+library(ImSIwithR)
+library(readr)
+```
+  
+
+# Exploration 2.1 - Chip Melting Times
+
+Industrial-scale baking requires a precise understanding of how recipe ingredients behave when baked. For example, bakers want to know and understand how different types of baking chips respond to different oven temperatures. In this study you will compare the melting times of chocolate chips and butterscotch chips. You are going to be the participants, and the response variable will be the amount of time, from placing a chip on your tongue and holding it steadily to the roof of your mouth, until the chip is completely melted. Of course, there are more precise ways of measuring melting times, but this approach is tastier!
+
+> 1.  Outline a study protocol for investigating this question. Specifically, how will you design your study? How will you use random assignment? What about inclusion criteria? (Reminder: Inclusion Criteria is key features of the target population of interest.)
+
+Assemble a large sample of participants and randomly assign each participant a chip to melt. Use a stopwatch to record the time from when the chip is placed in the mouth to when it is completely dissolved. Inclusion criteria could be a particular class.
+
+> 2.  Brainstormsources of variation, including discussion of any “controls” you will use in the study to minimize unexplained variation. Fill in the list of the Sources of Variation components for this study:
+
+-   Observed Variation in: Meting time
+
+    -   Inclusion criteria: Students in class
+    
+    -   Design: Same melting “technique” for each student, each trial
+    
+-   Sources of explained variation: type of chip
+
+-   Sources of unexplained variation: Pressure, Body temperature, Amount of saliva, Temperature of chip to begin with, Size of chip, Unknown sources
+
+
+> 3.  Reviewing your sources of unexplained variation, do they have anything in common? Based on this commonality, can you suggest a way to improve the design of your study to try to address these sources?
+
+
+Many of the sources of unexplained variation (amount of pressure applied, body temperature, amount of saliva) come from the participant. It would improve the design to have each participant melt both types of chip and compare the times more directly.
+
+### Definition : Matched Pairs Design
+
+A *matched pairs design* pairs experimental units that are similar to each other and randomly assigns each member within a pair to one of the two treatment groups. A special type of matched pairs design is **repeated measures** where the same individual receives both treatments in a randomly assigned order.
+
+> 4.  Is a repeated measures type of matched pairs design feasible in this study? Describe how it would work and its main benefits.
+
+Yes, each participant can receive both treatments, i.e., melt both chip types. The main benefit is that because both chips are melted by all of the same people, the comparison of butterscotch to chocolate should be more precise (rather than comparing across different people). Person-specific variables (e.g., body temperature) should be more constant.
+
+### Key Idea
+
+By having the _same experimental unit_ (e.g., person) complete _both treatments_, the variability from experimental unit to experimental unit (e.g., person to person) is held constant and is no longer “unexplained variation.”
+
+
+> 5.  Does random assignment still play an important role in a matched pairs design? Explain why it matters and what could happen if you didn’t use random assignment.
+
+Yes, because we wouldn’t want the order of melting to influence the times. For example, if everyone melted the butterscotch chip second and people were anxious to be done, they might record faster times for that chip just because they wanted to be done with the study, not because butterscotch is a faster melting chip. If we don’t randomize order, the order could be confounded with the treatment.
+
+> 6.  Would a two-sample t-test (or a separate means model) be an appropriate analysis to compare the two melting time means for our matched pairs study design? Explain.
+
+No, because the two samples are no longer independent because it is the same person melting both chips
+
+### Key Idea
+
+In a _paired design_, it is not reasonable to consider the multiple observations on the same individual as independent, so we cannot carry out a procedure (e.g., a two-sample t-test) that assumes we have two independent samples.
+
+To _analyze a paired design_ you can either use a _one-sample t-test_ (and confidence interval) on the differences OR a _simulation that maintains the paired nature of the study design_ (e.g., randomizing the order of the two treatments on the same individual). The validity condition of the one-sample t-test is that the distribution of the differences is reasonably symmetric or the sample size is large with no severe skewness or outliers (e.g., larger than 20-30).
+
+_Note:_ To work through a simulation-based analysis that simulates random assignment of the treatment within each pair or to conduct a one-sample t-test on the differences (i.e., the paired t-test that you may have seen in your first course), refer to the Homework Exercises. 
+
+The _paired t-test approach_ only works with _two treatments_ and so we will investigate a _more general method_ in this Exploration. 
+
+## More General Method - Repeated Measures (simple case)
+
+Data from one of the textbook authors’ classes that collected data on 31 students in their statistics class. In this study 31 Cal Poly San Luis Obispo students placed a single chip on the roof of their mouth and recorded the time (in seconds) to melt completely. This data is stored in `MeltingTimes` within `library(ImSIwithR)`. Let's load the data and look at the histogram of melting time by chip type.
+
+
+```{r, load in data}
+data(MeltingTimes)
+head(MeltingTimes, 2)
+```
+
+
+```{r, stacked histogram of melting time by chip type}
+ggplot(MeltingTimes, aes(time, fill = chiptype)) + 
+  geom_histogram(color = "white") + 
+  facet_wrap(~ chiptype, ncol = 1, scales = "free_y") +
+  labs(title = "Melting Times Distribution by Chiptype",
+       x = "Metling Time",
+       y = "Count") +
+  theme_minimal()
+
+```
+
+> 7. Use R to find and report each of the following:
+ 
+ * Overall mean melting time; Mean melting time of chocolate; Mean melting time of butterscotch:
+
+* Effect of chocolate; Effect of butterscotch:
+
+* `SSchip`, `SSError`, `SSTotal`:
+
+```{r, Find overall mean  }
+overall_mean <- mean(MeltingTimes$time) # calls the time column of MeltingTimes and finds the average
+print(paste("Overall Mean Melting Time:", round(overall_mean,2) ))#round the result to 2 decimal places
+```
+
+* Overall mean melting time: 115.44
+
+```{r, summary statistics without accounting for person effect}
+# Calculating average melting time per chip type, number of observations, effect, and Sum of Squares for the Chip
+summary_table <- MeltingTimes %>%
+  group_by(chiptype) %>%
+  summarise(
+    n = n(),
+    mean_melting_time = mean(time)) %>%
+  mutate(
+    effect = mean_melting_time - overall_mean,
+    SS = n * effect^2)%>%
+  ungroup() 
+
+# select elements for a summary table (specifying names and variables).
+final_table <- summary_table %>%
+  select(
+    Chip = chiptype,
+    `Group Size (n)` = n,
+    `Mean Melting Time` = mean_melting_time,
+    Effect = effect
+     )
+# view the table 
+final_table
+```
+
+* Mean melting time of chocolate: 122.48
+
+* Mean melting time of butterscotch: 108.39
+
+* Effect of chocolate: -7.04
+
+* Effect of butterscotch: 7.04
+
+```{r, calculate sums of squares total based on the summary table created above}
+# Calculate Sum of Squares totals
+SSTotal <- sum((MeltingTimes$time - overall_mean)^2)
+SSchip <- sum(summary_table$SS)
+SSError <- SSTotal - SSchip
+
+# Make a simple sum of squares table
+sstable <- 
+  tibble(
+    "SS Chip" = SSchip, # SSModel
+    "SS Error" = SSError,
+    "SS Total" = SSTotal,
+  )
+sstable
+
+```
+
+* `SSchip`: 3,080.15
+
+* `SSError`: 85,887.1
+
+* `SSTotal`: 88,967.24
+
+The following procedure is easily expandable to _more than two treatment groups_. The goal of this analysis is to take the _paired nature of the design into account_. That is, _we want to account for the person-to-person variation_. To do that, we need to determine how much variation in the data is explained by the participants. Then, once we determine the `SSperson`, we can take that variation out of the unexplained `SSError`. To find the `SSperson` we need to know the effect of each person. As with the treatment effects, the person effects can be found by (“group” mean - overall mean).
+
+# Person Effect (`SSperson`):
+
+```{r,  read the Google sheet with the data}
+library(googlesheets4) #package of functions in which `read_sheet` function lives
+gs4_deauth()#check authorization
+
+ClassData <- #creating a name for the dataset in R
+read_sheet("https://docs.google.com/spreadsheets/d/1KcQ7eNVIVfQe3qI3P923wv6Wo2Z-CJonEuNY8_YDhhs/edit?usp=sharing")
+
+head(ClassData) #"prints" the first 6 rows of the data
+```
+_Let's combine our class data with the author's data:_
+
+```{r, Merges your class data with the provided dataset}
+merged_data <- bind_rows(MeltingTimes,ClassData)
+head(merged_data,2)
+tail(merged_data,2)
+```
+
+_Let's convert character variables in the dataset: `student` and `chiptype` into factor variables._ This will allow us to filter specific students or chip type.
+
+```{r, convert all character columns to factors}
+merged_data <- merged_data %>%
+  mutate(across(where(is.character), as.factor))
+```
+
+
+> 8. Calculate _your average_ of two melting times. How does your average melting time compare to the overall mean melting time? This is the “effect” of you. For this solution I use a student with initials `KH` to illustrate the results.
+
+```{r, your personal effect - use your name}
+overall_mean <- mean(merged_data$time, na.rm = TRUE)
+
+your_summary_table <- merged_data %>%
+  filter(student=="KH") %>% # replace with YOUR NAME
+  summarise(
+  mean_melting_time = mean(time)) %>%
+  mutate(
+    overallmean=overall_mean,
+    effect = mean_melting_time - overall_mean)
+
+# select elements for a summary table (specifying names and variables).
+your_results <- your_summary_table %>%
+  select(
+    `Mean Melting Time` = mean_melting_time,
+    `Overall Mean`= overallmean,
+     Effect = effect
+     )
+# view the table 
+your_results
+```
+> Report the following:
+
+$Overall \ Mean  \ Melting  \ Time \ = 101.72$
+
+$Your \ Mean  \ Melting  \ Time \ Across \ 2 \ Types \  of  \ Chips = 113.5$
+
+$Your \ Personal \ Effect = -11.78$
+
+
+_Now let's use R to calculate the **effect of each person** by doing the following using R code below:_
+
+a.  First, we need to find the _mean melting time_ (across the two types of chips) for each person.
+b.  Then, we find the _mean of all these means_ (this turns out to equal the mean of all observations).
+c.  Now, we find the _difference between the mean for the person_ in (a) to the overall mean in (b) - this is the effect of each person.
+d.  Next, we square each `person effect`, multiply each by 2 (because the effect came from two melting times).  
+
+> 9. Report your contribution to the Sums of Squares Person: (For this solution I use a student with initials `KH` to illustrate the results.)
+
+$Your  \ SSPerson  \ contribution = 277.2031$
+
+```{r, your personal effects}
+
+overall_mean_merged <- mean(merged_data$time, na.rm = TRUE)#part a
+
+person_stats <- merged_data %>%
+  group_by(student) %>%
+  summarise(
+    n_nonmiss = sum(!is.na(time)),
+    mean_time = mean(time, na.rm = TRUE) #part b
+  ) %>%
+  mutate(
+    person_effect = mean_time - overall_mean_merged, # part c
+    SS_Person = n_nonmiss * person_effect^2 # part d
+  ) %>%
+  select(-n_nonmiss)  # drop the n column as requested
+person_stats %>%
+  filter(student=="KH") # Your name here
+```
+
+_Here is the glimpse of the results for all students in the combined dataset:_
+
+```{r, statistics for combined dataset (with your class data)}
+glimpse(person_stats)
+```
+
+
+> 10. Take a closer look at the first six rows of combined data. Explain what it means for a person to have a larger positive effect than another person. Explain what it means for a person to have a larger negative effect.
+
+```{r, first 6 rows of personal effects for combined data}
+head(person_stats)
+```
+
+
+If someone has a larger positive effect than another person, it means they melted chips slower than the other individual who was already slower than the overall average. If someone has a larger negative effect than another person, it means they melted chips quicker than the other individual who was already quicker than the overall average
+
+> 11. The person-to-person variation in melting times is now accounted for as a source of explained variation. As such, it is placed into the ANOVA table as a known source of variation. Let's sum the `SS_Person` column from the `personal_stats` table to obtain the  sum of squares for the “person effect,” `SSperson`. _Note: `SSstudent` and `SSPerson` represent the same entity and are used interchangeably._
+
+Report the $SSPerson=?$ using the output below.
+
+```{r, summing individual sums of squares for student from previous calculations}
+person_totals <- person_stats %>%
+  summarise(
+    sum_person_effect = sum(person_effect, na.rm = TRUE),
+    SS_person_total = sum(SS_Person, na.rm = TRUE)
+  )
+
+# extract value into a scalar and print
+SS_person_total <- person_totals$SS_person_total
+cat("SSstudent =", round(SS_person_total,0), "\n")
+```
+
+> 12. It turns out that the result of paired t-test is equivalent to an ANOVA with a pair effect included. Let's use the built-in `anova` function in R to obtain the ANOVA table for the paired t-test. How does $SSstudent$ from output above (q.11) comparea to the $SSstudent$ in the table below?
+
+It is the same value, so our "manual" step-by-step calculations are correct.
+
+```{r, ANOVA table using built-in function }
+model_chips_and_person <- lm(time ~ student + chiptype, data = merged_data)
+ANOVA_table <- anova(model_chips_and_person)
+ANOVA_table
+```
+
+Note that there are 2-1=1 degrees of freedom for chip type,
+48-1=47 degrees of freedom for student,
+96-1=95 total degrees of freedom and 
+95(total)-(1+47)(chip + student) = 47 error (residual) degrees of freedom.
+
+_We call the combination of the `SSperson` and the `SSchip` the `SSModel`, where the model is accounting for both person and chip effects. As we continue in the course, our statistical models will become more and more complex and the `SSModel` will always represent the total variation explained by the statistical model._
+
+> 13. What proportion of the total variation is explained by chip type? What proportion is explained by person? Interpret. 
+
+89% of variability is explained by the person;  2% of variability is explained by the chip type
+
+```{r, proportion of explained variation calculation}
+# fit model 
+model_chips_and_person <- lm(time ~ student + chiptype, data = merged_data)
+
+# ANOVA table (type I sums of squares)
+anova_tab <- anova(model_chips_and_person)
+
+# total sum of squares about the grand mean (explicit, handles NAs)
+SS_total <- sum((merged_data$time - mean(merged_data$time, na.rm = TRUE))^2, na.rm = TRUE)
+
+# proportions for terms (student, chiptype, Residual)
+term_SS <- c(student_explained_variability = anova_tab["student", "Sum Sq"],
+             chiptype_explained_variability = anova_tab["chiptype", "Sum Sq"],
+             Residual = anova_tab["Residuals", "Sum Sq"])
+prop_term <- term_SS / SS_total
+
+# results
+anova_tab
+prop_term         # proportion of total SS explained by each term
+```
+
+
+> 14. Now report an F-statistic for comparing the melting times of the chip types. How do you calculate an F statistic based on Sums of Squares? ( replace the numerator and the denominator below with appropriate values from the table above) Is this person-adjusted F-statistic significantly different? What does this mean in the context of the problem? (Hint: chocolate has a higher melting average time.)
+
+$$F=\frac{SSStudent/df_{student}}{SSError/df_{error}}=\frac{127020/47}{2434.93/1}=\frac{MSStudent}{MSError}=\frac{2702.55}{2434.93}$$
+
+> 15. Write out a prediction equation for the predicted melting time based on the individual and the type of chip. (Hint: overall mean should also be included)
+
+$predicted \ melting \ time = overall \ mean  + effect \ of \ person + effect \ of \ chip \ type$$
+
+
+> 16. Let's use prediction equation to find YOUR predicted melting time for the butterscotch chip and for the chocolate chip. First we will do it for every sturent and then use the `filter` command to enter YOUR name to only get your result. For this solution I use a student with initials `KH` to illustrate the results.
+
+
+```{r, using prediction equation}
+# chip effects
+chip_stats <- merged_data %>%
+  group_by(chiptype) %>%
+  summarise(
+    n_chip = sum(!is.na(time)),
+    mean_time_chip = mean(time, na.rm = TRUE)
+  ) %>%
+  ungroup() %>%
+  mutate(
+    chip_effect = mean_time_chip - overall_mean_merged
+  ) %>%
+  select(chiptype, mean_time_chip, chip_effect)
+
+# join effects and compute predicted times per observation
+predicted_data <- merged_data %>%
+  left_join(person_stats %>% select(student, person_effect), by = "student") %>%
+  left_join(chip_stats %>% select(chiptype, chip_effect), by = "chiptype") %>%
+  mutate(
+    person_effect = coalesce(person_effect, 0),
+    chip_effect   = coalesce(chip_effect, 0),
+    predicted_time = overall_mean_merged + person_effect + chip_effect
+  ) %>% 
+  filter(student=="KH")# Your name here
+
+predicted_data
+```
+
+For this solution I use a student with initials `KH` to illustrate the results.
+
+$Predicted \  Butterscotch \  time  \ for \  KH = 101.72 + 11.77-5.03625=108.46$
+
+$Predicted \  Chocolate \  time  \ for \  KH = 101.72 + 11.77 + 5.03625=118.53$
+
+
+```{r, built-in function in R that predicts the outcome for each observation in the original data, eval=FALSE}
+merged_data<-merged_data %>% drop_na()# remove NAs if any
+
+model_chips_and_person <- lm(time ~ student + chiptype, data = merged_data)
+# get predicted values (works with original rows)
+pred_vals <- predict(model_chips_and_person, newdata = merged_data)
+
+merged_data <- merged_data %>%
+  mutate(
+    predicted_time = pred_vals
+  )
+
+your_predictions<-merged_data %>%
+  filter(student=="KH") # Your name here
+
+your_predictions
+
+```
+
+
+> 17. Now, determine the residuals for the two predictions in #16. How do you interpret the residuals?
+
+For this solution I use a student with initials `KH` to illustrate the results.
+
+```{r, built-in function in R that predicts the outcome for each observation in the original data with residuals, eval=FALSE}
+merged_data <- merged_data %>%
+  mutate(
+    predicted_time = pred_vals,
+    residual = if_else(is.na(time), NA_real_, time - predicted_time)
+  )
+
+your_predictions_with_residuals<-merged_data %>%
+  filter(student=="KH") # Your Initial here
+
+your_predictions_with_residuals
+
+```
+
+$Butterscotch \  residual  \ for \  KH = 94-108.46=-14.46$
+
+$Chocolate \  residual \ for \  KH = 133-118.54 = 14.46$
+
+_If we found everyone’s residuals, squared them and summed them up, these would give us a direct computation of the `SSError` shown in the previous ANOVA table._
+
+
+> 18. If there were three types of chips being tested, how would your results and analysis change? How would ANOVA calculations change? 
+
+The `SSperson` would multiply each person’s squared effect by 4, rather than 2. The `SSModel` would come from 4 group means, rather than 2.
+
+The `total DF` would be 48*4-1=192, 
+The `model DF` would be 4-1=3
+The `error DF` would be 192(total)-(3+47)(chip + student) = 142 error (residual) degrees of freedom.

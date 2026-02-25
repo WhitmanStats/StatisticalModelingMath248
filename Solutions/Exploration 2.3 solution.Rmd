@@ -1,0 +1,191 @@
+---
+title: "Math 248: Exploration 2.3"
+author: "Solution"
+header-includes:
+  - \usepackage{float}
+  - \floatplacement{figure}{H}
+output:
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo=TRUE,message=FALSE,warning=FALSE, fig.align = 'center', out.width="80%" )
+library(tidyverse)
+library(ggplot2)
+library(dplyr)
+library(mosaic)
+library(ImSIwithR)
+```
+
+# Exploration 2.3 Car Acceleration
+
+One commonly cited metric in car commercials is the time it takes the car to accelerate from 0 to 60 mph. In this exploration, we will consider what car features might help explain faster acceleration (shorter times) using data on 406 cars (Quinlan, “Combining Instance-based and Model-based Learning,” Proceedings on the Tenth International Conference of Machine Learning, 236–243, 1993; used in the 1983 ASA Data Graphics Exposition).
+
+*Do heavier cars accelerate faster?* The `carmpg` file within `library(ImSIwithR)` contains data on the weight of the car (whether or not the car weighs over 2800 kg) and the time it takes to accelerate to 60 mph (measured in seconds). (This dataset has been around the internet for a while but details on the data collection are limited. We use the version with 392 complete records.)
+
+> 1.  Was this an observational study or a randomized experiment? How are you deciding?
+
+Observational study, data was simply collected and no assignment was employed.
+
+
+> 2.  Identify all variables; be sure to specify the response variable and explanatory variable(s).
+
+Acceleration - response, weight and horsepower are explanatory variables.
+
+Let's load the data.
+
+```{r, load in data }
+library(ImSIwithR)
+data(carmpg)
+head(carmpg,2)
+```
+
+Let's convert character variables in the dataset: `weight` and `horsepower` into factor variables.
+
+```{r, convert all character columns to factors }
+carmpg <- carmpg %>%
+  mutate(across(where(is.character), as.factor))
+
+head(carmpg, 2)
+```
+
+> 3.  Compare the distributions of acceleration times between light and heavy cars, and comment on the boxplot. Comment on what the plot tells you about the shapes, centers, and standard deviations of acceleration for each weight class.
+
+Both light and heavy cars appear to have relatively normally distributed acceleration times. The mean of the heavy cars is slightly faster; this may be surprising as it implies the heavy cars actually tend to accelerate more quickly.
+ 
+```{r, side-by-side boxplots }
+ggplot(carmpg, aes(x= weight, y=acceleration, fill = weight))+
+  geom_boxplot()+
+  labs(title="Acceleration Distribution by Weight Class")
+```
+
+> 4.  Let's conduct a one-variable analysis evaluating the association between acceleration and car weight.
+> a.  To do this, let's first create a Skeleton ANOVA table. (Hint: It's a good idea to sketch it on paper first, so you know how many rows you need (there will always be 6 columns,) and then use the `Visual` mode).
+
+| Treatment | df        | Design    | df        | Combined      | df            |
+|-----------|-----------|-----------|-----------|---------------|---------------|
+| weight    | 2-1=**1** |           |           | weight        | 2-1=1         |
+|           |           | car       | 392-1=391 | *car\|weight* | **391-1=390** |
+| **Total** | 392-1=391 | **Total** | 392-1=391 | **Total**     | 392-1=391     |
+
+As you can see in the Skeleton ANOVA diagram above, weight is the treatment of interest, and thus it is included in the *Treatment* column. There are 3 different weight categories and thus 2 degrees of freedom associated with weight. Cars are the observational units, so they need to be included in the *Design* column. Note that we need to pay attention to which units the treatment was applied (for experiments) or on which units it was observed (for observational studies). Since weight is observed on cars, weight shows up in the row above the car. The subtraction of degrees of freedom happens in the *Combined* column to adjust the degrees of freedom of units after applying/observing treatment(s) on them. In the table above, we get 390 degrees of freedom for the residual term by subtracting 1 df associated with weight (trt) from 391 degrees of freedom associated with cars (units). The difference is denoted as `car|weight`, car df after accounting for weight. This term represents the _residual_.
+
+> b.  Then let's use R to output the complete ANOVA table that uses the terms from the combined columns of the Skeleton ANOVA above. Check the degrees of freedom in the output. Do they match the degrees of freedom in the Skeleton ANOVA? Based on the p-value, is there a statistically significant relationship between acceleration time and car weight?
+
+There is a statistically significant relationship between car weight and acceleration; however, because the cars were not randomly assigned, causation cannot be inferred. A theory-based approach would be appropriate because there are enough observations and no outliers or skewness. The degrees of freedom match the Skeleton ANOVA from part a.
+
+```{r, ANOVA table for CRD model }
+model_weight <- aov(acceleration ~ weight, data = carmpg)
+anova(model_weight)
+```
+
+_Now let's include another variable in the dataset: `horsepower`. First, let's create a Skeleton ANOVA table for this analysis. The decision we need to make before creating the table is whether horsepower is the explanatory variable/treatment we are interested in. In that case, it will be a line in the *Treatment* column._
+
+| Treatment  | df        | Design | df        | Combined   | df            |
+|------------|-----------|--------|-----------|------------|---------------|
+| Horsepower | 2-1=1     |        |           | Horsepower | 2-1=1         |
+| Weight     | 2-1=**1** |        |           | Weight     | 2-1=1         |
+|            |           | car    | 392-1=391 | *car\|H&W* | **391-2=389** |
+| **Total**  | 392-1=391 | Total  | 392-1=391 | **Total**  | 392-1=391     |
+
+_In this Skeleton ANOVA both horsepower and weight are included in the *Treatment* column. Cars are still observational units on which both treatments are observed. Thus, car line in the *Design* column should be underneath both horsepower and weight. After observing horsepower and weight on cars, cars have 389 df left. This term is denoted in the table as `car|H&W`. It represent model residual._
+
+If, however, we think of it as a potential *confounding variable* that we want to "block by" then horsepower should be included in the *Design* column.
+
+| Treatment | df | Design | df | Combined | df |
+|------------|------------|------------|------------|------------|------------|
+|  |  | Horsepower | 2-1=1 | Horsepower | 2-1=1 |
+| Weight | 2-1=**1** |  |  | Weight | 2-1=1 |
+|  |  | car(horsepower) | (225-1)\*(167-1)=390 | *car(H)\|W* | **390-1=389** |
+| **Total** | 392-1=391 | Total | 392-1=391 | **Total** | 392-1=391 |
+
+As you can see in the Skeleton ANOVA diagram above, horsepower is now included in the *Design* column above weight. This is because, in this case, it provides grouping for cars and is not a treatment we are interested in. Since weight is not observed on the horsepower group, horsepower keeps its 1 df in the *Combined* column; weight also keeps its 1 df. The subtraction of degrees of freedom happens at the point where treatment (weight) is observed on cars within horsepower groups. We read `car(horsepower)` terms as cars within horsepower and `car(H)|W` as cars within horsepower after observing weight.  `car(H)|W` is the residual term that has 390-1=389 df. These represent SSE degrees of freedom.
+
+> 5.  On the surface, both combined columns look the same. Use the *Combined* column of the Skeleton ANOVA that treats horsepower and weight as treatments/ explanatory variables to write out the theoretical model in words.
+
+Data = Horsepower + Weight + Error
+
+This is a two-way ANOVA model.
+
+_In general, how do we decide which approach to take?_ We need to check whether the *association between two different explanatory variables* is "allowed" by the modeling technique.
+
+_While blocking is a great technique to account for potential confounding variables, it works when we can have control over blocks in experiments. With observational studies, we can't assign treatments to units within blocks. We can only observe treatments on observational units. Blocked designs prohibit block by treatment interaction. This is one of the validity conditions for block models. With observational studies, there is likely to be an interaction (association) of the treatment of interest and a potential confounding variable._
+
+*In Chapter 3, we will see how to test for interaction between variables in more detail. For now, the cross-tabulation of horsepower and weight can help us determine whether there is an association/interaction between the two variables. We need to check this, since in order to be a confounding variable*, horsepower would need to be associated with both acceleration and weight.
+
+ 
+
+```{r, Create the two-way frequency table }
+frequency_table <- table(carmpg$horsepower,carmpg$weight)
+addmargins(frequency_table)
+prop.table(frequency_table, margin = 2)#column conditional proportions
+```
+
+The table appears to indicate an association between weight and horsepower. The conditional proportions of high horsepower in vehicles are 151/196 or 77% for heavy cars, while only 16/196 or 8% for light cars. Thus, horsepower is a confounding variable in the study because heavier cars tend to have more horsepower, which plays a key role in quicker acceleration times.
+
+*What that means for the analysis is that horsepower interacts with weight and thus we are not able to see the full picture when we treat horsepower as a grouping/blocking variable. That means that we will treat horsepower as a treatment ( explanatory variable).*
+
+*Let's add horsepower to the model*. Note that the output of the R code below does NOT match the output you get with the applet. We get the same output for weight, but the horsepower calculations for sums of squares and F statistic are not the same. Let's try to figure out what's happening.
+
+ 
+```{r, ANOVA table with confounding variable sequential sums of squares }
+model_horsepower_weight <- aov(acceleration ~ horsepower + weight, data = carmpg)
+anova(model_horsepower_weight) # sequential sums of squares - Type 1
+```
+
+ 
+
+```{r include_image2, echo=FALSE, out.width="70%", fig.align="center" }
+knitr::include_graphics("~/Documents/Math 248 Materials/Math 248 Resources/ISI2 Math 248/Type 3 ANOVA carmpg.png")
+```
+
+*It turns out that there are generally two different types of calculations for sums of squares in the ANOVA table.*
+
+### Type I vs. Type III Sums of Squares
+
+*Type I (Sequential) Sums of Squares*: The order in which variables are entered into the model affects the results because each variable is adjusted only for those that precede it in the model. This type is generally not recommended for unbalanced observational studies with correlated predictors (confounding variables) because the shared variance is attributed to the variable entered first, which can lead to biased interpretation.
+
+*Type III (Marginal) Sums of Squares:* Each effect is evaluated after adjusting for all other effects in the model, including interactions. This ensures that the hypothesis tested for each main effect is consistent regardless of the order of the variables in the model. This is especially useful in observational studies where data are typically unbalanced and confounding variables are present.
+
+In observational studies with *unbalanced data* and confounding variables, you should generally use *Type III sums of squares*. This approach is used because it assesses the effect of each variable after adjusting for all other terms in the model. *Note: For balanced designs (same number of treatments in each block), Type 1 and Type 3 sums of squares produce the same result - see Exploration 2.2 solutions.*
+
+We can match the output in the book by using the *marginal/partial sums of squares* that look at the *effect of horsepower on acceleration after accounting for weight* and the *effect of weight on acceleration after accounting for horsepower*.
+
+> 6.  Using marginal/Type 3 Sums of Squares, is there any statistically significant relationships between explanatory variables (horsepower and weight) and acceleration?
+
+Yes, the p-value for the association between weight and acceleration (0.00045) is still small.  
+
+```{r, marginal/partial sums of squares - Type 3 }
+library(car)
+options(contrasts = c("contr.sum", "contr.poly"))
+
+model_horsepower_weight <- lm(acceleration ~ horsepower + weight, data = carmpg)
+a3 <- Anova(model_horsepower_weight, type = 3)
+
+# display Type III ANOVA without the intercept row
+a3[rownames(a3) != "(Intercept)", , drop = FALSE] 
+```
+
+*Once again, one of the assumptions for blocked design structures is that there is no treatment by block interaction. However, it is easier to control in experiments. With observational studies, there is likely an interaction between the confounding variable we would like to control for and the treatment. The book in their explanation uses the following chart: The association between weight and horsepower creates covariation* in acceleration times. Because weight and horsepower change together (they are associated), these two variables explain some of the same variation in acceleration times.
+
+ 
+```{r include_image3, echo=FALSE, out.width="60%", fig.align="center" }
+knitr::include_graphics("~/Documents/Math 248 Materials/Math 248 Resources/ISI2 Math 248/sums of squares piechart carmpg.png")
+```
+
+### Do We Always Have Covariation?
+
+Well, think about the Strawberry Storage study. In that experimental design, each strawberry variety had the same distribution of storage methods, meaning that the strawberry variety and storage method were not associated. (In fact, the researchers made sure that each storage method was assigned to only one clamshell of each variety so there was zero covariation in that study.)Thus, Type I Sums of Squares and Type 3 Sums of Squares will be the same. But in this observational study, weight and horsepower are associated because the researchers have no control over which car is in which group. Thus, in observational studies that usually have *unbalanced data* and *confounding variables*, you should generally use *Type III sums of squares*.
+
+### Key Idea
+
+By making sure each block has the same distribution of treatments, that is, each treatment occurs the same number of times within each block, the randomized complete block design ensures there is no relationship between the blocking variable and the treatment variable and therefore *no covariation*.
+
+In this case, the *covariation* is not all that large, and our adjusted associations were each statistically significant. It’s possible that this covariation could be large enough to hinder the significance of an individual adjusted association, or that an adjusted association could become insignificant if the new variable explains a lot of the same association in the response. If you are choosing variables to include in your model, there are advantages to finding variables that explain different aspects of the variation in the response variables (i.e., variables that are associated with the response but not with each other).
+
+> 7.  What conclusion can you draw based on this study? What population are you comfortable generalizing your conclusions to?
+
+Based on this study we learned that both weight, after accounting for horsepower and horsepower, after accounting for weight have a statistically significant effect on acceleration. There is not a lot information given about the data collection process, so in this case we don't know how generally this conclusion applies to.
+
+
+

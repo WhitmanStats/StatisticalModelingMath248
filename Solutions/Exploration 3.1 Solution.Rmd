@@ -1,0 +1,556 @@
+---
+title: "Math 248: Exploration 3.1"
+author: "Solution"
+header-includes:
+  - \usepackage{float}
+  - \floatplacement{figure}{H}
+output:
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo=TRUE,message=FALSE,warning=FALSE, fig.align = 'center', out.width="80%" )
+library(tidyverse)
+library(ggplot2)
+library(dplyr)
+library(mosaic)
+library(ImSIwithR)
+```
+
+# Exploration 3.1 Pig Growth
+
+Livestock farmers want their animals to be healthy and grow under the best conditions. It makes sense that adding vitamins to the pig’s diet should produce fatter pigs faster. However, perhaps an antibiotic can also impact growth by controlling the bacteria in the pigs’ intestines. An experiment conducted with 12 baby pigs assessed the effects of adding 0 mg or 40 mg of an antibiotic to the pig’s diet per day, as well as the effects of 0 mg or 5 mg of vitamin B12 per day. At the end of the study, the average daily weight gain, in pounds, was determined.
+
+## STEP 1: Ask a research question.
+
+ Does adding either an antibiotic or vitamin B12 to pig diets affect average daily weight gain?
+
+Experimental units - baby pigs
+
+Response variable - weight gain per day 
+
+Explanatory variables - antibiotics/not and vitamin B12/not 
+
+No blocking variables, however, an experiment is recommended so that causation can be inferred from the results (and these explanatory variables are easily manipulated).
+
+## STEP 2: Design a study and collect data.
+
+> 1.  What are the experimental units? What is the response variable? What is/are the explanatory variable(s) (aka “factor(s)”) of interest? Are there any blocking variables? Do you recommend an experiment or an observational study?
+
+Experimental units -  baby pigs
+
+Response variable - weight gain per day 
+
+Explanatory variables -  antibiotics/not and vitamin B12/not 
+
+No blocking variables, however, an experiment is recommended so that causation can be inferred from the results (and these explanatory variables are easily manipulated).
+
+> 2.  Consider this proposed study: Randomly assign 6 pigs to receive 0 mg of antibiotic per day and 0 mg of vitamin B12 per day (the control group), and 6 pigs to receive 40 mg of antibiotic per day and 5 mg of vitamin B12 per day (as depicted in the following picture). Explain why this is not a very good design.
+
+```{r pigs, echo=FALSE, out.width="80%", fig.align="center"}
+knitr::include_graphics("~/Documents/Math 248 Materials/Math 248 Resources/ISI2 Math 248/Bad Design.png")
+```
+
+
+This study design is not very beneficial because it cannot attribute effects to a single explanatory variable. The antibiotic and vitamin variables are completely confounded.
+
+*Consider this proposed study: Randomly sample 6 pigs and randomly assign 3 to receive 0 mg of antibiotic per day and 3 to receive 40 mg of antibiotic per day (no vitamins). For the remaining 6 pigs, randomly assign 3 to receive 0 mg of vitamin B12 per day and 3 to receive 5 mg of vitamin B12 per day (no antibiotic) as depicted in the following figure.*
+
+```{r pigs2, echo=FALSE, out.width="80%", fig.align="center"}
+knitr::include_graphics("~/Documents/Math 248 Materials/Math 248 Resources/ISI2 Math 248/Better Design.png")
+```
+
+> 3. Identify one way this study is better than the first study. Would you recommend this study design? Explain why or why not.
+
+This study design is better because it does not confound the variables. This design would not be recommended though because it does not allow both explanatory variables to be examined simultaneously.
+
+
+
+
+*An advantage to using the same pigs to investigate both explanatory variables is increased sample size, but we need to make sure the two explanatory variables are also not confounded. The most efficient study design to explore both variables at once is a factorial design where each pig is assigned one of four treatments. The four treatments are the four possible factor-level combinations:*
+
+*Treatment 1:* Antibiotic 0 mg, vitamin B12 0 mg
+
+*Treatment 2:* Antibiotic 40 mg, vitamin B12 0 mg
+
+*Treatment 3:* Antibiotic 0 mg, vitamin B12 5 mg
+
+*Treatment 4:* Antibiotic 40 mg, vitamin B12 5 mg
+
+*This is also called a “2 × 2 factorial design” (2 treatment variables, both with 2 levels).*
+
+> 4.How many of the 12 pigs will you assign to each treatment? How will you make this assignment?
+
+Three pigs will randomly be assigned to each of the four treatment groups, this creates a balanced design
+
+
+## Definition
+
+With multiple experimental variables, a full factorial design examines all possible factor (variable)-level combinations (called treatments). A balanced design assigns the same number of experimental units (replications) to each treatment; this ensures that the two experimental variables will not be confounded. The experimental units should be randomly assigned to each treatment.
+
+Consider the fabricated data in the `piggrowth` file within `library(ImSIwithR)`.
+
+## STEP 3: Explore the data.
+
+Let's load the data.
+
+```{r, load in data}
+library(ImSIwithR)
+data(piggrowth)
+piggrowth <- piggrowth %>%
+  mutate(across(where(is.character), as.factor)) # transforming character variables into factor variables
+head(piggrowth,2)
+```
+
+> 5.  Create the histogram of the mean pig growths for these 12 pigs. Report the overall mean pig growth, along with the standard deviation.
+
+
+$\bar{x}_{growth}=1.285 \ lbs$
+
+$SD{x}_{growth}=0.26 \ lbs$
+
+
+```{r, histogram of pig growth}
+ggplot(piggrowth, aes(x= Growth))+
+  geom_histogram(binwidth=0.05)+
+  labs(title="Histogram of Pig Growth")
+```
+
+```{r, mean and sd of pig growth}
+piggrowth %>%
+  summarise(
+    mean_growth = mean(Growth, na.rm = TRUE),
+    sd_growth = sd(Growth, na.rm = TRUE)
+  )
+```
+
+> 6.  How many pigs were assigned to each treatment? Do the four treatments appear to explain variation in pig growth?
+
+Three pigs were assigned to each treatment. It looks like the treatments could explain a large portion of the variation in pig growth since boxplots illustrate difference between treatment groups.
+
+```{r, side-by-side boxplots}
+ggplot(piggrowth, aes(x=Treatment , y=Growth, fill = Treatment))+
+  geom_boxplot()+
+  geom_jitter(width = 0.1) +
+  labs(title="Growth Distribution by Treatment")
+```
+
+> 7.  Calculate the four treatment means and standard deviations. Which treatment appears to be the best? The worst?
+
+_Best:_ Antibiotic Yes, Vitamin Yes 
+
+_Worst:_ Antibiotic No, Vitamin No
+
+
+```{r, means and standard deviations of the Variety groups}
+summary_data <- piggrowth %>%
+  group_by(Treatment) %>%
+  summarise(
+    mean_growth = mean(Growth, na.rm = TRUE), # Calculate mean
+    sd_growth = sd(Growth, na.rm = TRUE),       # Calculate standard deviation
+    n = n(),                                  # Count the number of observations
+   .groups = 'drop'                           # Drop the grouping structure
+  )
+
+# View the new summary data frame
+print(summary_data)
+```
+
+$\bar{x}_{NoNo}=0.956 \ lbs$
+
+$\bar{x}_{NoYes}=1.40 \ lbs$
+
+$\bar{x}_{YesNo}=1.196 \ lbs$
+
+$\bar{x}_{YesYes}=1.586 \ lbs$
+
+$S_{NoNo}=0.124\ lbs$
+
+$S_{NoYes}=0.1 \ lbs$
+
+$S_{YesNo}=0.084 \ lbs$
+
+$S_{YesYes}=0.0986 \ lbs$
+
+
+> 8.  Use the frequency table below to determine how many pigs in each Antibiotic group were given B12 and how many weren’t. Explain why the two explanatory variables `Antibiotic` and `VitaminB12` are not confounded in this study design using the proportions table.
+
+```{r, Create the two-way frequency table}
+frequency_table <- table(piggrowth$Antibiotic,piggrowth$VitaminB12)
+addmargins(frequency_table)
+prop.table(frequency_table, margin = 2)#column conditional proportions
+```
+
+The number of pigs given B12 in the above order of groups is 3,3,3,3. The number of pigs given the antibiotic or not is identical for those given vitamin and those not. The proportions table illustrates this balance.
+
+
+## STEP 4: Draw inferences beyond the data.
+
+The above analysis tells us that, in this sample, the best pig diet appears to use both vitamin B12 and the antibiotic. But our next questions should be whether this is a statistically significant difference, especially considering the small group sizes, and if so, how do we estimate the differences in average weight gain.
+
+### Analysis #1: One-Variable Model Using the Treatments
+
+To begin, we will conduct one-variable analyses using each variable separately. Let's first create a Skeleton ANOVA table for each.
+
+#### One-variable model using Antibiotic:
+
+| Treatment  | df        | Design    | df      | Combined          | df          |
+|------------|-----------|-----------|---------|-------------------|-------------|
+| Antibiotic | 2-1=**1** |           |         | Antibiotic        | 2-1=1       |
+|            |           | pig       | 12-1=11 | *pig\|antibiotic* | **11-1=10** |
+| **Total**  | 12-1=11   | **Total** | 12-1=11 | **Total**         | 392-1=391   |
+
+The corresponding theoretical model is:
+
+`Growth = Antibiotic + Error`,
+
+Validity conditions:
+
+* Equal SD/Variances
+
+* Independent observations
+
+* Normally distributed response variable
+
+> 9. Use the R code below to answer the following questions: What proportion of variation in pig growth is explained by whether or not the pig received the antibiotic? What is the SSvalue for this variable?
+
+Proportion of Variation Explained: 0.187
+
+$SS_{antibiotic}= 0.137$
+
+```{r, ANOVA table for antibiotic CRD model - type 1 SS}
+model_antibiotic <- aov(Growth ~ Antibiotic, data = piggrowth)
+anova(model_antibiotic)
+
+# proportion of explained variation antibiotic
+# ANOVA table (type I sums of squares - sequential sums of squares)
+anova_tab_1 <- anova(model_antibiotic)
+
+term_SS <- c(antibiotic_explained_variability = anova_tab_1["Antibiotic", "Sum Sq"],
+             Residual = anova_tab_1["Residuals", "Sum Sq"])
+
+SS_total <-anova_tab_1 ["Antibiotic", "Sum Sq"] + anova_tab_1["Residuals", "Sum Sq"]
+  
+prop_term <- term_SS / SS_total
+
+# results
+prop_term         # proportion of total SS explained by each term
+```
+
+#### One-variable model using VitamiinB12:
+
+| Treatment  | df        | Design    | df      | Combined          | df          |
+|------------|-----------|-----------|---------|-------------------|-------------|
+| VitaminB12 | 2-1=**1** |           |         | VitaminB12        | 2-1=1       |
+|            |           | pig       | 12-1=11 | *pig\|antibiotic* | **11-1=10** |
+| **Total**  | 12-1=11   | **Total** | 12-1=11 | **Total**         | 392-1=391   |
+
+The corresponding theoretical model is:
+
+`Growth = Vitamin B12 + Error`,
+
+Validity conditions:
+
+* Equal SD/Variances
+
+* Independent observations
+
+* Normally distributed response variable
+
+
+> 10. Use the R code below to answer the following questions: What proportion of variation in pig growth is explained by whether or not the pig received Vitamin B12? What is the SSvalue for this variable?
+
+Proportion of Variation Explained: 0.703 
+
+$SS_{vitamin}: 0.521$
+
+```{r, ANOVA table for vitaminb12 CRD model - type 1 SS}
+model_vitaminb12 <- aov(Growth ~ VitaminB12, data = piggrowth)
+anova(model_vitaminb12)
+
+# proportion of explained variation antibiotic
+# ANOVA table (type I sums of squares - sequential sums of squares)
+anova_tab_2 <- anova(model_vitaminb12)
+
+term_SS <- c(vitaminb12_explained_variability = anova_tab_2["VitaminB12", "Sum Sq"],
+             Residual = anova_tab_2["Residuals", "Sum Sq"])
+
+SS_total <-anova_tab_2 ["VitaminB12", "Sum Sq"] + anova_tab_2["Residuals", "Sum Sq"]
+  
+prop_term <- term_SS / SS_total
+
+# results
+prop_term         # proportion of total SS explained by each term
+```
+
+*As you saw in Chapter 2, when there is no association between the two explanatory variables, you can simply combine the two one-variable analyses into a two-variable analysis that will account for combining both variables in the same study on the same experimental units.*
+
+
+*As you saw in Chapter 2, when there is no association between the two explanatory variables, you can simply combine the two one-variable analyses into a two-variable analysis that will account for combining both variables in the same study on the same experimental units.*
+
+## Definition
+
+In a _balanced factorial design_, we can calculate _main effects_ for each treatment factor by comparing the mean of each level of a factor (averaged over the categories of the other factor) to the overall mean. In other words, we can use the row means and the column means to calculate these effects. These row and column averages are exactly what we would find if we simply averaged the groups within each of the variables, ignoring the other variable.
+
+$$Main \ \ Effect_{\text{Antibiotic}} = \frac{(\bar{y}_{YesNo} + \bar{y}_{Yes Yes})}{2} - \frac{(\bar{y}_{No Yes} + \bar{y}_{No No})}{2}$$
+
+
+$$Main \ \ Effect_{\text{B12}} = \frac{(\bar{y}_{Yes Yes} + \bar{y}_{No Yes})}{2} - \frac{(\bar{y}_{Yes No} + \bar{y}_{No No})}{2}$$
+*Let's use R to visualize the main effects of `Antibiotic` and the main effect of `VitaminB12` using the Interaction Plot*. _Interaction Plot:_ R calculates the means for each combination and connects the dots.
+
+
+```{r, interaction plot}
+mean_data <- piggrowth %>%
+  group_by(Antibiotic, VitaminB12) %>%
+  summarise(mean_response = mean(Growth), .groups = 'drop')
+
+# Create the interaction plot using ggplot2
+ggplot(mean_data, aes(x = VitaminB12,
+                      y = mean_response,
+                      color = Antibiotic,
+                      group = Antibiotic)) +
+  geom_point(size = 3) + # Add points
+  geom_line(size = 1) + # Add lines
+  labs(title = "Interaction Plot of Antibiotic and Vitamin B12",
+       x = "Levels of Vitamin B12",
+       y = "Mean Response",
+       color = "Antibiotic") +
+  theme_minimal()
+```
+
+
+*How can we calculate main effects? Let's use R to do it*
+
+```{r, Main Effect of Antibiotic}
+# Main effect of Antibiotic: Average 'response' over all levels of Vitamin B12
+main_effect_Antibiotic <- piggrowth %>%
+  group_by(Antibiotic) %>%
+  summarise(main_effect_mean = mean(Growth), .groups = 'drop')
+
+print("Main Effect of Antibiotic is the difference in the means below:")
+print(main_effect_Antibiotic)
+```
+
+Thus, the _Main Effect of Antibiotic_ = 1.391 - 1.178 = 0.213
+
+
+```{r, Main effect of VitaminB12}
+# : Average 'response' over all levels of Antibiotic
+main_effect_VitaminB12 <- piggrowth %>%
+  group_by(VitaminB12) %>%
+  summarise(main_effect_mean = mean(Growth), .groups = 'drop')
+
+print("Main Effect of Vitamin B12 is the difference in the means below:")
+print(main_effect_VitaminB12)
+```
+
+
+Thus, the _Main Effect of Vitamin B12_ = 1.493 - 1.076= 0.417
+
+*Can we add main effects to the interaction plot?* Let's start with visualization of the main effect of `Antibiotic`.
+
+```{r,Visualization for Main Effect of Antibiotic}
+# The gray dashed lines show the averaging process across B for each level of A.
+ggplot(mean_data, aes(x = VitaminB12, 
+                      y = mean_response,
+                      color = Antibiotic,
+                      group = Antibiotic)) +
+  geom_line(size = 1, alpha = 0.5) +
+  geom_point(size = 4) +
+  geom_hline(data = main_effect_Antibiotic, 
+             aes(yintercept = main_effect_mean,
+                 color = Antibiotic),
+             linetype = "dashed", size = 1) +
+  labs(title = "Visualizing Averaging for Main Effect of Antibiotic",
+  subtitle = "Dashed lines show the average value of Antibiotic across all Vitamin B12 levels",
+       x = "Level of Vitamin B12",
+       y = "Mean Response",
+       color = "Antibiotic") +
+  theme_minimal()
+```
+
+
+Now, let's visualize of the main effect of `VitaminB12`.
+
+```{r, Visualization for Main Effect of Vitamin B12}
+# This requires reshaping the data slightly to put B on the color aesthetic and Antibiotic  on the x-axis.
+mean_data_reshaped_B <- piggrowth %>%
+    group_by(Antibiotic, VitaminB12) %>%
+    summarise(mean_response = mean(Growth), .groups = 'drop')
+
+ggplot(mean_data_reshaped_B, aes(x = Antibiotic,
+                                 y = mean_response,
+                                 color = VitaminB12, 
+                                 group = VitaminB12)) +
+  geom_line(size = 1, alpha = 0.5) +
+  geom_point(size = 4) +
+  geom_hline(data = main_effect_VitaminB12, 
+             aes(yintercept = main_effect_mean, 
+             color = VitaminB12),
+             linetype = "dashed", size = 1) +
+  labs(title = "Visualizing Averaging for Main Effect of Vitamin B12",
+  subtitle = "Dashed lines show the average value of Vitamin B12 across all Antibiotic levels",
+       x = "Level of Antibiotic",
+       y = "Mean Response",
+       color = "Vitamin B12") +
+  theme_minimal()
+```
+
+
+*Are these main effects statistically significant?*
+
+We can look at the p-values for `Antibiotic` and `VitaminB12` in the ANOVA table output to find out. Let's conduct a two-variable analysis by putting both Vitamin12 and Antibiotic in a Treatment column of the Skeleton ANOVA:*
+
+| Treatment  | df        | Design | df      | Combined      | df         |
+|------------|-----------|--------|---------|---------------|------------|
+| Antibiotic | 2-1=**1** |        |         | Antibiotic    | 2-1=1      |
+| VitaminB12 | 2-1=**1** |        |         | VitaminB12    | 2-1=1      |
+|            |           | pig    | 12-1=11 | pig\|Ant, Vit | **11-2=9** |
+| **Total**  | 12-1=11   | Total  | 12-1=11 | **Total**     | 12-1=11    |
+
+The corresponding theoretical model is:
+
+`Growth = Antibiotic + Vitamin B12 + Error`,
+
+Validity conditions:
+
+* Equal SD/Variances
+
+* Independent observations
+
+* Normally distributed response variable
+
+
+_Let's use R to obtain the ANOVA table with Type I Sums of Squares:_
+
+```{r, two-way ANOVA}
+model_antibiotic_vitamin <- aov(Growth ~ Antibiotic + VitaminB12, data = piggrowth)
+anova(model_antibiotic_vitamin) # sequential sums of squares - Type 1
+```
+
+> 11. Do the degrees of freedom in R output match the degrees of freedom in the Skeleton ANOVA? 
+
+
+Yes, they match.
+
+> 12. Report the p-value for `Antibiotic`, this p-value is answering the question of whether the main effect of Antibiotic = 0.213 is significantly different from zero. Is it? Report the p-value for `VitaminB12`, this p-value is answering the question of whether the main effect of Vitamin B12 = 0.417 is significantly different from zero. Is it?
+
+p-values are 0.004428 and 0.00004281 for Antibiotic and VitaminB12 respectively, both main effects are statistically significant.
+
+> 13. Did the sums of squares change for `VitaminB12` or for `Antibiotic` with this two-way additive ANOVA model compared to individual models? Did the F-statistics change for `VitaminB12 `or for `Antibiotic`? Explain. 
+
+The sum of squares did not change. However, the F statistics became more extreme because we are explaining more variation with the two variables in the same model which reduces the size of the MSError (the denominator of the F statistic)
+
+> 14. Let's use R to calculate the Sums of Squares using marginal/Type 3 Sums of Squares, how do your results compare to output in question #13? Explain why the results of this comparison make sense for this study.
+
+The Sums of Squares are the same, this is happening because we have a balanced study.
+
+```{r, marginal/partial sums of squares - Type 3}
+library(car)
+options(contrasts = c("contr.sum", "contr.poly"))
+
+model_antibiotic_vitamin <- lm(Growth ~ Antibiotic + VitaminB12, data = piggrowth)
+a3 <- Anova(model_antibiotic_vitamin, type = 3)
+
+# display Type III ANOVA without the intercept row
+a3[rownames(a3) != "(Intercept)", , drop = FALSE] 
+```
+
+> 15. What proportion of the total variation in pig growth is explained by the two-variable model? That is, what proportion of the total variation in pig growth is explained by these variables together (use the multiple $R^2$ from output below)? How does this compare to the sum of the $R^2$ values from the two one-variable models? (Hint: Use the proportion of variability explained by antibiotic and vitaminB12 from questions #9 & #10 and compare their combined value to multiple $R^2$ from R output below)
+
+The two-variable model explains about 89% of the variation in pig growth, this is equal to the sum of the variation explained by vitamins and antibiotics individually.
+
+```{r, two-way ANOVA model summary }
+model_antibiotic_vitamin <- lm(Growth ~ Antibiotic + VitaminB12, data = piggrowth)
+summary(model_antibiotic_vitamin)#produces R-squared and overall model p-value - need to use lm specification
+```
+
+> 16. What does the p-value corresponding to the overall two-variable model tell us? Describe in the context of the study.(You can find the overall model p-value on the last line of R output above). Hint: does it suggest that at least one of the explanatory variables in the model significant?
+
+Overall p-value is 6.245e-05, it tells us that at least one term in the model is statistically significant.
+
+This also indicates that a significant amount of variation in the pig growths is explained by the model. In other words, including vitamins and antibiotics in the model accounts for a large amount of the variation in pig growth rates.
+
+> 17. How does the total variation explained by this two-variable model compare to what you found with the one-variable models? 
+
+The explained variation is similar: 89% in the two-variable model compared to 89.2% in the single-variable model. The standard error of residuals is also similar, 0.098 for the two-variable model and 0.103 for the one-variable model.
+ 
+
+```{r, proportion of explained variation calculation two-way ANOVA }
+# ANOVA table (type I sums of squares - sequential sums of squares)
+anova_tab_3 <- anova(model_antibiotic_vitamin)
+
+term_SS <- c(antibiotic_explained_variability = anova_tab_3["Antibiotic", "Sum Sq"],
+             vitamin_explained_variability = anova_tab_3["VitaminB12", "Sum Sq"],
+             Residual = anova_tab_3["Residuals", "Sum Sq"])
+
+SS_total <-anova_tab_3["Antibiotic", "Sum Sq"] + anova_tab_3["VitaminB12", "Sum Sq"] + anova_tab_3["Residuals", "Sum Sq"]
+  
+prop_term <- term_SS / SS_total
+
+# results
+prop_term         # proportion of total SS explained by each term
+```
+
+
+### Validity Conditions
+
+Recall that the theory-based p-values given above, as well as the theory-based confidence intervals on the effects, depend on the usual validity conditions. Technically, the symmetry and equal variance conditions apply to each of the four treatments. It can often become cumbersome to check these conditions for each individual treatment, especially with small sample sizes or a large number of treatments. An alternative method to check the validity conditions uses the residuals of the model. This approach pools the results together after adjusting for the group means. If each distribution had been symmetrically distributed, then the shifted over (adjusted) distributions, combined together, should be symmetrically distributed.
+
+
+## Key Ideas
+
+* If the responses in each treatment are approximately symmetric, then a graph of the residuals will be approximately symmetric.
+
+* If the responses in each treatment have a similar standard deviation, then a graph of the residuals vs. the predicted values for each treatment will exhibit a similar spread in each treatment.
+
+> 18. One of the validity conditions for the F-tests is that the distribution of residuals looks symmetric. Use the histogram of the model residuals and a QQ plot to answer the following questions: Does this condition appear to be met? Be clear about how you are deciding. Note: A Normal QQ plot (Quantile-Quantile plot) visually checks if your data follows a normal distribution by plotting your data's quantiles (percentiles) against the quantiles of a perfect normal distribution, with points ideally falling on a straight diagonal line.
+
+There are six residuals above 0 and six below 0. The residuals are also mostly symmetric with a bit of a spike at -0.1.
+
+```{r, histogram of the residuals}
+ggplot(model_antibiotic_vitamin, aes(x =.resid)) +
+  geom_histogram(binwidth=0.03) +
+  labs(title = "Histogram of the Residuals", x ="Residuals")
+```
+
+```{r, Normal QQ plot}
+qqnorm(residuals(model_antibiotic_vitamin))
+qqline(residuals(model_antibiotic_vitamin)) # Adds the reference line
+```
+
+Normal QQ plot shows two observations in the lower tail that do not follow the line well. This is consistent with the histogram of the residuals.
+
+
+> 19. Another validity condition is that the responses in each treatment have a similar standard deviation. Examine the residuals vs. predicted/fitted values plot below. Does this condition appear to be met? 
+
+
+```{r, residual vs fitted plot}
+ggplot(model_antibiotic_vitamin, aes(x = .fitted, y = .resid)) +
+  geom_point() +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
+  labs(title = "Residuals vs Fitted", x = "Fitted values", y = "Residuals")
+```
+
+Yes, the responses appear to have similar standard deviations and the residuals vs predicted values graph doesn’t show any "fanning."
+
+> 20. The third validity condition is that the samples must be independent across the treatments being compared. Is this validity condition met? Why or why not?
+
+Yes, each of the three pigs in the four treatment groups were unique, there was no overlap. We are also assuming the pigs were treated identically.
+
+
+## STEP 5: Formulate conclusions.
+
+These were fabricated data, so let’s focus on evaluating the study design.
+
+> 21.  Which variable (`Vitamin B12` or `antibiotic`) has a larger effect on average pig growth? Which explains a greater proportion of variation in average pig growth? Why is it okay to compare these values?
+
+Vitamins have a larger effect on pig growth of 0.2083 pounds per day while also explaining much more of the variation at 69.3%. It is okay to compare the values because there is no covariation and the "scale" of the explanatory variables is the same in each case.
+
+> 22. What would be your recommended treatment combination to increase pig growth? Is there a clear winner? Is a cause and effect conclusion possible in this study? Explain.
+
+The best combination for pig growth seems to be to use the Antibiotic and Vitamin B12. We can state causal effects because the pigs were randomly assigned to treatment groups.
+
+> 23. Summarize the main advantages of the study design (balanced factorial design) and the two-variable analysis using both the antibiotic and vitamin B12 simultaneously.
+
+The balanced factorial design allowed for maximum power in the study while also allowing for the unique effects of vitamin B12 and antibiotics to be determined.

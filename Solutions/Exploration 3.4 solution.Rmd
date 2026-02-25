@@ -1,0 +1,224 @@
+---
+title: "Math 248: Exploration 3.4"
+author: "Solution"
+header-includes:
+  - \usepackage{float}
+  - \floatplacement{figure}{H}
+output:
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo=TRUE,message=FALSE,warning=FALSE, fig.align = 'center', out.width="80%" )
+library(tidyverse)
+library(ggplot2)
+library(dplyr)
+library(mosaic)
+library(ImSIwithR)
+```
+
+# Exploration 3.4: Hopelessness and Exercise
+
+A recent study (Dunn et al., J. Cardiopulm. Rehab. Prevent., 2017) gathered data on patients who had recently had a heart attack requiring hospitalization. Before patients were discharged from the hospital, patients took a series of surveys which included measures of chronic hopelessness. Chronic hopelessness was measured based on a series of Likert scale questions which were averaged together yielding a Chronic Hopelessness score of 1-4. This variable was classified as *Not hopeless* vs. *Moderate to Severe Hopelessness* and recorded as `BaselineGroup` variable. Researchers were interested in learning about whether exercise after a heart attack was associated with hopelessness levels eight months later (`hopelessness8`). Higher scores indicate a more hopeless feeling. Patients have data measuring hopelessness eight months after hospitalization, as well as information about their exercise habits during the eight-month period following hospitalization. `Exercise` was classified as "Regular home exerciser" (exercised at home at least three times per week) or "Not regular home exerciser" (did not exercise at home at least three times per week). Data for 174 participants are in `Hopelessness`.
+
+## STEP 1: Ask a research question.
+
+> 1. Identify the explanatory and response variables, and whether they are categorical or quantitative.
+
+Explanatory variables - exercise, categorical; Baseline hopelesness - categorical
+
+Response variable - 8 month hopelessness, quantitative
+
+
+## STEP 2: Design a study and collect data.
+
+> 2.  Is this an observational study or a randomized experiment? If the latter, are there any blocking variables to account for?
+
+Observational study
+
+## STEP 3: Explore the data.
+
+Let's load the data.
+
+```{r, load data}
+data(Hopelessness)
+Hopelessness<- Hopelessness %>%
+  mutate(across(where(is.character), as.factor)) # transforming character variables into factor variables
+head(Hopelessness,2)
+```
+
+> 3.  The goal of the study is to measure the effect of exercise on hopeleseness 8 months after the heart attack. There is another variable that was measured in the study, baseline hopefullness level that could have an effect on hopefullness 8 months later. Thus we should include it in the model and test for a possible interaction between `Exercise` and `hopelessness8`. Does the interaction plot below suggest that there is a significant interaction between `Exercise` and `BaselineGroup`?
+
+Yes, it does. There is a larger difference in the 8 month hopelessness scores between exercisers and non-exercisers of those who are moderately to severely hopeless than those who are not hopeless.
+
+
+```{r, interaction plot exercise by baseline}
+ggplot(Hopelessness,
+       aes(x = BaselineGroup,
+           y = hopelessness8, 
+           color = Exercise, 
+           group = Exercise)) +
+  stat_summary(fun = mean, geom = "line") +
+  stat_summary(fun = mean, geom = "point") +
+  labs(title = "Interaction Effect of Exercise by Baseline Group",
+       x = "Baseline Group",
+       y = "Mean Hopelessness after 8 months",
+       color = "Exercise") +
+  theme_minimal()
+```
+
+
+
+> 4. Fill out the `?` in the following skeleton ANOVA table. Note: `E` denotes `Exercise`, `B` denotes `BaselineGroup` and `pnt` denotes patient
+
+| Treatment | df        | Design | df        | Combined  | df        |
+|-----------|-----------|--------|-----------|-----------|-----------|
+| Exercise  | 2-1=1     |        |           | Exercise  | 1         |
+| Baseline  | 2-1=1     |        |           | Baseline  | 1         |
+| E\*B      | 1\*1=1    |        |           | E\*B      | 1         |
+|           |           | pnt    | 174-1=173 | residual  | 170         |
+| **Total** | 174-1=173 | Total  | 174-1=173 | **Total** | 174-1=173 |
+
+The corresponding theoretical model is:
+
+`hopelessness8 = Exercise + Baseline + Exercise*Baseline  Error`,
+
+*Validity conditions:*
+
+-   Equal SD/Variances
+
+-   Independent observations
+
+-   Normally distributed response variable
+
+
+> 5. What are the null alternative hypotheses for the interaction? Use appropriate math notation. (Hint: we used the math notation for interaction hypothesis in Exploration 3.2)
+
+The _null hypothesis_ for the interaction term is 
+
+$$H_0:\; \mu_{mod-severe \ exercise} - \mu_{mod-severe \ non-exercise} - \mu_{not \  hopeless \ exercise} + \mu_{not \ hopeless \ non-exercise} = 0$$
+The _alternative hypothesis_ for the interaction term is 
+
+$$H_A:\; \mu_{mod-severe \ exercise} - \mu_{mod-severe \ non-exercise} - \mu_{not \  hopeless \ exercise} + \mu_{not \ hopeless \ non-exercise} \neq 0$$
+
+> 6.  Run the two-way ANOVA model with interaction using Type 1 Sums of Squares R code. Is the interaction between baseline hopelessness and exercise significant? Do the degrees of freedom in the output match the degrees of freedom in the Skeleton ANOVA?
+
+The interaction between exercise and baseline hopelessness is statistically significant with p-value of 0.000307. the degrees of freedom in this table match the Skeleton ANOVA degrees of freedom.
+
+```{r, two-way ANOVA with interaction Type 1 SS}
+model_interaction_type1 <- aov(hopelessness8 ~ Exercise*BaselineGroup, data = Hopelessness)
+# View the results
+summary(model_interaction_type1)
+```
+
+> 7.  Now, run the two-way ANOVA model with interaction using Type 3 Sums of Squares R code. Do the p-values in this analysis match the p-values you obtained with Type 1 Sums of Squares? Why is this happening? Which analysis should you use? (Hint: think about the type of study this is)
+
+The p-value for the interaction term is the same, bit the other two p-values are different. This suggests that this is an unbalanced design (this is expected since this is an observational study)
+
+```{r, two-way ANOVA with interaction Type 3 SS}
+# Set global contrasts to 'sum' for Type III SS
+options(contrasts = c("contr.sum", "contr.poly"))
+# Note: Ensure Participant is treated as a factor if it isn't already
+model_interaction_type3 <- lm(hopelessness8 ~ Exercise * BaselineGroup,
+                              data = Hopelessness)# Use lm() instead of aov()
+
+library(car)# Load the package
+# 3. Calculate Type III SS
+type3_results <- Anova(model_interaction_type3, type = "III")
+
+# 4. Drop the intercept from the output
+# We use [-1, ] to remove the first row
+type3_no_intercept <- type3_results[-1, ]
+
+# View the final table
+print(type3_no_intercept)
+```
+
+> 8. Which effects are appropriate to estimate in this study: main effects or simple effects? Why? Explain.
+
+Since interaction effect is significant we need to interpret simple effects (conditional means) because the average hopelessness after 8 months is different for exercise at different baseline levels of hopelessness.
+
+_Hopefully you remembered that if the interaction term is statistically significant, you *should not* interpret main effects and focus on simple effects only. If the interaction is NOT significant: You can safely ignore it and report the *Main Effects* as the primary findings of your study._
+
+> 9.  Report the sizes of the simple effect of `Exercise` at different `BaselineGroup` levels. What are the p-values associated with each simple effect? Is it meaningful to interpret these p-values? (Hint: think about what they compare each conditional mean to; it's not comparing them to each other.)
+
+$\text{Simple Effect of Exercise| Moderate-to-severe Hopeless}=0.4901$
+ 
+$\text{Simple Effect of Exercise| Not Hopeless}=-0.0564$
+
+The p-values associated with these effects are testing whether the estimate of the effect is significantly different from zero. It is not meaningful to interpret these p-values since we care about the difference in simple effects. The p-value reported in the Type 3 ANOVA table output, 0.0003067 is the appropriate p-value.
+
+
+```{r, calculating simple effects of exercise }
+library(emmeans)
+cat("### Simple Effects of Exercise (within each level of Baseline Group)\n")
+simple_effects_exercise <- emmeans(model_interaction_type3, ~ Exercise | BaselineGroup)
+summary(simple_effects_exercise, adjust = "sidak")# sidak adjustment
+cat("\n### Pairwise Comparisons of Exercise (within Baseline Group)\n")
+pairs(simple_effects_exercise, reverse = TRUE, infer = TRUE)
+# reverse=TRUE matches the order of the difference with the plot, you may not always need it
+```
+
+> 10. How much variation in hopelessness after 8 months is explained by this model? The R code below outputs an Adjusted $R^2$. Report it's value using appropriate math notation.
+
+Around 23% of variability in hopelessness is explained by this model
+
+```{r, extract model R-squared}
+# Extract Adjusted R-squared 
+adj_r_sq <- summary(model_interaction_type3)$adj.r.squared
+print(adj_r_sq)
+```
+
+
+> 11. Examine the residual plots for this model produced by R below. Do you consider the validity conditions for the theory-based F-tests to be met? Include supporting evidence for your conclusions.
+
+Independence condition would be satisfied if this was a random sample. The histogram of the residuals is approximately symmetric with a mean of 0, though there is a little skewness to the right that may need to be further examined. The QQ plot does not clearly show the violation of the normality condition.  The sample size is large so the F test is likely valid. Lastly the width of each stack is relatively equal showing equal variance for the four treatment groups.
+
+```{r, extract residuals and predicted (fitted) values from the model}
+plot_data <- data.frame(
+  Fitted = predict(model_interaction_type3),
+  Residuals = residuals(model_interaction_type3)
+)
+```
+
+ 
+
+```{r, residual vs fitted plot }
+ggplot(plot_data, aes(x = Fitted, y = Residuals)) +
+  geom_point(alpha = 0.5) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
+  geom_smooth(method = "loess", se = FALSE, color = "blue") +
+  labs(title = "Residuals vs Predicted Values",
+       x = "Predicted Ratings",
+       y = "Residuals") +
+  theme_minimal()
+```
+
+ 
+
+```{r, histogram of the residuals }
+ggplot(plot_data, aes(x = Residuals)) +
+  geom_histogram(bins = 30, fill = "steelblue", color = "white") +
+  labs(title = "Histogram of Residuals",
+       x = "Residual Value",
+       y = "Frequency") +
+  theme_minimal()
+```
+
+ 
+
+```{r, normal QQ plot }
+ggplot(plot_data, aes(sample = Residuals)) +
+  stat_qq() +
+  stat_qq_line(color = "red") +
+  labs(title = "Normal Q-Q Plot",
+       x = "Theoretical Quantiles",
+       y = "Sample Quantiles") +
+  theme_minimal()
+```
+
+> 12. Is it reasonable to recommend that recovering cardiac patients, like those in this study, should exercise to combat hopelessness at eight months after a cardiac event? Is it reasonable to recommend that to those with moderate to severe hopelessness at baseline exercise? Explain your reasoning.
+
+No, because there is not strong evidence of a genuine exercise effect. There is strong evidence of a difference for this population (moderate to severe hopelessness at baseline) but we should be cautious drawing a cause-and-effect conclusion from this observational study.
+
+
