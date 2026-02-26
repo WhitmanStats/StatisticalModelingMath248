@@ -1,0 +1,199 @@
+---
+title: "Math 248: Exploration 4.1"
+author: "Your name here"
+header-includes:
+  - \usepackage{float}
+  - \floatplacement{figure}{H}
+output:
+  pdf_document: default
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo=TRUE,message=FALSE,warning=FALSE, fig.align = 'center', out.width="80%" )
+library(tidyverse)
+library(ggplot2)
+library(dplyr)
+library(mosaic)
+library(ImSIwithR)
+```
+
+
+jacob comment: 
+
+Overall it goes from seperate means -> regression model -> evaluations -> conditions (just a roadmap for me)
+
+Explanation of SLR (simple linear regression) isn't very good, especially the key ideas around the beta weights as well as predected response = 0 (like important to note, but should be put better).
+
+Key Idea between 10 and 11 doesn't seem helpful. 
+
+Question 12, interpret THIS residual? or a specfic residual? 
+
+Question 13 not necessary, could just use r to compare the two. 
+
+question 14 through 16 could be combined into a longer question of assessing differences between the models. 
+
+Description before 17 could be condensed into validity conditions for regression. 
+
+Question 17 could be just to assess validity conditions rather than say it without saying it. 
+
+Last could include a section of Observational study reportable / significances, 
+
+
+I think the steps of the statistical process could be omitted, but I think the final segments of the formulate conclusions and look back and ahead could be useful, (definetely condensed). 
+
+# Exploration 4.1: Fatty Acids and DNA
+
+
+## Background Information
+
+More and more evidence exists that fatty acids circulating in the blood are associated with cardiovascular and brain health. Some fatty acids are obtained through diet whereas others are synthesized by the body from dietary fatty acids and other sources. Understanding dietary, genetic, and other factors that explain variation in fatty acid levels is a current research question of interest. One gene that has recently been identified in fatty acid metabolism is FADS1 (fatty acid desaturase 1, on chromosome 11). Some people have a genetic variant in the FADS1 gene, such that at one place in the gene the person has the base cytosine (C) instead of thymine (T). This “T to C” genetic variant may be inherited from either the mother or the father, both parents, or not at all. Thus, people can have either 0 (neither mother nor father), 1 (from the mother or father), or 2 copies (from both mother and father) of cytosine (C) in the FADS1 gene.
+
+
+
+## STEP 1: Ask a Research Question
+
+In a study by Kalsbeek et al., 2018, “A genome-wide association study of red-blood cell fatty acids and ratios incorporating dietary covariates: Framingham Heart Study Offspring Cohort,” researchers wanted, to know whether the cytosine genetic variation in FADS1 is associated with the metabolism of fatty acids in the blood as  measured by the arachidonic acid to di-homo-gamma-linolenic fatty acid ratio. Lower values of this ratio indicate higher amounts of fatty acids in the blood and thus, more efficient use of dietary fatty acids.
+
+
+## Step 2: Design a study and collect data
+
+The Framingham Heart Study is a well-known study of cardiovascular health. In a sample of 100 individuals from the Framingham Heart Study, the researchers determined the cytosine genetic variation in the FADS1 gene, as well as the arachidonic acid to di-homo-gamma-linolenic (AA%:dgLA%) fatty acid ratio in the blood.
+
+
+## STEP 3: Explore the data.
+
+```{r}
+data(fattyAcid)
+```
+
+
+>1. Describe the shape, center, and variability of the distribution of the fatty acid ratio in the blood of these 100 study participants.
+
+
+
+>2. Does there appear to be an association between the fatty acid ratio and the genetic variant? Describe the nature of this association. Does it appear to be better to inherit the cytosine variant from both parents, either (one) parent, or neither parent to yield lower (better) ratios? (What would the scatterplot look like if the number of parents was not related to the fatty acid ratios? What if it explained all of the variation in fatty acid ratios?) Explain.
+
+
+
+>3. What proportion of the variation in the fatty acid ratio is explained by the cytosine variable? What is the SSModel value? Is the association between the fatty acid ratio and the genetic variant statistically significant (cite both the p-value and the F-statistic)?
+
+
+
+>4. Write out the prediction equation for the separate-means model. What is the value of the residual SE? What is the value of the SSError?
+
+
+
+>5. What does this model predict for the fatty acid ratio when cytosine is inherited from neither parent, 1 parent, or both parents?
+
+
+
+>6. What do you notice about the difference in the predicted ratio as you move from 0 to 1 to 2 parents? How big is the change from 0 to 1 as compared to the change from 1 to 2?
+
+
+
+## Linear Regression Model: 
+
+Your observation that the change from 0 to 1 is very similar to the change from 1 to 2 parents suggests that another way we can model this relationship is with a line. To explore the possible linear association between these two variables, we will first examine a scatterplot of two quantitative variables. So rather than phrasing our observations in terms of inheritance from neither, one, or both parents we will simply refer to 0, 1, or 2 copies.
+
+
+>7. Do you see a general trend between the fatty acid ratio and the number of copies? Increasing or decreasing? Would it be reasonable to call it a linear trend?
+
+
+The statistical equation for a simple linear sample prediction is generally written as:
+
+$$\hat{y} = b_0 + b_1 x $$
+
+$b_0$ is the y-intercept of the line, $b_1$ is the slope of the line, and $\hat{y}$ is the predicted value of the response for a particular value of x. Simple linear regression is the statistical method that allows us to quantify the linear relationship between two quantitative variables with a regression line.
+
+
+>8. Record the fitted equation of the regression line. 
+
+
+### Key Ideas: 
+
+- The intercept is the predicted response when the value of the explanatory v ariable is set to 0, but this is not always a useful or meaningful prediction; it is often extrapolation.
+
+- The slope is the change in predicted response when the value of the explanatory variable increases by one unit. A key feature of the linear model is that the interpretation of the slope doesn’t depend on what two x values you are talking about, as long as they are one unit apart.
+
+
+>9. In the context of this study, write an interpretation for the slope and intercept.
+
+
+
+>10. Use the regression model to predict the fatty acid ratio when someone has 0, 1, and 2 copies of cytosine.
+
+0 parents: 1 parent: 2 parents:
+
+>What is the difference in the predicted values as you move from 0 to 1 and 1 to 2 parents?
+
+
+
+### Key Idea: 
+
+When the explanatory variable is quantitative, the regression model makes predictions based on the assumption of a linear change in the predicted response that is associated with a unit change of the explanatory variable.
+
+
+
+>11. How do the predictions made with the regression model compare to what you found earlier when we used the separate-means model? What are the implications of this?
+
+
+
+>12. Determine the residual for the first person in the dataset. Remember: the residual is the observed response minus the predicted response. Interpret this residual in the context of this study.
+
+
+
+>13. Fill in the table with information from the ANOVA tables for both the separate means and linear models and the residual SE values for each model. (The residual SE for the regression model can obtained by checking the Regression SE box, by looking at the distribution of the model residuals, or by taking the square root of MSError.)
+
+
+
+>14. Compare the SSError from the linear model to the SSError of the single-mean model you computed earlier. How close are they? How do the $R^2$ values for the two models compare?
+
+
+
+>15. How does the residual Standard Error for the linear model compare to the separate means model?
+
+
+
+>16. What are the implications of having similar residual Standard Error and explained variation in both models?
+
+
+## Which Model Is Better?
+
+The separate-means model using the treatment groups will always predict the observed group means exactly. Because of this, in terms of SSError, linear regression can never do better than the separate-means model. The linear regression model is a simplification of the separate-means model. But when the treatment group means have a linear relationship with the explanatory variable, the predictions from the linear regression model will be very close to the observed group means. In this case, the two models are practically equivalent, with almost identical residual SE and $R^2$ values.
+
+
+### Key Idea: 
+
+When two models have similar SSError values, choose the model that is simpler (e.g., uses fewer degrees of freedom). You can also favor the model that makes more sense in context (e.g., agrees with past research studies). There is not always “one best” model but you may want to explore a few more deeply.
+
+
+The linear regression model has an advantage in terms of interpretation. With the regression model we have a built-in statistic, the slope, which helps us describe how the fatty acid ratio is related to the number of cytosine copies. Because the slope is negative, we can conclude there is a decreasing relationship between the fatty acid ratio and the number of copies of cytosine. As the number of copies of cytosine goes up, the predicted fatty acid ratio goes down (a good thing). In addition, using the value of the slope, we can quantify the rate of change in the predicted fatty acid ratio. We predict a decrease of 2.64 in the predicted fatty acid ratio for each additional copy of the genetic variant. 
+
+
+
+## Assessment of Linearity: 
+
+To complete our assessment of the appropriateness of the regression model for these data, we should examine plots of the residuals. The residuals represent the variation left over in the response variable after adjusting for the linear trend. If we see a pattern in those residuals vs. our explanatory variable, then this tells us that the linear model is not appropriate (or at least that there could be a better model out there).
+
+
+### Key Idea: 
+
+Using the linear regression model requires that the association between the explanatory variable and the response variable is linear. This means that after fitting the regression line (removing the linear trend in the data), the residuals should exhibit no patterns when plotted against the explanatory variable or the predicted (or fitted) values.
+
+
+>17. Does this graph exhibit any sort of pattern? That is, do any of the “stacks” sit mostly above or below the horizontal line at a residual of 0, or does each stack of residuals appear to be mostly randomly scattered about the horizontal line at a residual of 0? Do the “widths” of the stacks seem approximately the same?
+
+
+
+## Step 5: Formulate conclusions
+
+In this sample of participants, we found that each additional copy of cytosine was associated with an additional decline in the fatty acid ratio. Because we could translate the number of copies to an ordinal, numeric variable and that variable had a linear relationship with the response variable (residual plots look relatively random), it makes sense to treat the number of copies as a quantitative variable and use a linear model to predict the fatty acid ratio. We found that in simplifying from the separate-means model to the linear model we don’t lose much information. Both the $R^2$ and SE residual for the linear regression model are very similar to those of the separate-means model (around 36% of the variation in fatty acid ratios can be explained by cytosine). Furthermore, by simplifying to the regression model we gain interpretability: each additional copy of cytosine predicts a decrease of 2.64 in the fatty acid ratio.
+
+
+
+## Step 6: Look back and ahead. 
+
+Due to the relatively large $R^2$ value and somewhat large sample size, you probably predict that this association is statistically significant. This is something you will explore further in Section 4.2. However, do be cautious not to draw any cause and effect conclusions from this observational study.
+
+
