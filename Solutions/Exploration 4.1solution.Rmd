@@ -1,0 +1,401 @@
+---
+title: "Math 248: Exploration 4.1"
+author: "Your name here"
+header-includes:
+  - \usepackage{float}
+  - \floatplacement{figure}{H}
+output:
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo=TRUE,message=FALSE,warning=FALSE, fig.align = 'center', out.width="80%", comment="" )
+library(tidyverse)
+library(ggplot2)
+library(dplyr)
+library(mosaic)
+library(ImSIwithR)
+```
+
+# Exploration 4.1: Fatty Acids and DNA
+
+## Background Information
+
+More and more evidence exists that fatty acids circulating in the blood are associated with cardiovascular and brain health. Some fatty acids are obtained through diet whereas others are synthesized by the body from dietary fatty acids and other sources. Understanding dietary, genetic, and other factors that explain variation in fatty acid levels is a current research question of interest. One gene that has recently been identified in fatty acid metabolism is FADS1 (fatty acid desaturase 1, on chromosome 11). Some people have a genetic variant in the FADS1 gene, such that at one place in the gene the person has the base cytosine (C) instead of thymine (T). This “T to C” genetic variant may be inherited from either the mother or the father, both parents, or not at all. Thus, people can have either 0 (neither mother nor father), 1 (from the mother or father), or 2 copies (from both mother and father) of cytosine (C) in the FADS1 gene.
+
+## STEP 1: Ask a Research Question
+
+In a study by Kalsbeek et al., 2018, “A genome-wide association study of red-blood cell fatty acids and ratios incorporating dietary covariates: Framingham Heart Study Offspring Cohort,” researchers wanted, to know whether the cytosine genetic variation in FADS1 is associated with the metabolism of fatty acids in the blood as measured by the arachidonic acid to di-homo-gamma-linolenic fatty acid ratio. Lower values of this ratio indicate higher amounts of fatty acids in the blood and thus, more efficient use of dietary fatty acids.
+
+## Step 2: Design a study and collect data
+
+The Framingham Heart Study is a well-known study of cardiovascular health. In a sample of 100 individuals from the Framingham Heart Study, the researchers determined the cytosine genetic variation in the FADS1 gene, as well as the arachidonic acid to di-homo-gamma-linolenic (AA%:dgLA%) fatty acid ratio in the blood.
+
+## STEP 3: Explore the data.
+
+Let's load the data.
+
+```{r, load the data}
+library(ImSIwithR)
+data(fattyAcid)
+fattyAcid<-fattyAcid %>%
+  mutate(across(where(is.character), as.factor)) # transforming character variables into factor variables
+head(fattyAcid,2) # prints the first two rows of the data
+```
+
+> 1.  Describe the shape, center, and variability of the distribution of the fatty acid ratio in the blood of these 100 study participants.
+
+The distribution of fatty acid ratios is approximately symmetric with a mean of 10.91% and a standard deviation of 2.72%.
+
+```{r, histogram of fatty acid ratio variable}
+ggplot(fattyAcid, aes(x = FattyAcidRatio)) +
+  geom_histogram(binwidth = 0.5, fill = "lightblue", color = "black")+
+  labs(title = "Histogram of Fatty Acide Ratio",
+       x = "Fatty Acid Ratio",
+       y = "Count") +
+  theme_minimal()
+```
+
+!!! Remove eval=FALSE after inserting the path and successfully running the code AND remove this note.
+
+```{r, numerical summary of the length variable, eval=FALSE}
+summarize(fattyAcid,  
+          mean_FattyAcidRatio = mean(FattyAcidRatio), 
+          sd_FattyAcidRatio = sd(FattyAcidRatio, na.rm = TRUE)
+          )
+```
+
+Now, let's add the categorical explanatory variable `Cytosine` and obtain the summary statistics for the *one-variable separate-means model* (one-way ANOVA + CRD) that predicts `FattyAcidRatio` using `Cytosine`.
+
+> 2.  Does there appear to be an association between the fatty acid ratio and the genetic variant? Describe the nature of this association. Does it appear to be better to inherit the cytosine variant from both parents, either (one) parent, or neither parent to yield lower (better) ratios? Are there the same number of patients for each `Cytosine` level?
+
+There appears to be an association between fatty acid ratio and the genetic variant. Increasing levels of genetic variants lowers the fatty acid ratios in individuals on average. Inheriting from both parents gives the lowest mean fatty acid ratio of 7.37%. If cytosine level was not related to fatty acid ratio, each of the graphs would have the same mean. If cytosine explained all of the variation, the standard deviation for each of the distributions would be 0.
+
+```{r, box-plots of fattyacidratio for each cytosine level}
+ggplot(fattyAcid, 
+       aes(x = FattyAcidRatio, 
+           y = Cytosine,
+           fill = Cytosine)) +
+  geom_boxplot(color = "black") + # 'color' sets the outline of the boxes
+  labs(
+    title = "Boxplots of Fatty Acid Ratio by Cytosine level",
+    x = "Cytosine levels",
+    y = "Fatty Acid Ratio"
+  ) +
+  theme_minimal() +
+  theme(legend.position = "none") # Hide legend if fill is mapped to x-axis already
+
+```
+
+> 3.  Let's conduct a one-variable analysis evaluating the association between `FattyAcidRatio` and `Cytosine`.
+
+> a.  To do this, let's first create a Skeleton ANOVA table. Fill out the `?` in the following skeleton ANOVA table.
+
+| Treatment | df        | Design      | df       | Combined  | df       |
+|-----------|-----------|-------------|----------|-----------|----------|
+| cytosine  | 3-1=**2** |             |          | cytosine  | 2        |
+|           |           | participant | 100-1=99 | residual  | 97        |
+| **Total** | 100-1=99  | **Total**   | 100-1=99 | **Total** | 100-1=99 |
+
+> b.  Write out the theoretical model equation for this model.
+
+Using the comined ANOVA column terms the theoretical model is as follows:
+
+`Fatty Acid Ratio = Cytosine + Error`
+
+*Validity conditions:*
+
+-   Equal SD/Variances
+
+-   Independent observations
+
+-   Normally distributed response variable
+
+> c.  Is the association between the fatty acid ratio and the genetic variant statistically significant (cite both the p-value and the F-statistic)?
+
+There is strong evidence of a significant association between fatty acid ratio and genetic variant as evidenced by an F-statistic of 27.76 and a very small p-value.
+
+```{r, one-way ANOVA Type 1 SS}
+means_model <- aov(FattyAcidRatio ~ Cytosine, data = fattyAcid)
+anova(means_model)
+```
+
+> d.  What does this model predict for the fatty acid ratio when cytosine is inherited from neither parent, 1 parent, or both parents? (Hint: report the averages for each group)
+
+
+```{r, means and standard deviations of the cystine groups}
+summary_data <- fattyAcid %>%
+  group_by(Cytosine) %>%
+  summarise(
+    mean_FattyAcidRatio = mean(FattyAcidRatio), #calculate the mean
+    sd_FattyAcidRatio = sd(FattyAcidRatio, na.rm = TRUE), #calculate the standard deviation
+    n = n(),                                  # Count the number of observations
+   .groups = 'drop'                           # Drop the grouping structure
+  )
+
+# View the new summary data frame
+print(summary_data)
+```
+
+$$
+predicted \ Fatty \ Acid \ Ratio = 
+\begin{cases} 
+7.37 & \text{if both} \\
+10.01 & \text{if either} \\
+12.65 & \text{if neither}
+\end{cases}
+$$
+
+> e.  What do you notice about the difference in the predicted ratio as you move from 0 to 1 to 2 parents (neither vs either vs both)? How big is the change from 0 to 1 (neither vs either) as compared to the change from 1 to 2 (either vs both) ?
+
+The difference in predicted ratio is a decrease of 2.64 percentage points for the difference from 0 to 1 copy and from 1 to 2 copies. The changes are identical.
+
+```{r, difference in predicted response for one unit change in the explanatory variable}
+either_vs_both<-(10.01-7.37)
+neither_vs_either<-(12.65-10.01)
+print(neither_vs_either)
+print(either_vs_both)
+```
+
+## Linear Regression Model
+
+Your observation that the change from 0 to 1 is very similar to the change from 1 to 2 parents suggests that another way we can model this relationship is with a line. To explore the possible linear association between these two variables, we will first examine a *scatterplot of two quantitative variables*. So rather than phrasing our observations in terms of inheritance from neither, one, or both parents we will simply refer to 0, 1, or 2 `Copies`.
+
+Let's use R to create a scatterplot of the relationship between `FattyAcidRatio` and `Copies`.
+
+```{r, creating the scatterplot}
+ggplot(fattyAcid, aes(x = Copies, y = FattyAcidRatio)) +
+  geom_point(alpha = 0.6, color = "steelblue", size = 2) +
+  labs(
+    title = "Fatty Acid Ratio vs. Copies",
+    x = "Copies",
+    y = "Fatty Acid Ratio"
+  ) +
+  theme_minimal()
+```
+
+> 4.  Do you see a general trend between the fatty acid ratio and the number of copies? Increasing or decreasing? Would it be reasonable to call it a linear trend?
+
+It appears there is generally a decreasing trend between fatty acid ratio and the number of copies. It would be reasonable to call it a linear trend.
+
+*You may recall from Math 247 course that one way to summarize a linear trend is to fit a least squares regression line that minimizes the sum of the squared residuals from the response values to the values predicted by the line.*
+
+### Theoretical model for Simple Linear Regression
+
+The theoretical model equation for a simple linear regression can be written as:
+
+$$y = \beta_0 + \beta_1 x +e$$ where errors are independent and identically distributed as $e \sim N(0, \sigma)$
+
+$\beta_0$ is the population y-intercept $\beta_1$ is the population slope, $e$ is the population error
+
+### Estimated/Fitted Regression Line
+
+Once we use data to obtain the estimated equation of the regression line, we add $\hat{}$ notation on top of the response variable $y$ and model parameters: $\beta_0$ and $\beta_1$.
+
+$$\hat{y} = \hat{\beta_0} + \hat{\beta_1} x$$. Notice that there is no more error in the predicted equation.
+
+$\hat{y}$ is the predicted value of the response for a particular value of x. $b_0$ is the estimated y-intercept of the line $b_1$ is the estimated slope of the line
+
+*Simple linear regression* is the statistical model that allows us to quantify the linear relationship between two quantitative variables with a regression line.
+
+Let's use R to obtain estimated slope and intercept of the regression line that predicts `FattyAcidRatio` using `Copies`.
+
+```{r, simple linear regression Type 1 sums of squares}
+slr_model <- lm(FattyAcidRatio ~ Copies, data = fattyAcid)# notice the use of lm function
+slr_model
+```
+
+> 5.  Write down the fitted equation of the regression line for `fattyAcid` data. (Replace intercept and slope in the equation below with appropriate estimates from the R output)
+
+$\widehat{FattyAcidRatio} = \text{12.65} - \text{2.64}\  Copies$
+
+### Key Ideas:
+
+-   The *y-intercept* is the predicted response when the value of the explanatory variable is set to 0, but this is not always a useful or meaningful prediction; it is often *extrapolation*.
+
+-   The *slope* is the change in predicted response when the value of the explanatory variable increases by one unit. A key feature of the linear model is that the interpretation of the slope doesn’t depend on what two x values you are talking about, as long as they are *one unit apart*.
+
+> 6.  In the context of this study, write an interpretation for the slope and intercept.
+
+> 7.  Use the regression model to predict the `FattyAcidRatio` when someone has 0, 1, and 2 `Copies` of cytosine. What is the difference in the predicted values as you move from 0 to 1 and 1 to 2 parents?
+
+$0  \ \text{parents}: 12.65%$
+
+$1  \ \text{parent}: 10.01%$
+
+$2  \ \text{parents}: 7.37%$
+
+
+```{r, prediction using simple linear regression}
+# 1. Define the values of Copies you want to predict for
+new_data <- data.frame(Copies = c(0, 1, 2))
+
+# 2. Use the predict function
+# This calculates: y_hat = beta_0 + beta_1 * Copies
+predictions <- predict(slr_model, newdata = new_data)
+
+# 3. Combine them into a readable table
+results <- cbind(new_data, Predicted_FattyAcidRatio = predictions)
+print(results)
+```
+
+### Key Idea:
+
+When the *explanatory variable is quantitative*, the regression model makes predictions based on the assumption of a *linear change in the predicted response* that is associated with a unit change of the explanatory variable.
+
+## Evaluating the Regression Model
+
+> 8.  How do the predictions made with the regression model compare to what you found earlier when we used the separate-means model (one-way ANOVA)? What are the implications of this?
+
+The predictions made by the regression model are the same as the separate means model. Because they give the same predictions, this gives evidence to further investigate using the regression model.
+
+> 9.  Determine the residual for the first person in the dataset. Remember: the residual is the observed response minus the predicted response. Interpret this residual in the context of this study: Does the model overestimate or underestimate the predicted response?
+
+Residual = Observed - Predicted= $10.759-0.01=0.75$ percentage points The linear model predicts a fatty acid ratio that is 0.749 percentage points below the observed fatty acid ratio for this individual. In this case, the model underestimated the predicted response.
+
+```{r, residual for the first person}
+# 1. Extract all residuals from your model
+model_residuals <- residuals(slr_model)
+
+# 2. Print the residual for the first observation
+first_residual <- model_residuals[1]
+print(first_residual)
+```
+
+_Let's look at the ANOVA table for a simple linear regression model and compare it to the ANOVA table for the separate means model. We notice that degrees of freedom for treatment has changed from 2 in a separate-means model to 1 in a simple linear regression model._
+
+_This is happening because we are specifically interested in estimating linear effect of copies. A possible quadratic effect that we could estimate is not of interest here. this is because the scatterplot did not suggest any curvature in the relationship between the `Fatty Acid Ratio` and `Copies`. Note: we have sufficient degrees of freedom to estimate linear and quadratic effects of copies in this case, because there are  3 levels of copies. This means that there are 2 degrees of freedom to estimate Copies effects: linear effect of copies + quadratic effect of copies)_
+
+
+```{r, comparison of ANOVA tables for two models one-way ANOVA vs Simple Linear Regression}
+cat("\n------------------------------------\n")
+cat("ANOVA table for regression model\n")
+cat("\n------------------------------------\n")
+anova(slr_model) # simple linear regression ANOVA table
+cat("\n------------------------------------\n")
+cat("ANOVA table for a separate means model\n")
+cat("\n------------------------------------\n")
+anova(means_model) # separate means model ANOVA table
+```
+
+\newpage
+
+## Skeleton ANOVA for a simple linear regression model
+
+| Treatment | df | Design | df | Combined | df |
+|------------|------------|------------|------------|------------|------------|
+| Linear effect of Copies | 1 |  |  | Linear effect of Copies | 1 |
+|  |  | participant | 100-1=99 | residual | 98 |
+| **Total** | 100-1=99 | **Total** | 100-1=99 | **Total** | 100-1=99 |
+
+
+
+> 10. Compare the `SSError` (Residual Sums of Squares) from the simple linear regression ANOVA table to the `SSError` (Residual Sums of Squares) of the separate means ANOVA table. How close are they? 
+
+The `SSError` for the two models are identical values of 267.24; 
+
+> 11. How do the $R^2$ values for the two models compare?
+
+The $R^2$ for the two models are identical values of 0.364.
+
+```{r, comparing proportions of explained variation from two models, eval=FALSE}
+summary.lm(means_model)$r.squared # r-squared for separate means model
+summary(slr_model)$r.squared # r-squared for a simple linear regression model
+```
+
+> 12. How does the residual Standard Error (RSE) for the simple linear regression model compare to the separate means model? Note: Lower RSE means your model's predictions are closer to the actual data points.
+
+The residual standard error for the linear model is a little bit smaller. This is because the model has 1 fewer DF, so the `SSError` has one additional df. Thus, $MSError = SSError/DF error$ is a little bit smaller, resulting in a smaller standard error of residuals.
+
+```{r, comparing residual standard errors of the two models}
+# Extract RSE for the Simple Linear Regression
+slr_summary <- summary(slr_model)
+slr_rse <- slr_summary$sigma
+
+print(paste("SLR Residual Standard Error:", slr_rse))
+
+# Extract RSE for the ANOVA model
+means_summary <- summary.lm(means_model)
+means_rse <- means_summary$sigma
+cat("\n-------------------------------------------\n")
+print(paste("Means Model Residual Standard Error:", means_rse))
+```
+
+
+> 13. What are the implications of having similar residual Standard Error and explained variation in both models?
+
+Either model can be used to predict fatty acid ratios.
+
+## Which Model Is Better?
+
+The separate-means model using the treatment groups will always predict the observed group means exactly. Because of this, in terms of `SSError`, linear regression can never do better than the separate-means model. The linear regression model is a simplification of the separate-means model. But when the treatment group means have a linear relationship with the explanatory variable, the predictions from the linear regression model will be very close to the observed group means. In this case, the two models are practically equivalent, with almost identical residual SE and $R^2$ values.
+
+### Key Idea:
+
+When two models have similar `SSError` values, choose the model that is simpler (e.g., uses fewer degrees of freedom). You can also favor the model that makes more sense in context (e.g., agrees with past research studies). There is not always “one best” model but you may want to explore a few more deeply.
+
+The linear regression model has an advantage in terms of interpretation. With the regression model we have a built-in statistic, the slope, which helps us describe how the fatty acid ratio is related to the number of cytosine copies. Because the slope is negative, we can conclude there is a decreasing relationship between the fatty acid ratio and the number of copies of cytosine. As the number of copies of cytosine goes up, the predicted fatty acid ratio goes down (a good thing). In addition, using the value of the slope, we can quantify the rate of change in the predicted fatty acid ratio. We predict a decrease of 2.64 in the predicted fatty acid ratio for each additional copy of the genetic variant.
+
+## Assessment of Linearity:
+
+To complete our assessment of the appropriateness of the regression model for these data, we should examine plots of the residuals. The residuals represent the variation left over in the response variable after adjusting for the linear trend. If we see a pattern in those residuals vs. our explanatory variable, then this tells us that the linear model is not appropriate (or at least that there could be a better model out there).
+
+### Key Idea:
+
+Using the linear regression model requires that the association between the explanatory variable and the response variable is linear. This means that after fitting the regression line (removing the linear trend in the data), the residuals should exhibit no patterns when plotted against the explanatory variable or the predicted (or fitted) values.
+
+As you have seen in Chapter 10 explorations of Math 247, the validity conditions of the simple linear regression model can be expressed as LINE conditions and are described in detail below.
+
+## Checking validity conditions
+
+If we were to subtract the mean from each observation and pool these values together, then we should have one big distribution with mean 0, standard deviation equal to $\sigma$, and a Normal shape. However we don’t know the population regression coefficients, but we have their least squares estimates. If we subtract the fitted values from each response value, these differences are simply the _residuals_ from the least squares regression. So **to check the technical conditions we will use residual plots**.
+
+* *L*:  The _Linearity_ condition is considered met if a plot of the residuals vs. the explanatory variable (fitted values in R) does not show any patterns such as curvature. _Linearity_ condition is assessed with the scatterplot, i.e. "does linear relationship between x and y seem reasonable"?
+
+* *I*: Another condition is that the observations are _Independent_. We will usually appeal to the data being collected randomly or randomization being used. The main thing is to make sure there is not something like time dependence in the data. _Independence_ condition is assessed based on the information about how the data was collected. If we have a random sample the independence condition is considered to be satisfied.
+
+* *N*: The _Normality_ condition is considered met if a histogram and Normal Probability Plot of the residuals look normal. _Normality_ of the residuals condition is assessed with the help of a Normal QQ plot or a histogram of residuals. A normal quantile plot (QQ plot) is a scatterplot of the ordered residuals against values we'd expect to see from a "perfect" normal sample of the same size. These can check for normally distributed errors. _Ideal pattern_: most dots are close to the dotted line, with perhaps a few deviations. 
+
+* *E*: The _Equal variance_ condition is considered met if a plot of the residuals vs. the explanatory variable shows the similarly variability in residuals across the values of x. _Equal variance_ condition is considered met if a plot of the residuals vs. the explanatory variable shows the similarly variability in residuals across the values of x. In other words, is the distribution of points on a scatterplot above the regression line the same as below the line?
+_Equal variance_ of the residuals (homogeneity condition) can be checked with the help of the scatterplot of the residuals against the fitted line produced in R. Positive residuals represent points above the line, negative residuals represent points below the line.  _Ideal pattern_: random variation above and below zero (grey dotted line), with no pattern. What we don't want to see is a "funnel" pattern in which it is clear that the variances are not constant.
+
+
+> 14. Assess the LINE conditions of the simple linear regression predicting Fatty Acid Ratio using Copies. Do you think that the validity conditions of this model are met in this case?
+
+The stacks look symmetrically distributed about the line at a residual of 0 meeting the linearity condition. However, the width of the stacks does not appear to be the same. There is much less variation for 2 copies than 1 copy or 0 copies. This means that we do not have equal standard deviations of residuals for all three groups.
+
+```{r, diagnostic residual plots}
+# Prepare the model data
+model_diag <- fortify(slr_model)
+
+# A. Residuals vs Fitted Plot
+# Used to check for Linearity and Homoscedasticity
+ggplot(model_diag, aes(x = .fitted, y = .resid)) +
+  geom_point(alpha = 0.6) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
+  geom_smooth(se = FALSE, color = "steelblue") + # Adds a helper line to see trends
+  labs(title = "Residuals vs Fitted",
+       x = "Fitted Values (Predicted)",
+       y = "Residuals") +
+  theme_minimal()
+
+# B. Normal Q-Q Plot
+# Used to check if residuals are normally distributed
+ggplot(model_diag, aes(sample = .resid)) +
+  stat_qq() +
+  stat_qq_line(color = "red") +
+  labs(title = "Normal Q-Q Plot",
+       x = "Theoretical Quantiles",
+       y = "Sample Quantiles") +
+  theme_minimal()
+```
+
+
+
+## Step 5: Formulate conclusions
+
+In this sample of participants, we found that each additional copy of cytosine was associated with an additional decline in the fatty acid ratio. Because we could translate the number of copies to an ordinal, numeric variable and that variable had a linear relationship with the response variable (residual plots look relatively random), it makes sense to treat the number of copies as a quantitative variable and use a linear model to predict the fatty acid ratio. We found that in simplifying from the separate-means model to the linear model we don’t lose much information. Both the $R^2$ and SE residual for the linear regression model are very similar to those of the separate-means model (around 36% of the variation in fatty acid ratios can be explained by cytosine). Furthermore, by simplifying to the regression model we gain interpretability: each additional copy of cytosine predicts a decrease of 2.64 in the fatty acid ratio.
+
+## Step 6: Look back and ahead.
+
+Due to the relatively large $R^2$ value and somewhat large sample size, you probably predict that this association is statistically significant. This is something you will explore further in Section 4.2. However, do be cautious not to draw any cause and effect conclusions from this observational study.
