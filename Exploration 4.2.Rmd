@@ -1,0 +1,227 @@
+---
+title: "Math 248: Exploration 4.2"
+author: "Your name here"
+header-includes:
+  - \usepackage{float}
+  - \floatplacement{figure}{H}
+output:
+  pdf_document: default
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo=TRUE,message=FALSE,warning=FALSE, fig.align = 'center', out.width="80%" )
+library(tidyverse)
+library(ggplot2)
+library(dplyr)
+library(mosaic)
+library(ImSIwithR)
+```
+
+Jacob comment:
+
+Question2 revisit
+
+I think the use of multiple statistics isn't great and somewhat confusing. It should focus on one specifically and go through the simulation process completely with that one. 
+
+
+question 17 uses applet directly, and the comparison of theory based to simulation based approach is valuable but I think could be introduced in a different exploration, or sould be the main focus of this one. 
+
+
+If using the theory based approach, question 18 and 19 could be combined. (How does it change based on changes in data...)
+
+Do not need question 20, it is just a calculation 
+
+Incomplete definition of t statistic, (WHY does it follow t-distribution) - between question 20 and 21
+
+
+**Okay. I think I understand more of what is attempted for this exploration- **
+
+  It should focus primarily on the difference between theory based and simulation based and go through the validity conditions for a t test, with a proper definition of such a statistic and distribution. 
+
+
+_the first 7 questions I do not think are important,_
+
+As well as questions - 24-26, 20, 8-13 can be combined, and 17 -19 could be combined
+
+
+
+
+
+
+# Exploration 4.2: Fatty Acid and DNA continued. 
+
+Recall the study on the genetic variant, cytosine instead of thymine in the FADS1 gene, and its association with fatty acid metabolism from Exploration 4.1. The fatty acid ratio and the number of copies of the cytosine variant in the FADS1 gene were determined for a sample of 100 participants in the Framingham Heart Study. A lower fatty acid ratio is better, as lower values indicate greater synthesis of the fatty acids in the blood. The question of interest in this study is whether the cytosine genetic variation in FADS1 is associated with the arachidonic acid to di-homo-gamma-linolenic fatty acid ratio in the blood. You found (Figure 4.2.8) that the fatty acid ratio has a decreasing, linear association with the number of copies (0, 1, or 2) of the cytosine variant inherited from parents.
+
+
+
+The prediction equation, found through least squares regression, was:
+
+$$predicted \ fatty\ acid\ ratio = 12.7 -2.64(Number \ of \ copies)$$
+And explained about 36% of the variation in fatty acid ratios.
+
+
+>1. Make a prediction: Do you think that this association will be statistically significant? Why or why not?
+
+This is a reasonably large $R^2$ value for an observational study and a relatively large sample size, but we still need to officially assess the statistical significance of this linear association.
+
+
+## STEP 4: Draw inferences beyond the data
+
+Let’s now think about how to find a p-value to assess the statistical significance of not just the “association,” but more specifically the “linear association” between fatty acid ratio and the number of copies of cytosine.
+
+
+>2. Write out the null and alternative hypotheses we are interested in testing; make sure you are using the phrase “linear association.”
+
+
+## Simulation-Based Inference Let’s see how to apply the 3S Strategy to test for a linear association.
+
+
+>3. Outline the simulation method you could use to determine whether the linear association is statistically significant. In particular, what statistic could you use to measure the strength of the linear association in the observed data? How would you shuffle the data?
+
+
+### Choice of Statistic
+
+>4. One choice of statistic for summarizing the linear association is $R^2$. Why do you think it’s reasonable to use $R^2$ to measure the linear association between fatty acid ratio and the number of copies of cytosine? What types of $R^2$ values will you consider evidence against the null hypothesis?
+
+
+### Simulation
+
+
+>5. How does the scatterplot of the shuffled data compare to the scatterplot of the original data? Does this make sense? What types of values are you getting for the shuffled $R^2$? Does this make sense?
+
+
+
+### Strength of Evidence
+
+>6. Where is the observed $R^2$ value located in the null distribution of shuffled $R^2$ values?
+
+
+>7. Determine the approximate p-value for the observed $R^2$. Based on this p-value should we reject or fail to reject $H_0$?
+
+
+## Alternative Statistics: 
+
+>8. Now let’s repeat the simulation process, but this time using the slope as the statistic. What value of the population slope, $\beta_1$, is assumed by the null hypothesis?
+
+
+>9. Rewrite the hypotheses in terms of the population slope, $\beta_1$.
+
+
+>10. What is typically the value of the shuffled slope when the fatty acid values get shuffled to different values of the number of copies of cytosine? How do the shuffled slopes compare to the observed slope?
+
+
+>11. Now get up to at least 1000 shuffles. Based on the scatterplot of simulated lines (shown in grey around the blue horizontal line), does it seem plausible that the observed regression slope (shown in red) happened by chance alone when there is no real association between the two variables? Explain how you are deciding.
+
+
+>12. Based on the histogram of simulated slopes, does it seem plausible that the observed regression slope happened by chance along when there is no real association between the two variables? Explain how you are deciding.
+
+
+>13. Approximate the two-sided p-value and include a screen capture or sketch of the null distribution showing the p-value.
+
+
+# Standardized Statistics: 
+
+It is also possible to construct a standardized statistic
+
+$$standardized\ slope = \frac{observed\ slope -mean \ of \ shuffled \ slopes}{SD \ of \ shuffled \ slopes}$$
+
+>14. What are some potential advantages to using a standardized statistic in this case?
+
+
+>15. In your histogram of 1000 or more shuffled slopes, what are the mean and standard deviation of the shuffled slopes in the null distribution? Why do you think the mean is close to zero?
+
+
+>16. Use a mean of zero and the standard deviation of the null distribution to standardize the observed slope. Write a sentence interpreting the standardized slope.
+
+
+## Theory-Based Approach:  
+
+We can also estimate the standard deviation of the null distribution for the slopes using a mathematical formula (See Definition box). In this formula, SD(X) is the standard deviation of the x-values. For this study, that refers to the standard deviation of the number of copies of cytosine.
+
+### Definition: 
+
+The standard error of the slope is calculated as follows:
+
+$$Standard\ Error \ of \ slope \ (b_1) = \frac{SE \ of \ residuals}{SD(X)\sqrt{n-1}}$$
+
+where X represents the explanatory variable.
+
+
+>17. Now, use the values displayed in the applet to calculate the theory-based SE of the slope, SE(b1). How does it compare to the standard deviation of the null distribution for the slopes from the simulation you performed earlier?
+
+
+>18. Based on the formula, what would happen to the theory-based SE of the slopes if the variation in the explanatory variable increased but everything else stayed the same? That is, if the values of the explanatory variable were more spread out? Explain visually why this makes sense.
+
+
+>19. What would happen to the theory-based standard error of the slopes if the sample size was smaller? Larger?
+
+
+>20. Use the theory-based standard error of the slope you found in Question #17 to standardize the observed slope.
+
+
+This standardized statistic is referred to as the *t-statistic*, because it tends to follow a t-distribution.
+
+>21. Does the t-distribution appear to reasonably approximate the null distribution of the theory-based t-statistic?
+
+
+>22. Are the simulated p-value and theory-based p-value similar?
+
+
+
+### Key Idea: 
+
+When the validity conditions are met, the null distribution of the standardized slope
+$( t = b_1 /SE( b_1))$ can be approximated by a t-distribution with $n-2$ degrees of freedom.
+
+
+## Validity Conditions: 
+
+The validity conditions for the theory-based t-test for the slope are considered met if
+
+• the residuals vs. predicted values graph does not show any strong evidence of curvature or other patterns (Linearity)
+• the responses can be considered independent of each other (Independence)
+• the histogram of the residuals is approximately symmetric with no large outliers (Normality)
+• the residuals vs. predicted values graph shows a constant width (Equal variance).
+
+
+
+>23. Do you consider the independence, normality, and equal standard deviation assumptions met for these data? Cite explicit evidence which supports your conclusions.
+
+
+In Section 4.1, you saw how the various sums of squares (SSTotal, SSModel, and SSError) are calculated in the context of the linear model. Recall that the mean square values are computed by dividing the sum of squares values by the associated degrees of freedom and that the F-statistic = MSModel/MSError. We now interpret this F-statistic as the ratio of the variability explained by the regression line to the unexplained variation about the regression line (rather than differences in groups means to within group variation as before). The DF total is still the number of observations minus one (for estimating the overall mean). The DF for model with one quantitative explanatory variable is 1, corresponding to the slope.
+
+
+>24. Report the value of the F-statistic and the corresponding p-value. Do they also provide strong evidence of a genuine linear association for this process? Explain.
+
+
+### Key Idea:
+
+For theory-based inference in the context of a linear regression model, the F-statistic (and p-value) from the ANOVA table are equivalent to the t-statistic (and p-value) pertaining to the slope in the Regression table. In particular, $F=t^2$
+
+
+>25. Confirm that this interval is roughly equal to b1 ± 2 SE(b1).
+
+
+>26. Write a sentence interpreting this interval in the context of this study. (You should be interpreting both the slope in context and defining the population/larger process to which you are generalizing.)
+
+
+### Definition:
+
+A t-confidence interval for the population slope, $\beta_1$, is given by:
+
+$$b_1 \pm t^*\times(SE\ of \ b_1)$$
+
+where $b_1$ represents the sample slope, and the multiplier t * is the critical value corresponding to a t distribution with degrees of freedom being the same as the error DF. For a 95% confidence interval, t* will be approximately 2.
+
+
+## Step 5: Formulate Conclusions
+
+> 27. Write a paragraph summarizing the results of your analysis. Be sure to address the following questions.
+• Is there a statistically significant linear association between the fatty acid ratio and the number of copies of the genetic variant? What is your evidence?
+• What is the nature of that association? (Use the confidence interval for the slope.)
+• To what population would you generalize these conclusions?
+• Is a cause-and-effect conclusion valid?
+
+
+
