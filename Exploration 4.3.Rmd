@@ -1,0 +1,263 @@
+---
+title: "Math 248: Exploration 4.3"
+author: "Your name here"
+header-includes:
+  - \usepackage{float}
+  - \floatplacement{figure}{H}
+output:
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo=TRUE,message=FALSE,warning=FALSE, fig.align = 'center', out.width="80%" , comment="" )
+library(tidyverse)
+library(ggplot2)
+library(dplyr)
+library(mosaic)
+library(ImSIwithR)
+```
+
+# Exploration 4.3 Predicting Height
+
+Suppose you find a footprint at the scene of a crime. Would this be useful information to you in predicting the suspect’s height? Would you predict height differently based on whether you knew that the person leaving the print was a male or a female? The answers to these questions depend on whether or not there is an association between foot length and height and whether that association differs for male and females. So, let’s look at some data.
+
+## STEP 1: Ask a research question.
+
+> 1.  What do you predict about the association between foot length and height? Do you think this relationship will be similar for males and females?
+
+## STEP 2: Design a study and collect data.
+
+To measure height, measure the distance (in inches) from the floor to the highest point on the head, when the subject is facing directly forward. Shoes should be off, feet together, and arms by the side (<http://www.topendsports.com/testing/tests/height.htm>)
+
+To measure foot length, measure the distance (in centimeters) between the pternion (the rear-most point of the heal) and the tip of the longest toe, parallel to the foot axis. Shoes should be off and weight distributed equally on both feet.
+
+Let's collect these measurements for each student in our class, along with each student’s sex.
+
+*Enter your measurements* into the following [Google sheet:](https://docs.google.com/spreadsheets/d/1qy-Sudaa55ndycVXoWQZutainJ0nD8jnbPrrMYdZhSk/edit?usp=sharing). Think about what units are appropriate for each variable: I suggest using cm for `Foorsize` and `Handspan` and inches for `Height`.
+
+*Once the dataset is complete, let's load the data.*
+
+!!! Remove `eval=FALSE` after successfully running the code; ALSO *remove this note*.
+
+```{r,  read the Google sheet with the data, eval=FALSE}
+library(googlesheets4) #package of functions in which `read_sheet` function lives
+gs4_deauth()#check authorization
+
+FootHeight <- #creating a name for the dataset in R
+read_sheet("https://docs.google.com/spreadsheets/d/1qy-Sudaa55ndycVXoWQZutainJ0nD8jnbPrrMYdZhSk/edit?usp=sharing")
+
+FootHeight<- FootHeight %>%
+  mutate(across(where(is.character), as.factor)) # transforming character variables into factor variables
+
+head(FootHeight) #"prints" the first 6 rows of the data
+```
+
+## STEP 3: Explore the data.
+
+> 2.  Create the histogram of the `Height` variable. Describe the shape, center, and variation in these heights. Are there any outliers or other unusual characteristics?
+
+!!! Remove `eval=FALSE` after successfully running the code; ALSO *remove this note*.
+
+```{r, histogram of height, eval=FALSE}
+ggplot(FootHeight, aes(Height)) + 
+  geom_histogram(binwidth = 2, color = "black", fill = "lightblue") + 
+  labs(title = "Distribution of Height in Math 248 class",
+       x = "Height",
+       y = "Count") +
+  theme_minimal()
+```
+
+!!! Remove `eval=FALSE` after successfully running the code; ALSO *remove this note*.
+
+```{r, mean and standard deviation of height,eval=FALSE}
+m_height <- mean(FootHeight$Height, na.rm = TRUE)
+s_height <- sd(FootHeight$Height, na.rm = TRUE)
+print(m_height)
+print(s_height)
+```
+
+> 3.  Let’s see whether `Footsize` explains variation in `Height`. Describe the association between height and foot size. Is this the association what you expected? Are there any unusual observations? If so, what do you suggest?
+
+!!! Remove `eval=FALSE` after successfully running the code; ALSO *remove this note*.
+
+```{r, scatterplot of Height vs Footsize with added regression line, eval=FALSE}
+ggplot(data = FootHeight, aes(x = Footsize, y = Height)) +
+  geom_point()+
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(
+    title = "Scatterplot of Height vs. Foot Size",
+    x = "Size of the foot in cm",
+    y = "Height in inches"
+  ) +
+  theme_minimal()
+```
+
+> 4.  What percentage of variation in `Height` is explained by `Footsize`? Also, report and interpret the residual SE (RSE) value. What does the RSE residuals value tell you about the expected accuracy of your prediction of the person’s height based on the foot size?
+
+!!! Remove `eval=FALSE` after successfully running the code; ALSO *remove this note*.
+
+```{r, proportion of explained variation, eval=FALSE}
+slr_model<-lm(Height~Footsize,data = FootHeight)
+summary(slr_model)$r.squared # r-squared for a simple linear regression model
+```
+
+!!! Remove `eval=FALSE` after successfully running the code; ALSO *remove this note*.
+
+```{r, residual standard error calculation, eval=FALSE}
+slr_summary <- summary(slr_model)
+slr_rse <- slr_summary$sigma
+
+print(paste("SLR Residual Standard Error:", slr_rse))
+```
+
+### Can We Improve the Model?
+
+We expect that whether a person is male or female may also explain variation in height. But, if we already know the person’s foot size, is knowing the person’s sex also helpful in predicting height?
+
+> 5.  Make a prediction: If we have our statistical model predict the height of a person by both the person’s foot size and sex, do you think the explained variation will improve over a model predicting height by foot size alone? Explain.
+
+*First, let's verify that sex is related to height.*
+
+!!! Remove `eval=FALSE` after successfully running the code; ALSO *remove this note*.
+
+```{r, side-by-side boxplots, eval=FALSE}
+ggplot(FootHeight, aes(x=Sex , y=Height, fill = Sex))+
+  geom_boxplot()+
+  geom_jitter(width = 0.1) +
+  labs(title="Height Distribution of students in Math 248 by Sex")+
+  theme_minimal()
+```
+
+!!! Remove `eval=FALSE` after successfully running the code; ALSO *remove this note*.
+
+```{r, means and standard deviations, eval=FALSE}
+summary_data <- FootHeight %>%
+  group_by(Sex) %>%
+  summarise(
+    mean_height = mean(Height, na.rm = TRUE), # Calculate mean
+    sd_height = sd(Height, na.rm = TRUE),     # Calculate standard deviation
+    n = n(),                                  # Count the number of observations
+   .groups = 'drop'                           # Drop the grouping structure
+  )
+
+# View the new summary data frame
+print(summary_data)
+```
+
+> 6.  What do you learn from the graph and means above? What percentage of variation in `Height` is explained by `Sex`? Does this seem like a substantial amount?
+
+!!! Remove `eval=FALSE` after successfully running the code; ALSO *remove this note*.
+
+```{r, one-way ANOVA model for height using sex, eval=FALSE}
+means_model<-aov(Height ~ Sex, data = FootHeight)
+summary.lm(means_model)$r.squared # r-squared for separate means model
+```
+
+*However, if we already have the person’s foot size, how worthwhile is it to also know the person’s sex?*
+
+!!! Remove `eval=FALSE` after successfully running the code; ALSO *remove this note*.
+
+```{r, scatterplots of height vs footsize for each sex, eval=FALSE}
+ggplot(FootHeight, 
+       aes(x = Footsize, y = Height, color = Sex)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) + # 'se=FALSE' removes confidence bands
+  labs(title = "Height vs Foot Size by Sex",
+       x = "Foot Size of Math 248 student",
+       y = "Height of Math 248 student")+
+  theme_minimal()
+```
+
+> 7.  Based on the plot above, who tends to have larger feet, males or females? How can you tell?
+
+> 8.  How much additional variation in `Height` is explained by adding `Sex` to a model that already includes `Footsize`? (Use the adjusted $R^2$ value from the `summary(Sex_footsize_model)`\` output to answer this question)
+
+!!! Remove `eval=FALSE` after successfully running the code; ALSO *remove this note*.
+
+```{r, multiple linear regression 1 - Type 1 SS, eval=FALSE}
+Sex_footsize_model<-lm(Height ~ Sex + Footsize, data = FootHeight)
+summary(Sex_footsize_model)$adj.r.squared #adjusted  r-squared
+```
+
+
+### Using Categorical Variables in the Statistical Model
+
+The *least squares estimation method* can again be used to estimate the slope coefficients for *both explanatory variables simultaneously.*
+
+Let's revisit the model that predicts `Height` based on `Footsize` after adjusting for `Sex`.
+
+!!! Remove `eval=FALSE` after successfully running the code; ALSO *remove this note*.
+
+```{r, final multiple linear regression  - Type 1 SS, eval=FALSE}
+Sex_footsize_model<-lm(Height ~ Sex + Footsize, data = FootHeight)
+summary(Sex_footsize_model)
+```
+
+!!! Remove `eval=FALSE` after successfully running the code; ALSO *remove this note*.
+
+```{r, tidy version of the model output, eval=FALSE}
+library(broom)
+
+# Run the model without the intercept
+Sex_footsize_model <- lm(Height ~ Sex + Footsize - 1, data = FootHeight)
+
+# Create the tidy table
+tidy_output <- tidy(Sex_footsize_model)
+
+# View the clean output
+print(tidy_output)
+```
+
+> 9. Based on the output above, write out two separate prediction equations, one for females and one for males.
+
+$\widehat{FemaleHeight}= intercept (?) + slope (?) *FootSize$
+
+$\widehat{MaleHeight}= intercept (?) + slope (?) *FootSize$
+
+> 10. Provide interpretations of the intercept and the slope coefficients, keeping in mind where you have previously seen these values.
+
+## STEP 4: Draw inferences beyond the data.
+
+> 11. Assess the fit of this model using the residual plots. Be sure to address all four validity conditions.
+
+```{r, diagnostic residual plots, eval=FALSE}
+# Prepare the model data
+model_diag <- fortify(Sex_footsize_model)
+
+# A. Residuals vs Fitted Plot
+# Used to check for Linearity and Homoscedasticity
+ggplot(model_diag, aes(x = .fitted, y = .resid)) +
+  geom_point(alpha = 0.6) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
+  geom_smooth(se = FALSE, color = "steelblue") + # Adds a helper line to see trends
+  labs(title = "Residuals vs Fitted",
+       x = "Fitted Values (Predicted)",
+       y = "Residuals") +
+  theme_minimal()
+
+# B. Normal Q-Q Plot
+# Used to check if residuals are normally distributed
+ggplot(model_diag, aes(sample = .resid)) +
+  stat_qq() +
+  stat_qq_line(color = "red") +
+  labs(title = "Normal Q-Q Plot",
+       x = "Theoretical Quantiles",
+       y = "Sample Quantiles") +
+  theme_minimal()
+```
+
+## STEP 5: Formulate conclusions.
+
+> 12. Write a paragraph summarizing the results of your analysis. Be sure to address the following.
+
+-   Is there a statistically significant linear association between the height and the foot length of a suspect, after adjusting for sex? What is your evidence? If so, what is the nature of that association?
+
+-   Explain how you would use that information to predict the suspect’s height, as if to a police officer at the scene of the crime.
+
+-   To what population would you generalize these conclusions?
+
+## STEP 6: Look back and ahead.
+
+> 13. What do you suggest next in analyzing these data?
+
+*In this section, you looked at adding a binary categorical variable into the regression model and fitting a “parallel lines” model that allows the lines for the two groups to have different intercepts (a “shift”), but assumes they have the same slope. Once you add a second explanatory variable to the regression model, you are fitting a multiple regression model rather than a simple linear regression model. We can again expand the ANOVA table to include this additional source of variation (in fact, including a possible quantitative “covariate” into the factorial design is often referred to as ANCOVA or analysis of covariance). Not much changes in the analysis and interpretations, other than the coefficients and Sums of Squares values need to be interpreted as after adjusting for the other variables in the model. This means you are making comparisons for one variable holding the value of the other variable constant or comparing individuals in the same subpopulation. We can also calculate R2 values for individual variables and for the model as a whole. Evaluation of residual plots works the same way as well.*

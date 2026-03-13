@@ -1,0 +1,184 @@
+---
+title: "Math 248: Exploration 4.4"
+author: "Your name here"
+header-includes:
+  - \usepackage{float}
+  - \floatplacement{figure}{H}
+output:
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo=TRUE,message=FALSE,warning=FALSE, fig.align = 'center', out.width="80%" , comment="" )
+library(tidyverse)
+library(ggplot2)
+library(dplyr)
+library(mosaic)
+library(ImSIwithR)
+```
+
+# Exploration 4.4 FEV and Smoking
+
+Forced expiratory volume (FEV) is a measure of the strength of a person’s lungs—the maximum volume of air (measured in liters) a person can blow out in the first second. Larger values indicate healthier lungs. Researchers in the 1970s were interested in how smoking impacted FEV in adolescents (e.g., Tager, Weiss, Rosner, & Speizer, 1979, “Effect of parental cigarette smoking on the pulmonary function of children,” American Journal of Epidemiology). In particular, does smoking have a particularly strong impact on adolescents whose lung capacity is still developing and maturing?
+
+## STEP 1: Ask a research question.
+
+> 1. The researchers wanted to explore whether smokers tend to have lower FEV values than non-smokers. In addition to smoking status, what other variables could be associated with FEV values?
+
+## STEP 2: Design a study and collect data.
+
+The researchers couldn’t very well randomly assign individuals to be smokers and non-smokers so they conducted an observational study. Data were collected on 654 adolescent youth in the East Boston area during the mid- to late 1970s. Variables measured included smoking status, age, height, and gender. The data can be found in the file `FEV` in `library(ImSIwithR)`.
+
+_Let's load the data._
+
+!!! Remove `eval=FALSE` after successfully running the code; ALSO *remove this note*.
+
+```{r,  load the data, eval=FALSE}
+library(ImSIwithR) 
+data(FEV)
+FEV<- FEV %>%
+  mutate(across(where(is.character), as.factor)) # transforming character variables into factor variables
+head(FEV) #"prints" the first 6 rows of the data
+```
+
+## STEP 3: Explore the data.
+
+In this Exploration we will focus on `FEV` as a response variable and `Age` and `Smoker`  as explanatory variables.
+
+> 2. What type of variable is `FEV`? What type of variable `Age`? What type of variable is `Smoker`?
+
+
+
+---
+
+Let's create a visualization to see how `Age` and `Smoker` affect `FEV`. Scatterplot of `FEV` by `Age` with color indicating the `Smoking status` will accomplish this task.
+
+!!! Remove `eval=FALSE` after successfully running the code; ALSO *remove this note*.
+
+```{r, scatterplots of height vs footsize for each sex, eval=FALSE}
+ggplot(FEV, 
+       aes(x = Age, y = FEV, color = Smoker)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) + # 'se=FALSE' removes confidence bands
+  labs(title = "FEV vs Age Size by Smoking status",
+       x = "Age",
+       y = "FEV (Forced Expiratory Volume)")+
+  theme_minimal()
+```
+The plot above looks busy, for a better visual it is typically better to separate the plots. `facet_wrap` function is helpful in that task.
+
+!!! Remove `eval=FALSE` after successfully running the code; ALSO *remove this note*.
+
+```{r,individual scatterplots of height vs footsize for each sex, eval=FALSE}
+ggplot(FEV, aes(x = Age, y = FEV, color = Smoker)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) + 
+  # This splits the plot into separate panels by the Smoker variable
+  facet_wrap(~ Smoker) + 
+  labs(title = "FEV vs Age by Smoking Status",
+       x = "Age",
+       y = "FEV (Forced Expiratory Volume)") +
+  theme_minimal()
+```
+
+
+> 3. Do the plots above suggest that the slopes for different smoking statuses are the same. In other words, do the lines seem parallel?
+
+
+
+---
+
+## Definition
+
+Recall from Chapter 3, that a _statistical interaction_ occurs between two variables when the effect (or association) of one explanatory variable on the response variable changes based on the value of the other variable. An _interaction between a quantitative variable and a categorical variable_ occurs when the _slopes of the regression lines are different_ for different categories. Equivalently, this means that the distance between the lines changes as the quantitative variable changes.
+
+Let's fit a model which includes an interaction term between the smoker variable and the age variable. To do this, we multiply the value of the quantitative explanatory variable and the value of the categorical variable.
+
+!!! Remove `eval=FALSE` after successfully running the code; ALSO *remove this note*.
+
+```{r, multiple regression with categorical and quantitative predictors and interaction, eval=FALSE}
+FEV_model<-lm(FEV ~ Smoker + Age + Smoker*Age, data = FEV)
+summary(FEV_model)
+```
+---
+
+## STEP 4: Draw inferences beyond the data.
+
+We first look at the interaction term. If it is significant it means that we will have two separate regression lines for each `Smoker` status and the lines will have different slopes in addition to different intercepts. If the interaction term is not significant, we could drop it from the model, it will then suggest two parallel lines ( with the same slope but different intercepts) could explain the relationship between the quantitative variables. 
+
+The output suggests that the interaction between `Age` and `Smoker` is statistically significant with p-value close to zero (1.65e-07). Thus, the equations for each smoker status should have different slopes in addition to different intercepts. Let's use a different model specification that allows to easily obtain slopes and intercepts for separate regression lines of `FEV` vs `Age` for each `Smoker status`.
+
+---
+
+!!! Remove `eval=FALSE` after successfully running the code; ALSO *remove this note*.
+
+```{r, tidy output, good for estimates and p-values, eval=FALSE}
+library(broom)
+Separate_Models <- lm(FEV ~ 0 + Smoker + Smoker:Age, data = FEV)
+# This formula tells R: 
+# 1. Give me a separate intercept for each Smoker level (0 + Smoker)
+# 2. Give me a separate slope for Age for each Smoker level (Smoker:Age)
+tidy(Separate_Model)#print the estimates and p-values
+```
+
+> 4. Based on the output above, write out two separate prediction equations, one for smokers and one for non-smokers.
+
+$\widehat{SmokerFEV} = intercept (?) + slope (?) *Age$
+
+$\widehat{NonSmokerFEV} = intercept (?) + slope (?) *Age$
+
+> 5. According to the equation for smokers, how much of an increase in FEV is associated with a one-year age increase? For non-smokers, how much of an increase in FEV is associated with a one-year age increase? How does this compare to the prediction for smokers?
+
+ 
+ 
+---
+
+### Important note
+
+when we fit an interaction term between two variables that are associated, the _covariation problem_ _for observational studies_ can be exacerbated further. In short, when we add an interaction there is even more variation in the response that we cannot uniquely assign to either of the explanatory variables or to the interaction term. As you might expect, this is not an issue in well-designed experiments where there is no association between factors or blocks.
+
+---
+
+## STEP 5: Formulate conclusions.
+
+> 6. To what population are you willing to generalize these results? Can you draw a cause and effect conclusion about smoking and the rate of growth of lung capacity from this study?
+
+
+---
+
+## STEP 6: Look back and ahead.
+
+> 7. Do you consider the validity conditions met for this study? Justify your answer.
+
+!!! Remove `eval=FALSE` after successfully running the code; ALSO *remove this note*.
+
+```{r, diagnostic residual plots, eval=FALSE}
+# Prepare the model data
+model_diag <- fortify(FEV_model)
+
+# A. Residuals vs Fitted Plot
+# Used to check for Linearity and Homoscedasticity
+ggplot(model_diag, aes(x = .fitted, y = .resid)) +
+  geom_point(alpha = 0.6) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
+  geom_smooth(se = FALSE, color = "steelblue") + # Adds a helper line to see trends
+  labs(title = "Residuals vs Fitted",
+       x = "Fitted Values (Predicted)",
+       y = "Residuals") +
+  theme_minimal()
+
+# B. Normal Q-Q Plot
+# Used to check if residuals are normally distributed
+ggplot(model_diag, aes(sample = .resid)) +
+  stat_qq() +
+  stat_qq_line(color = "red") +
+  labs(title = "Normal Q-Q Plot",
+       x = "Theoretical Quantiles",
+       y = "Sample Quantiles") +
+  theme_minimal()
+```
+
+> 8. What suggestions do you have for a follow-up study? 
+ 
+
+
