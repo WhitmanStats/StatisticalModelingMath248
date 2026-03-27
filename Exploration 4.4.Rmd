@@ -55,7 +55,7 @@ Let's create a visualization to see how `Age` and `Smoker` affect `FEV`. Scatter
 
 !!! Remove `eval=FALSE` after successfully running the code; ALSO *remove this note*.
 
-```{r, scatterplots of height vs footsize for each sex, eval=FALSE}
+```{r, scatterplots of FEV vs Age Size by Smoking status, eval=FALSE}
 ggplot(FEV, 
        aes(x = Age, y = FEV, color = Smoker)) +
   geom_point() +
@@ -69,8 +69,9 @@ The plot above looks busy, for a better visual it is typically better to separat
 
 !!! Remove `eval=FALSE` after successfully running the code; ALSO *remove this note*.
 
-```{r,individual scatterplots of height vs footsize for each sex, eval=FALSE}
-ggplot(FEV, aes(x = Age, y = FEV, color = Smoker)) +
+```{r, individual scatterplots of FEV vs Age Size for each Smoking status, eval=FALSE}
+ggplot(FEV,
+       aes(x = Age, y = FEV, color = Smoker)) +
   geom_point() +
   geom_smooth(method = "lm", se = FALSE) + 
   # This splits the plot into separate panels by the Smoker variable
@@ -82,7 +83,7 @@ ggplot(FEV, aes(x = Age, y = FEV, color = Smoker)) +
 ```
 
 
-> 3. Do the plots above suggest that the slopes for different smoking statuses are the same. In other words, do the lines seem parallel?
+> 3. Do the plots above suggest that the slopes for different smoking statuses are the same? In other words, do the lines seem parallel?
 
 
 
@@ -92,21 +93,41 @@ ggplot(FEV, aes(x = Age, y = FEV, color = Smoker)) +
 
 Recall from Chapter 3, that a _statistical interaction_ occurs between two variables when the effect (or association) of one explanatory variable on the response variable changes based on the value of the other variable. An _interaction between a quantitative variable and a categorical variable_ occurs when the _slopes of the regression lines are different_ for different categories. Equivalently, this means that the distance between the lines changes as the quantitative variable changes.
 
-Let's fit a model which includes an interaction term between the smoker variable and the age variable. To do this, we multiply the value of the quantitative explanatory variable and the value of the categorical variable.
+Let's fit a model which includes an interaction term between the `Smoker` variable and the `Age` variable. To do this, we multiply the value of the quantitative explanatory variable and the value of the categorical variable.
 
 !!! Remove `eval=FALSE` after successfully running the code; ALSO *remove this note*.
 
-```{r, multiple regression with categorical and quantitative predictors and interaction, eval=FALSE}
+```{r, multiple regression with interaction type 1 SS, eval=FALSE}
 FEV_model<-lm(FEV ~ Smoker + Age + Smoker*Age, data = FEV)
-summary(FEV_model)
+anova(FEV_model)
 ```
+```{r, type 3 sums of squares, eval=FALSE}
+# 1. Load the necessary library
+library(car)
+
+# 2. Set "sum-to-zero" contrasts for the categorical variable (Smoker)
+# This is required for Type III SS to be interpretable
+options(contrasts = c("contr.sum", "contr.poly"))
+
+# 3. Re-fit your model
+FEV_model <- lm(FEV ~ Smoker + Age + Smoker:Age, data = FEV)
+
+# 4. Generate the Type III ANOVA table
+res<-Anova(FEV_model, type = "III")
+
+# 4. Print the table excluding the first row (the Intercept) for easy comparison with Type 1 output
+res[-1, ]
+```
+
+
+
 ---
 
 ## STEP 4: Draw inferences beyond the data.
 
-We first look at the interaction term. If it is significant it means that we will have two separate regression lines for each `Smoker` status and the lines will have different slopes in addition to different intercepts. If the interaction term is not significant, we could drop it from the model, it will then suggest two parallel lines ( with the same slope but different intercepts) could explain the relationship between the quantitative variables. 
+We first look at the interaction term. If it is significant it means that we will have *two separate regression lines* for each `Smoker` status and the lines will have *different slopes in addition to different intercepts*. If the interaction term is not significant, we could drop it from the model, it will then suggest that two parallel lines (with the same slope but different intercepts) could explain the relationship between the quantitative variables. 
 
-The output suggests that the interaction between `Age` and `Smoker` is statistically significant with p-value close to zero (1.65e-07). Thus, the equations for each smoker status should have different slopes in addition to different intercepts. Let's use a different model specification that allows to easily obtain slopes and intercepts for separate regression lines of `FEV` vs `Age` for each `Smoker status`.
+The output suggests that the interaction between `Age` and `Smoker` is statistically significant with p-value close to zero (1.65e-07) for both Type 1 and Type 3 Sums of Squares. Thus, the equations for each smoker status should have *different slopes in addition to different intercepts*. Let's use a different model specification that allows to easily obtain slopes and intercepts for separate regression lines of `FEV` vs `Age` for each `Smoker status`.
 
 ---
 
@@ -114,11 +135,11 @@ The output suggests that the interaction between `Age` and `Smoker` is statistic
 
 ```{r, tidy output, good for estimates and p-values, eval=FALSE}
 library(broom)
-Separate_Models <- lm(FEV ~ 0 + Smoker + Smoker:Age, data = FEV)
+Separate_Lines <- lm(FEV ~ 0 + Smoker + Smoker:Age, data = FEV)
 # This formula tells R: 
 # 1. Give me a separate intercept for each Smoker level (0 + Smoker)
 # 2. Give me a separate slope for Age for each Smoker level (Smoker:Age)
-tidy(Separate_Model)#print the estimates and p-values
+tidy(Separate_Lines)#print the estimates and p-values
 ```
 
 > 4. Based on the output above, write out two separate prediction equations, one for smokers and one for non-smokers.
@@ -154,7 +175,7 @@ when we fit an interaction term between two variables that are associated, the _
 
 ```{r, diagnostic residual plots, eval=FALSE}
 # Prepare the model data
-model_diag <- fortify(FEV_model)
+model_diag <- broom::augment(FEV_model)
 
 # A. Residuals vs Fitted Plot
 # Used to check for Linearity and Homoscedasticity
