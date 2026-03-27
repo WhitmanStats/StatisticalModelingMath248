@@ -1,0 +1,264 @@
+---
+title: "Math 248: Exploration 4.5"
+author: "Your name here"
+header-includes:
+  - \usepackage{float}
+  - \floatplacement{figure}{H}
+output:
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo=TRUE,message=FALSE,warning=FALSE, fig.align = 'center', out.width="80%" , comment="" )
+library(tidyverse)
+library(ggplot2)
+library(dplyr)
+library(mosaic)
+library(ImSIwithR)
+```
+
+# Exploration 4.5 Patient Satisfaction
+
+The U.S. healthcare system increasingly uses patient satisfaction scores in payment models and quality assessment. Researchers continue to explore different variables and whether they explain variation in patient satisfaction scores. For example, Tyser, Gaffney, Zhang, and Presson (2018) explored “the association of patient satisfaction with pain, anxiety, and self-reported physical function” (Journal Bone Joint Surgery of America, 1811–1818).In this exploration you will analyze an example dataset that includes measures of patient satisfaction, anxiety level, severity of illness, and age (found in Kutner, Nachtsheim, and Neter, 2004).
+
+
+## STEP 1: Ask a research question.
+
+In this study, we can ask: Do any/all of age, anxiety, and severity explain variation in patient satisfaction? Does anxiety interact with age?
+
+
+## STEP 2: Design a study and collect data.
+
+Suppose a random sample of 46 patients at a certain hospital is given a satisfaction survey upon release from the hospital. The data in `PatientSatisfaction` assess satisfaction on a (0–100) scale (with larger values indicating higher satisfaction), anxiety (measured as a quantitative variable with higher numbers indicating more anxiety), and age. Age is reported both as a quantitative variable and as a categorical variable (age group: younger = 20–34, middle = 35–49, older = 50–64). We will first focus on the categorical age group variable.
+
+> 1. Before looking at the data, make some predictions. Do you expect satisfaction to increase or decrease with age? Do you expect satisfaction to increase or decrease with anxiety? Do you expect anxiety and age to be related? If so, how? What would it mean for age and anxiety to interact in this context? Why might we might we prefer to use age as a categorical variable?
+
+
+
+---
+
+The data can be found in the file `patient_satisfaction` in `library(ImSIwithR)`.
+
+_Let's load the data._
+
+!!! Remove `eval=FALSE` after successfully running the code; ALSO *remove this note*.
+
+```{r,  load the data, eval=FALSE}
+library(ImSIwithR) 
+data(patient_satisfaction)
+PatientSatisfaction<- patient_satisfaction %>%
+  mutate(across(where(is.character), as.factor)) # transforming character variables into factor variables
+head(PatientSatisfaction) #"prints" the first 6 rows of the data
+```
+
+## STEP 3: Explore the data - Two-Variable Model with Interaction
+
+In this Exploration we will focus on creating a model to predict `satisfaction` from `AgeGroup` and `Anxiety`. 
+
+Let's create a visualization to see how `AgeGroup` and `Anxiety` affect `Satisfaction`. Scatterplot of `Satisfaction` by `Anxiety` with color indicating the `AgeGroup` will accomplish this task.
+
+!!! Remove `eval=FALSE` after successfully running the code; ALSO *remove this note*.
+
+```{r, scatterplots of satisfaction vs anxiety for each age group, eval=FALSE}
+ggplot(PatientSatisfaction, 
+       aes(x = anxiety, y = satisfaction, color = AgeGroup)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) + # 'se=FALSE' removes confidence bands
+  labs(title = "Satisfaction vs Anxiety by Age Group",
+       x = "Anxiety",
+       y = "Satisfaction")+
+  theme_minimal()
+```
+
+
+
+The plot above looks busy, for a better visual it is typically better to separate the plots. `facet_wrap` function is helpful in that task.
+
+!!! Remove `eval=FALSE` after successfully running the code; ALSO *remove this note*.
+
+```{r, individual scatterplots of satisfaction vs anxiety for each age group, eval=FALSE}
+ggplot(PatientSatisfaction,
+       aes(x = anxiety, y = satisfaction, color = AgeGroup)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) + 
+  # This splits the plot into separate panels by the Smoker variable
+  facet_wrap(~ AgeGroup) + 
+  labs(title = "Satisfaction vs Anxiety by Age Group",
+       x = "Anxiety",
+       y = "Satisfaction") +
+  theme_minimal()
+```
+
+
+> 2. Do the plots above suggest that the slopes for different age groups are the same? In other words, do the lines seem parallel?
+
+
+
+---
+
+## Definition
+
+Recall from Chapter 3, that a _statistical interaction_ occurs between two variables when the effect (or association) of one explanatory variable on the response variable changes based on the value of the other variable. An _interaction between a quantitative variable and a categorical variable_ occurs when the _slopes of the regression lines are different_ for different categories. Equivalently, this means that the distance between the lines changes as the quantitative variable changes.
+
+Let's fit a model which includes an interaction term between the smoker variable and the age variable. To do this, we multiply the value of the quantitative explanatory variable and the value of the categorical variable.
+
+!!! Remove `eval=FALSE` after successfully running the code; ALSO *remove this note*.
+
+```{r, multiple regression with interaction type 1 Sums of Squares, eval=FALSE}
+satisfaction_model_with_interaction<-lm(satisfaction ~ anxiety + AgeGroup + anxiety*AgeGroup,
+                       data = PatientSatisfaction)
+anova(satisfaction_model_with_interaction)
+```
+
+```{r, multiple regression with interaction type 3 sums of squares, eval=FALSE}
+# 1. Load the necessary library
+library(car)
+
+# 2. Set "sum-to-zero" contrasts for the categorical variable (AgeGroup)
+# This is required for Type III SS to be interpretable
+options(contrasts = c("contr.sum", "contr.poly"))
+
+# 3. Re-fit your model
+#satisfaction_model_with_interaction <- lm(satisfaction ~ anxiety + AgeGroup + anxiety*AgeGroup,
+                       #data = PatientSatisfaction)
+
+# 4. Generate the Type III ANOVA table
+res<-Anova(satisfaction_model_with_interaction, type = "III")
+
+# 5. Print the table excluding the first row (the Intercept) for easy comparison with Type 1 output
+res[-1, ]
+```
+
+
+
+
+## STEP 4: Draw inferences beyond the data.
+
+We first look at the interaction term. If it is significant it means that we will have three separate regression lines for each `AgeGroup` status and the lines will have different slopes in addition to different intercepts. If the interaction term is not significant, we could drop it from the model, it will then suggest three parallel lines (with the same slope but different intercepts) could explain the relationship between the quantitative variables. 
+
+The output suggests that the interaction between `Anxiety` and `Satisfaction` is not statistically significant with p-value of 0.427 (both Type 1 and Type 3). Which sums of squares are appropriate here? This is an observational study and the difference in outputs between Type 1 and Type 3 p-values suggests that the data is not balanced. Thus, we will focus on Type 3 sum of squares output. From the output we notice that the effect of `AgeGroup` has a p-value of 0.807, which is not statistically significant, but we can't use this model as is, we need to drop the interaction term and rerun the model. What does it mean? We will rerun the Type 3 model without the interaction term and assess the p-values for the remaining terms.
+
+!!! Remove `eval=FALSE` after successfully running the code; ALSO *remove this note*.
+
+```{r, multiple regression without interaction type 3 SS, eval=FALSE}
+library(car)
+options(contrasts = c("contr.sum", "contr.poly"))
+
+satisfaction_model_no_interaction<-lm(satisfaction ~ anxiety + AgeGroup ,
+                       data = PatientSatisfaction)
+res<-Anova(satisfaction_model_no_interaction, type = "III")
+res[-1, ]
+```
+
+From the output above we can see that both `Anxiety` and `AgeGroup` are now significant. 
+It means that we will have two separate equations for each `AgeGroup` to predict customer `Satisfaction` based on `Anxiety`. The two equations will have the same slope but different intercepts.
+
+Let's use a different model specification that allows to easily obtain slopes and intercepts for separate regression lines with common slope of `Satisfaction` vs `Anxiety` for each `AgeGroup`.
+
+
+!!! Remove `eval=FALSE` after successfully running the code; ALSO *remove this note*.
+
+```{r, tidy output, good for estimates and p-values, eval=FALSE}
+library(broom)
+Same_Slope_Equations <- lm(satisfaction ~  0+AgeGroup+ anxiety,
+                                data = PatientSatisfaction)
+# This formula tells R: 
+# 1. Give me a separate intercept for each AgeGroup level (0 + AgeGroup)
+# 2. Give me the same slope for each AgeGroup level (anxiety)
+tidy(Same_Slope_Equations )#print the estimates and p-values
+```
+
+> 3. Based on the output above, write out the three prediction equations for patient `Satisfaction` based on `Anxiety` for each `AgeGroup`. Note: coefficient for `anxiety` is the common slope.
+
+$\widehat{Satisfaction_{20-34}} = intercept (?) + slope (?) *Anxiety$
+
+$\widehat{Satisfaction_{35-49}} = intercept (?) + slope (?) *Anxiety$
+
+$\widehat{Satisfaction_{50-64}} = intercept (?) + slope (?) *Anxiety$
+
+
+> 4. Write down the interpretation of the slope  in the context.
+
+
+
+
+---
+
+## Definition
+
+A *partial F-test* can be used to compare two models where the "smaller model" has removed some terms from the "larger model." A small p-value for the partial F-test rejects the null hypothesis that the terms we have removed are important to be included in the model.
+
+
+```{r, partial F test in R, eval=FALSE}
+# 1. Define the Nested (Simple) Model
+satisfaction_model_no_interaction <- lm(satisfaction ~ anxiety + AgeGroup, 
+                           data = PatientSatisfaction)
+
+# 2. Define the Full Model
+satisfaction_model_with_interaction <- lm(satisfaction ~ anxiety + AgeGroup + anxiety*AgeGroup, 
+                                          data = PatientSatisfaction)
+
+# 3. Perform the Partial F-test
+anova(satisfaction_model_no_interaction, satisfaction_model_with_interaction)
+```
+
+#### How to Interpret the Result
+
+When you run this, R will produce a table with two rows. You are looking specifically at the $Pr(>F)$ value in the second row:
+
+If $p<0.05$: The additional complexity (`anxiety * AgeGroup`) significantly improves the model. You should stick with the Full Model.
+
+If $p>0.05$: The extra variables (`anxiety * AgeGroup`) do not explain enough "new" variance to justify their inclusion. The Simple Model is preferred for parsimony.
+
+#### Concept: What the Partial F-Test is doing
+
+The Partial F-test calculates how much the Residual Sum of Squares (RSS) drops when you add the new terms, relative to the amount of error still left in the model.
+
+---
+
+> 5. Based on the output above, what does the p-value in the second row of the output mean about the model that we should choose? Does it match your previous conlusion based on the p-values?
+
+
+
+## STEP 5: Formulate conclusions.
+
+> 6. To what population are you willing to generalize these results? Can you draw a cause and effect conclusion about patient satisfaction and anxiety from this study?
+
+
+
+## STEP 6: Look back and ahead.
+
+> 7. Do you consider the validity conditions met for this study? Justify your answer.
+
+!!! Remove `eval=FALSE` after successfully running the code; ALSO *remove this note*.
+
+```{r, diagnostic residual plots, eval=FALSE}
+# Prepare the model data
+model_diag <- broom::augment(satisfaction_model_no_interaction)
+
+# A. Residuals vs Fitted Plot
+# Used to check for Linearity and Homoscedasticity
+ggplot(model_diag, aes(x = .fitted, y = .resid)) +
+  geom_point(alpha = 0.6) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
+  geom_smooth(se = FALSE, color = "steelblue") + # Adds a helper line to see trends
+  labs(title = "Residuals vs Fitted",
+       x = "Fitted Values (Predicted)",
+       y = "Residuals") +
+  theme_minimal()
+
+# B. Normal Q-Q Plot
+# Used to check if residuals are normally distributed
+ggplot(model_diag, aes(sample = .resid)) +
+  stat_qq() +
+  stat_qq_line(color = "red") +
+  labs(title = "Normal Q-Q Plot",
+       x = "Theoretical Quantiles",
+       y = "Sample Quantiles") +
+  theme_minimal()
+```
+
+> 8. Summarize the conclusions you would make in predicting patient satisfaction from age and anxiety, as if to a hospital administrator.
+ 
+
+
