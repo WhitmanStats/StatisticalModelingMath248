@@ -33,7 +33,7 @@ To measure foot length, measure the distance (in centimeters) between the pterni
 
 Let's collect these measurements for each student in our class, along with each student’s sex.
 
-*Enter your measurements* into the following [Google sheet:](https://docs.google.com/spreadsheets/d/1qy-Sudaa55ndycVXoWQZutainJ0nD8jnbPrrMYdZhSk/edit?usp=sharing). Think about what units are appropriate for each variable: I suggest using cm for `Foorsize` and `Handspan` and inches for `Height`.
+*Enter your measurements* into the following [Google sheet](https://docs.google.com/spreadsheets/d/1qy-Sudaa55ndycVXoWQZutainJ0nD8jnbPrrMYdZhSk/edit?usp=sharing). Think about what units are appropriate for each variable: I suggest using cm for `Foorsize` and `Handspan` and inches for `Height`.
 
 *Once the dataset is complete, let's load the data.*
 
@@ -170,7 +170,7 @@ ggplot(FootHeight,
 
 > 7.  Based on the plot above, who tends to have larger feet, males or females? How can you tell?
 
-> 8.  How much additional variation in `Height` is explained by adding `Sex` to a model that already includes `Footsize`? (Use the adjusted $R^2$ value from the `summary(Sex_footsize_model)`\` output to answer this question)
+> 8.  How much additional variation in `Height` is explained by adding `Sex` to a model that already includes `Footsize`? (Use the adjusted $R^2$ value from the `summary(Sex_footsize_model)` output to answer this question)
 
 !!! Remove `eval=FALSE` after successfully running the code; ALSO *remove this note*.
 
@@ -178,6 +178,36 @@ ggplot(FootHeight,
 Sex_footsize_model<-lm(Height ~ Sex + Footsize, data = FootHeight)
 summary(Sex_footsize_model)$adj.r.squared #adjusted  r-squared
 ```
+
+> 9.  Is the (adjusted) association between `Sex` and `Height` stronger or weaker if we first adjust for `Footsize`? Read the explanation below carefully and replace `?` in the text with the values from relevant output.
+
+Note: The output does not change, if we use the  `summary(model)` function which uses partial tests (t-tests). When you call `summary(model)`, R calculates t-tests for each coefficient. These tests are "marginal," meaning they show the significance of that specific variable given that all other variables are already in the model.
+In this case:
+
+* In both models (`Footsize_sex_model` and `Sex_footsize_model`), the t-test for `Sex` asks: "Does `Sex` explain extra variance after `Footsize` is accounted for?"
+
+* In both models (`Footsize_sex_model` and `Sex_footsize_model`), the t-test for `Footsize` asks: "Does `Footsize` explain extra variance after `Sex` is accounted for?"
+
+```{r, multiple linear regression 2, eval=FALSE}
+Footsize_sex_model<-lm(Height ~ Footsize + Sex, data = FootHeight)
+summary(Footsize_sex_model)
+```
+
+If we use `anova(model)` function in R the two models will show the Type 1 sums of squares calculations that will show different results: 
+
+> * If we include `Sex` first and `Footsize` second, then `Footsize` after adjusting for `Sex` has a p-value of `?`.
+
+> If we include `Footsize` first, and `Sex` second, then `Footsize` is not adjusted for `Sex` and has a p-value of `?`. 
+
+> The adjusted association between sex and height is weaker/stronger (**bold** the correct response) if first adjusting for foot size. 
+
+```{r, using the anova function for different model specifications, eval=FALSE}
+anova(Sex_footsize_model)
+anova(Footsize_sex_model)
+```
+
+---
+
 
 
 ### Using Categorical Variables in the Statistical Model
@@ -208,17 +238,17 @@ tidy_output <- tidy(Sex_footsize_model)
 print(tidy_output)
 ```
 
-> 9. Based on the output above, write out two separate prediction equations, one for females and one for males.
+> 10. Based on the output above, write out two separate prediction equations, one for females and one for males.
 
 $\widehat{FemaleHeight}= intercept (?) + slope (?) *FootSize$
 
 $\widehat{MaleHeight}= intercept (?) + slope (?) *FootSize$
 
-> 10. Provide interpretations of the intercept and the slope coefficients, keeping in mind where you have previously seen these values.
+> 11. Provide interpretations of the intercept and the slope coefficients, keeping in mind where you have previously seen these values.
 
 ## STEP 4: Draw inferences beyond the data.
 
-> 11. Assess the fit of this model using the residual plots. Be sure to address all four validity conditions.
+> 12. Assess the fit of this model using the residual plots. Be sure to address all four validity conditions.
 
 ```{r, diagnostic residual plots, eval=FALSE}
 # Prepare the model data
@@ -248,7 +278,7 @@ ggplot(model_diag, aes(sample = .resid)) +
 
 ## STEP 5: Formulate conclusions.
 
-> 12. Write a paragraph summarizing the results of your analysis. Be sure to address the following.
+> 13. Write a paragraph summarizing the results of your analysis. Be sure to address the following.
 
 -   Is there a statistically significant linear association between the height and the foot length of a suspect, after adjusting for sex? What is your evidence? If so, what is the nature of that association?
 
@@ -258,6 +288,6 @@ ggplot(model_diag, aes(sample = .resid)) +
 
 ## STEP 6: Look back and ahead.
 
-> 13. What do you suggest next in analyzing these data?
+> 14. What do you suggest next in analyzing these data?
 
-*In this section, you looked at adding a binary categorical variable into the regression model and fitting a “parallel lines” model that allows the lines for the two groups to have different intercepts (a “shift”), but assumes they have the same slope. Once you add a second explanatory variable to the regression model, you are fitting a multiple regression model rather than a simple linear regression model. We can again expand the ANOVA table to include this additional source of variation (in fact, including a possible quantitative “covariate” into the factorial design is often referred to as ANCOVA or analysis of covariance). Not much changes in the analysis and interpretations, other than the coefficients and Sums of Squares values need to be interpreted as after adjusting for the other variables in the model. This means you are making comparisons for one variable holding the value of the other variable constant or comparing individuals in the same subpopulation. We can also calculate R2 values for individual variables and for the model as a whole. Evaluation of residual plots works the same way as well.*
+*In this section, you looked at adding a binary categorical variable into the regression model and fitting a “parallel lines” model that allows the lines for the two groups to have different intercepts (a “shift”), but assumes they have the same slope. Once you add a second explanatory variable to the regression model, you are fitting a multiple regression model rather than a simple linear regression model. We can again expand the ANOVA table to include this additional source of variation (in fact, including a possible quantitative “covariate” into the factorial design is often referred to as ANCOVA or analysis of covariance). Not much changes in the analysis and interpretations, other than the coefficients and Sums of Squares values need to be interpreted as after adjusting for the other variables in the model. This means you are making comparisons for one variable holding the value of the other variable constant or comparing individuals in the same subpopulation. We can also calculate $R^2$ values for individual variables and for the model as a whole. Evaluation of residual plots works the same way as well.*
